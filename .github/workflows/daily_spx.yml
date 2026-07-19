@@ -193,11 +193,11 @@ jobs:
         continue-on-error: true   # 이메일 미설정 시에도 워크플로우 실패 X
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.gmail.com
+          server_address: smtp.naver.com
           server_port: 465
           secure: true
           username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_APP_PASSWORD }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "📈 SPX Daily Update ${{ env.DATE }}"
           html_body: file://output/email_body.html
           to: ${{ secrets.EMAIL_TO }}
