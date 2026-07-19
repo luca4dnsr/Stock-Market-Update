@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# 프로젝트 생성 파일 (GitHub에 올리지 않음)
+cache/
+logs/
+
+# output/ 은 GitHub Actions가 자동 커밋하므로
+# 로컬에서 생성한 파일은 제외 (Actions 결과물만 추적)
+output/
+
+# docs/는 GitHub Pages용으로 Actions이 관리
+# 로컬 생성본은 제외
+docs/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,109 @@
+name: 📈 SPX Daily Update
+
+on:
+  schedule:
+    # 미국 동부 시간 오후 4시 마감 기준
+    # 여름(EDT): 20:00 UTC / 겨울(EST): 21:00 UTC
+    # → 22:00 UTC (= 다음날 07:00 KST) 실행으로 DST 관계없이 안전
+    - cron: '0 22 * * 1-5'   # 월~금 UTC 22:00 (KST 다음날 07:00)
+
+  # 수동 트리거 (GitHub Actions 탭에서 직접 실행 가능)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (데이터 수집만, 파일 출력 없음)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  contents: write   # output/ 및 docs/ 커밋·푸시를 위해 필요
+
+jobs:
+  generate:
+    name: Generate SPX Daily Report
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. 코드 체크아웃 ──────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Python 설정 ────────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      # ── 3. 의존성 설치 ────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. SPX 업데이트 실행 ─────────────────────────────
+      - name: Run SPX update
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            python main.py --dry-run --verbose
+          else
+            python main.py --verbose
+          fi
+
+      # ── 5. GitHub Pages용 HTML 복사 ─────────────────────
+      - name: Prepare GitHub Pages (docs/)
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          mkdir -p docs
+          # 가장 최신 HTML을 index.html로 복사
+          LATEST=$(ls -t output/SPX_daily_*.html 2>/dev/null | head -1)
+          if [ -n "$LATEST" ]; then
+            cp "$LATEST" docs/index.html
+            echo "GitHub Pages: $LATEST → docs/index.html"
+          fi
+
+      # ── 6. 생성 파일을 Actions Artifact로 업로드 ─────────
+      - name: Upload output as artifact
+        if: github.event.inputs.dry_run != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: spx-daily-${{ github.run_number }}
+          path: output/
+          retention-days: 30    # 30일 보관 후 자동 삭제
+
+      # ── 7. output/ + docs/ 를 저장소에 커밋 ──────────────
+      - name: Commit and push output
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/ docs/ || true
+          # 변경 사항이 있을 때만 커밋
+          if git diff --staged --quiet; then
+            echo "변경 사항 없음 — 커밋 생략"
+          else
+            DATE=$(date -u +'%Y-%m-%d')
+            git commit -m "📈 SPX Daily Update ${DATE} [auto]"
+            git push
+            echo "커밋 및 푸시 완료"
+          fi
+
+      # ── 8. 실행 요약 ─────────────────────────────────────
+      - name: Summary
+        if: always()
+        run: |
+          echo "### 📈 SPX Daily Automation Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 항목 | 내용 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 실행 시각 (UTC) | $(date -u +'%Y-%m-%d %H:%M') |" >> $GITHUB_STEP_SUMMARY
+          echo "| 실행 번호 | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dry Run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          if ls output/SPX_daily_*.xlsx 1>/dev/null 2>&1; then
+            echo "| Excel 생성 | ✅ |" >> $GITHUB_STEP_SUMMARY
+            echo "| HTML 생성  | ✅ |" >> $GITHUB_STEP_SUMMARY
+          fi
