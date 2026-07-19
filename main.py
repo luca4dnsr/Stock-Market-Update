@@ -114,6 +114,23 @@ def run(dry_run: bool = False, verbose: bool = False):
             generated_at=generated_at,
         )
 
+        # ── 이메일용 요약 JSON 저장 ──
+        import json
+        summary = {
+            "data_date":  data_date,
+            "advances":   advances,
+            "declines":   declines,
+            "total":      len(master_df),
+            "top3":  top_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
+            "bot3":  bottom_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
+            "excel_name": excel_path.name,
+        }
+        (OUTPUT_DIR / "summary.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        logger.info("summary.json 저장 완료")
+
         elapsed = (datetime.now() - t0).total_seconds()
         logger.info("=" * 55)
         logger.info("  완료 in %.1f초", elapsed)

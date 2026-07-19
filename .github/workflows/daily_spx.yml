@@ -92,7 +92,119 @@ jobs:
             echo "커밋 및 푸시 완료"
           fi
 
-      # ── 8. 실행 요약 ─────────────────────────────────────
+      # ── 8. 이메일 본문(HTML) 생성 ────────────────────────
+      - name: Generate email body
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          python3 - << 'PYEOF'
+          import json, pathlib
+
+          s = json.loads(pathlib.Path("output/summary.json").read_text())
+
+          def row(r):
+              color = "#cc0000" if r["return_1d"] > 0 else "#0055cc"
+              sign  = f"+{r['return_1d']:.1f}" if r["return_1d"] > 0 else f"{r['return_1d']:.1f}"
+              return (
+                  f"<tr>"
+                  f"<td style='padding:8px 12px;font-weight:700'>{r['ticker']}</td>"
+                  f"<td style='padding:8px 12px;color:#555'>{r['name'][:32]}</td>"
+                  f"<td style='padding:8px 12px;text-align:right;font-weight:700;color:{color}'>{sign}%</td>"
+                  f"</tr>"
+              )
+
+          top_rows = "".join(row(r) for r in s["top3"])
+          bot_rows = "".join(row(r) for r in s["bot3"])
+          adv_pct  = round(s["advances"] / max(s["advances"] + s["declines"], 1) * 100)
+
+          html = f"""
+          <!DOCTYPE html><html><body style="margin:0;padding:20px;background:#f0f4f8;font-family:'Helvetica Neue',Arial,sans-serif">
+          <div style="max-width:580px;margin:0 auto">
+
+            <!-- 헤더 -->
+            <div style="background:linear-gradient(135deg,#111827,#1e3a5f);padding:28px 32px;border-radius:12px 12px 0 0">
+              <h1 style="margin:0;color:white;font-size:22px;font-weight:800">📈 SPX Daily Monitor</h1>
+              <p style="margin:6px 0 0;color:#94a3b8;font-size:13px">데이터 기준일: {s['data_date']}</p>
+            </div>
+
+            <!-- 시장 폭 -->
+            <div style="background:white;padding:24px 32px">
+              <table style="width:100%;border-collapse:separate;border-spacing:12px"><tr>
+                <td style="background:#fff5f5;border:1.5px solid #fca5a5;border-radius:10px;padding:16px;text-align:center">
+                  <div style="font-size:30px;font-weight:900;color:#cc0000">↑ {s['advances']}</div>
+                  <div style="color:#888;font-size:12px;margin-top:4px">상승 종목</div>
+                </td>
+                <td style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:16px;text-align:center">
+                  <div style="font-size:30px;font-weight:900;color:#0055cc">↓ {s['declines']}</div>
+                  <div style="color:#888;font-size:12px;margin-top:4px">하락 종목</div>
+                </td>
+                <td style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center">
+                  <div style="font-size:30px;font-weight:900;color:#374151">{adv_pct}%</div>
+                  <div style="color:#888;font-size:12px;margin-top:4px">상승 비율</div>
+                </td>
+              </tr></table>
+            </div>
+
+            <!-- 상위 TOP 3 -->
+            <div style="background:white;padding:0 32px 20px">
+              <h2 style="font-size:15px;margin:0 0 10px;color:#111">🚀 상위 TOP 3</h2>
+              <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                <thead><tr style="background:#f9fafb">
+                  <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280">티커</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280">종목명</th>
+                  <th style="padding:8px 12px;text-align:right;font-size:11px;color:#6b7280">1일 수익률</th>
+                </tr></thead>
+                <tbody>{top_rows}</tbody>
+              </table>
+            </div>
+
+            <!-- 하위 BOTTOM 3 -->
+            <div style="background:white;padding:0 32px 24px">
+              <h2 style="font-size:15px;margin:0 0 10px;color:#111">📉 하위 BOTTOM 3</h2>
+              <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
+                <thead><tr style="background:#f9fafb">
+                  <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280">티커</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:11px;color:#6b7280">종목명</th>
+                  <th style="padding:8px 12px;text-align:right;font-size:11px;color:#6b7280">1일 수익률</th>
+                </tr></thead>
+                <tbody>{bot_rows}</tbody>
+              </table>
+            </div>
+
+            <!-- 푸터 -->
+            <div style="background:#f9fafb;padding:16px 32px;border-radius:0 0 12px 12px;border-top:1px solid #e5e7eb">
+              <p style="margin:0;font-size:12px;color:#9ca3af">
+                📎 전체 데이터는 첨부된 <b>Excel 파일</b>을 확인하세요.<br>
+                자동 생성: SPX Daily Monitor (GitHub Actions)
+              </p>
+            </div>
+
+          </div></body></html>
+          """
+
+          pathlib.Path("output/email_body.html").write_text(html.strip(), encoding="utf-8")
+          print("이메일 본문 생성 완료")
+          PYEOF
+
+      # ── 9. 이메일 발송 ────────────────────────────────────
+      # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_APP_PASSWORD, EMAIL_TO 등록
+      # 설정 안 되어 있으면 이 스텝은 조용히 건너뜀 (continue-on-error: true)
+      - name: Send email report
+        if: github.event.inputs.dry_run != 'true'
+        continue-on-error: true   # 이메일 미설정 시에도 워크플로우 실패 X
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_APP_PASSWORD }}
+          subject: "📈 SPX Daily Update ${{ env.DATE }}"
+          html_body: file://output/email_body.html
+          to: ${{ secrets.EMAIL_TO }}
+          from: "SPX Daily Monitor <${{ secrets.EMAIL_USERNAME }}>"
+          attachments: output/SPX_daily_*.xlsx
+
+      # ── 10. 실행 요약 ─────────────────────────────────────
       - name: Summary
         if: always()
         run: |
