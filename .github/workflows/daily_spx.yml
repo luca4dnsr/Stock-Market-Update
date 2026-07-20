@@ -39,6 +39,16 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
+      # 캐시는 7일 유효한 구성종목 CSV를 다음 실행에 복원한다.
+      # 매 실행마다 고유 키를 저장하고, 최신 캐시를 prefix로 복원한다.
+      - name: Restore S&P 500 components cache
+        uses: actions/cache@v4
+        with:
+          path: cache/sp500_components.csv
+          key: spx-components-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            spx-components-${{ runner.os }}-
+
       # ── 3. 의존성 설치 ────────────────────────────────────
       - name: Install dependencies
         run: |
@@ -81,7 +91,9 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add output/ docs/ || true
+          # output/ 및 docs/는 로컬 산출물을 무시하도록 .gitignore에 있으므로
+          # Actions가 생성한 검증 완료 산출물만 의도적으로 강제 스테이징한다.
+          git add -f output/ docs/
           # 변경 사항이 있을 때만 커밋
           if git diff --staged --quiet; then
             echo "변경 사항 없음 — 커밋 생략"
@@ -185,8 +197,14 @@ jobs:
           print("이메일 본문 생성 완료")
           PYEOF
 
+      - name: Set report date for email
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          REPORT_DATE=$(python3 -c "import json; print(json.load(open('output/summary.json'))['data_date'])")
+          echo "REPORT_DATE=${REPORT_DATE}" >> "$GITHUB_ENV"
+
       # ── 9. 이메일 발송 ────────────────────────────────────
-      # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_APP_PASSWORD, EMAIL_TO 등록
+      # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO 등록
       # 설정 안 되어 있으면 이 스텝은 조용히 건너뜀 (continue-on-error: true)
       - name: Send email report
         if: github.event.inputs.dry_run != 'true'
@@ -198,7 +216,7 @@ jobs:
           secure: true
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "📈 SPX Daily Update ${{ env.DATE }}"
+          subject: "📈 SPX Daily Update ${{ env.REPORT_DATE }}"
           html_body: file://output/email_body.html
           to: ${{ secrets.EMAIL_TO }}
           from: "SPX Daily Monitor <${{ secrets.EMAIL_USERNAME }}>"

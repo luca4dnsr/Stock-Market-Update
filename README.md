@@ -10,6 +10,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | 🌐 **HTML 대시보드** | 프리미엄 다크모드, 섹터 히트맵, 정렬 가능한 테이블 |
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
+| ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
 
 ---
 
@@ -81,7 +82,7 @@ git push -u origin main
 ├── dashboard.py       # HTML 대시보드 생성
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
-├── cache/             # S&P 500 구성종목 캐시 (자동 생성, gitignored)
+├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
 ├── output/            # 생성된 Excel + HTML (Actions이 커밋)
 ├── docs/              # GitHub Pages용 HTML (Actions이 관리)
 ├── logs/              # 실행 로그 (gitignored)
@@ -100,6 +101,7 @@ git push -u origin main
 TOP_N    = 20    # 상위 표시 종목 수
 BOTTOM_N = 20    # 하위 표시 종목 수
 BATCH_SIZE = 50  # yfinance 배치당 티커 수 (속도 vs 안정성 조절)
+MIN_PRICE_COVERAGE = 0.98  # 최소 주가 수집 비율
 ```
 
 ---

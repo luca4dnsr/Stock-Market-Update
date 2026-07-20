@@ -28,6 +28,13 @@ REQUEST_DELAY_SEC  = 0.5   # 배치 간 대기(초)
 MC_FETCH_WORKERS   = 20    # 시가총액 조회 동시 스레드 수
 MC_TIMEOUT_SEC     = 120   # 시가총액 조회 전체 타임아웃(초)
 
+# ── 데이터 품질 기준 ────────────────────────────────────
+# 지수 구성 변경·상장폐지 등을 고려해 절대 종목 수 대신 비율로 검증한다.
+# 기준을 충족하지 못하면 불완전한 일간 리포트를 만들지 않고 실행을 실패시킨다.
+MIN_PRICE_COVERAGE       = 0.98
+MIN_MARKET_CAP_COVERAGE  = 0.95
+MIN_LATEST_DATE_COVERAGE = 0.98
+
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)
 SP500_CACHE_FILE   = CACHE_DIR / "sp500_components.csv"

@@ -17,6 +17,9 @@ from config import (
     BATCH_SIZE,
     MC_FETCH_WORKERS,
     MC_TIMEOUT_SEC,
+    MIN_LATEST_DATE_COVERAGE,
+    MIN_MARKET_CAP_COVERAGE,
+    MIN_PRICE_COVERAGE,
     REQUEST_DELAY_SEC,
     SP500_CACHE_DAYS,
     SP500_CACHE_FILE,
@@ -183,7 +186,44 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
     tickers = components["ticker"].tolist()
 
     price_data = fetch_price_data(tickers)
+    price_coverage = len(price_data) / max(len(tickers), 1)
+    if price_coverage < MIN_PRICE_COVERAGE:
+        raise RuntimeError(
+            "주가 수집 커버리지가 기준 미달입니다: "
+            f"{len(price_data)}/{len(tickers)} ({price_coverage:.1%}), "
+            f"최소 {MIN_PRICE_COVERAGE:.0%} 필요"
+        )
+
+    # 모든 종목의 최신 거래일이 거의 같은지 확인한다. 일부 종목의 stale price가
+    # 당일 등락률·시장 폭 계산에 섞이는 것을 방지한다.
+    latest_dates = [series.index[-1].date() for series in price_data.values() if not series.empty]
+    latest_date = max(latest_dates)
+    latest_count = sum(date == latest_date for date in latest_dates)
+    latest_coverage = latest_count / max(len(price_data), 1)
+    if latest_coverage < MIN_LATEST_DATE_COVERAGE:
+        raise RuntimeError(
+            "최신 거래일 정합성 기준 미달입니다: "
+            f"{latest_date} 기준 {latest_count}/{len(price_data)} ({latest_coverage:.1%}), "
+            f"최소 {MIN_LATEST_DATE_COVERAGE:.0%} 필요"
+        )
+
     valid_tickers = list(price_data.keys())
     market_caps = fetch_market_caps(valid_tickers)
+
+    market_cap_coverage = len(market_caps) / max(len(valid_tickers), 1)
+    if market_cap_coverage < MIN_MARKET_CAP_COVERAGE:
+        raise RuntimeError(
+            "시가총액 수집 커버리지가 기준 미달입니다: "
+            f"{len(market_caps)}/{len(valid_tickers)} ({market_cap_coverage:.1%}), "
+            f"최소 {MIN_MARKET_CAP_COVERAGE:.0%} 필요"
+        )
+
+    logger.info(
+        "데이터 품질 검증 통과 — 주가 %.1f%% | 최신일 %s %.1f%% | 시가총액 %.1f%%",
+        price_coverage * 100,
+        latest_date,
+        latest_coverage * 100,
+        market_cap_coverage * 100,
+    )
 
     return components, price_data, market_caps
