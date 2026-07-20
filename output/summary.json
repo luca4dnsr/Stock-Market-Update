@@ -1,0 +1,41 @@
+{
+  "data_date": "2026-07-20",
+  "advances": 156,
+  "declines": 327,
+  "total": 503,
+  "top3": [
+    {
+      "ticker": "GPN",
+      "name": "Global Payments",
+      "return_1d": 5.8
+    },
+    {
+      "ticker": "LITE",
+      "name": "Lumentum",
+      "return_1d": 4.5
+    },
+    {
+      "ticker": "TER",
+      "name": "Teradyne",
+      "return_1d": 3.5
+    }
+  ],
+  "bot3": [
+    {
+      "ticker": "CVNA",
+      "name": "Carvana",
+      "return_1d": -4.8
+    },
+    {
+      "ticker": "HONA",
+      "name": "Honeywell Aerospace",
+      "return_1d": -4.3
+    },
+    {
+      "ticker": "ORCL",
+      "name": "Oracle Corporation",
+      "return_1d": -4.0
+    }
+  ],
+  "excel_name": "SPX_daily_20260720.xlsx"
+}

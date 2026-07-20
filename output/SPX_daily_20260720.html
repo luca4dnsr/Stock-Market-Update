@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SPX Daily Monitor — 2026-07-20</title>
+  <meta name="description" content="S&P 500 일간 등락률 대시보드 2026-07-20"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080c14;
+      --surface:  #0f1626;
+      --card:     rgba(18, 28, 48, 0.85);
+      --border:   rgba(255,255,255,0.08);
+      --text:     #dde6f4;
+      --muted:    #6b7fa0;
+      --pos:      #ff4d4d;
+      --neg:      #4d94ff;
+      --gold:     #f0a500;
+      --radius:   14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(255,77,77,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 90%, rgba(77,148,255,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 100% 80% at 50% 50%, rgba(8,12,20,1) 0%, rgba(4,8,18,1) 100%);
+      animation: bgShift 12s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      from { background-position: 0% 0%; }
+      to   { background-position: 100% 100%; }
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── Header ── */
+    header {
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px;
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .header-left h1 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #fff 30%, var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-left .subtitle {
+      color: var(--muted); font-size: 13px; margin-top: 4px;
+      font-weight: 400; letter-spacing: 0.02em;
+    }
+    .header-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 16px; border-radius: 8px;
+    }
+
+    /* ── Market Breadth ── */
+    .breadth-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      margin-bottom: 28px;
+      backdrop-filter: blur(12px);
+    }
+    .breadth-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+    }
+    .breadth-row {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .breadth-num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; min-width: 56px; }
+    .breadth-num.pos { color: var(--pos); }
+    .breadth-num.neg { color: var(--neg); }
+    .breadth-bar-wrap {
+      flex: 1; height: 12px; border-radius: 6px;
+      background: rgba(255,255,255,0.07);
+      overflow: hidden;
+      position: relative;
+    }
+    .breadth-bar-fill {
+      height: 100%; border-radius: 6px;
+      background: linear-gradient(90deg, var(--pos) 0%, rgba(255,77,77,0.5) 100%);
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .breadth-desc { font-size: 12px; color: var(--muted); }
+
+    /* ── Sector Heatmap ── */
+    .section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .sector-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .sector-tile {
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .sector-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .sector-name { font-size: 11px; color: rgba(220,230,248,0.75); margin-bottom: 6px; line-height: 1.3; }
+    .sector-val   { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; }
+
+    /* ── Tables ── */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .table-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .table-header h2 { font-size: 14px; font-weight: 700; }
+    .table-wrapper { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    thead th {
+      padding: 10px 12px;
+      text-align: right;
+      font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; user-select: none;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.02);
+    }
+    thead th:hover { color: var(--text); }
+    thead th.left-align { text-align: left; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+    td { padding: 9px 12px; vertical-align: middle; white-space: nowrap; }
+
+    .rank-cell   { color: var(--muted); font-size: 11px; text-align: center; width: 36px; }
+    .ticker-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 12px; }
+    .name-cell   { max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: rgba(220,230,248,0.8); }
+    .num-cell    { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .sector-cell { font-size: 11px; color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+
+    .pct {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 12.5px;
+    }
+    .pct.pos  { color: var(--pos); }
+    .pct.neg  { color: var(--neg); }
+    .pct.flat { color: var(--muted); }
+
+    /* 1D 수익률 하이라이트 */
+    tr.top-row td.pct:first-of-type  { background: rgba(255,77,77,0.07); border-radius: 4px; }
+    tr.bot-row td.pct:first-of-type  { background: rgba(77,148,255,0.07); border-radius: 4px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 40px 0 24px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* ── Color utils ── */
+    .pos { color: var(--pos); }
+    .neg { color: var(--neg); }
+
+    /* ── Responsive ── */
+    @media (min-width: 1100px) {
+      .tables-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .sector-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Sort indicator ── */
+    th[data-sorted="asc"]::after  { content: " ▲"; font-size: 9px; }
+    th[data-sorted="desc"]::after { content: " ▼"; font-size: 9px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="header-left">
+      <h1>SPX Daily Monitor</h1>
+      <div class="subtitle">S&amp;P 500 — 일간 등락률 자동 대시보드</div>
+    </div>
+    <div class="header-date">📅 2026-07-20</div>
+  </header>
+
+  <!-- ── Market Breadth ── -->
+  <div class="breadth-card">
+    <div class="breadth-label">Market Breadth — 상승 vs 하락 종목 수</div>
+    <div class="breadth-row">
+      <span class="breadth-num pos">↑ 156</span>
+      <div class="breadth-bar-wrap">
+        <div class="breadth-bar-fill" id="breadthFill" style="width:0%"></div>
+      </div>
+      <span class="breadth-num neg">↓ 327</span>
+      <span class="breadth-desc">503 종목 중</span>
+    </div>
+  </div>
+
+  <!-- ── Sector Heatmap ── -->
+  <div class="section-title">📊 Sector Performance (시총 가중 평균)</div>
+  <div class="sector-grid">
+    
+        <div class="sector-tile" style="background:rgba(180,60,60,0.5);">
+          <div class="sector-name">Communication Services</div>
+          <div class="sector-val pos">+1.0%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(180,60,60,0.5);">
+          <div class="sector-name">Energy</div>
+          <div class="sector-val pos">+0.6%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(150,80,80,0.3);">
+          <div class="sector-name">Information Technology</div>
+          <div class="sector-val pos">+0.1%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
+          <div class="sector-name">Real Estate</div>
+          <div class="sector-val neg">-0.4%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
+          <div class="sector-name">Financials</div>
+          <div class="sector-val neg">-0.4%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Utilities</div>
+          <div class="sector-val neg">-0.5%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Consumer Discretionary</div>
+          <div class="sector-val neg">-0.5%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Consumer Staples</div>
+          <div class="sector-val neg">-0.7%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Industrials</div>
+          <div class="sector-val neg">-0.8%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Materials</div>
+          <div class="sector-val neg">-0.9%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Health Care</div>
+          <div class="sector-val neg">-1.2%</div>
+        </div>
+  </div>
+
+  <!-- ── Top / Bottom Tables ── -->
+  <div class="tables-grid">
+
+    <!-- Top -->
+    <div class="table-card">
+      <div class="table-header">
+        <h2>🚀 상위 종목 TOP 20</h2>
+      </div>
+      <div class="table-wrapper">
+        <table id="topTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="left-align">티커</th>
+              <th class="left-align">종목명</th>
+              <th>시총</th>
+              <th>1일%</th>
+              <th>1주%</th>
+              <th>1개월%</th>
+              <th>3개월%</th>
+              <th>시총순위</th>
+              <th class="left-align">섹터</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr class="top-row">
+          <td class="rank-cell">1</td>
+          <td class="ticker-cell">GPN</td>
+          <td class="name-cell" title="Global Payments">Global Payments</td>
+          <td class="num-cell">$22.5B</td>
+          <td class="pct pos">+5.8%</td><td class="pct pos">+7.2%</td><td class="pct pos">+24.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell">380</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">2</td>
+          <td class="ticker-cell">LITE</td>
+          <td class="name-cell" title="Lumentum">Lumentum</td>
+          <td class="num-cell">$59.6B</td>
+          <td class="pct pos">+4.5%</td><td class="pct neg">-0.3%</td><td class="pct neg">-12.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">204</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">3</td>
+          <td class="ticker-cell">TER</td>
+          <td class="name-cell" title="Teradyne">Teradyne</td>
+          <td class="num-cell">$52.2B</td>
+          <td class="pct pos">+3.5%</td><td class="pct neg">-2.2%</td><td class="pct neg">-18.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell">227</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">4</td>
+          <td class="ticker-cell">AXON</td>
+          <td class="name-cell" title="Axon Enterprise">Axon Enterprise</td>
+          <td class="num-cell">$42.5B</td>
+          <td class="pct pos">+3.4%</td><td class="pct neg">-3.6%</td><td class="pct pos">+24.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">256</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">5</td>
+          <td class="ticker-cell">MRVL</td>
+          <td class="name-cell" title="Marvell Technology">Marvell Technology</td>
+          <td class="num-cell">$175.0B</td>
+          <td class="pct pos">+3.3%</td><td class="pct neg">-10.4%</td><td class="pct neg">-32.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">69</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">6</td>
+          <td class="ticker-cell">BF-B</td>
+          <td class="name-cell" title="Brown–Forman">Brown–Forman</td>
+          <td class="num-cell">$12.1B</td>
+          <td class="pct pos">+3.2%</td><td class="pct pos">+0.6%</td><td class="pct pos">+3.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell">469</td>
+          <td class="sector-cell">Consumer Staples</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">7</td>
+          <td class="ticker-cell">COHR</td>
+          <td class="name-cell" title="Coherent Corp.">Coherent Corp.</td>
+          <td class="num-cell">$55.8B</td>
+          <td class="pct pos">+2.8%</td><td class="pct neg">-7.2%</td><td class="pct neg">-24.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">211</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">8</td>
+          <td class="ticker-cell">SNDK</td>
+          <td class="name-cell" title="Sandisk">Sandisk</td>
+          <td class="num-cell">$206.0B</td>
+          <td class="pct pos">+2.7%</td><td class="pct neg">-16.9%</td><td class="pct neg">-29.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">53</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">9</td>
+          <td class="ticker-cell">DASH</td>
+          <td class="name-cell" title="DoorDash">DoorDash</td>
+          <td class="num-cell">$82.4B</td>
+          <td class="pct pos">+2.7%</td><td class="pct neg">-0.3%</td><td class="pct pos">+14.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell">147</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">10</td>
+          <td class="ticker-cell">LYB</td>
+          <td class="name-cell" title="LyondellBasell">LyondellBasell</td>
+          <td class="num-cell">$19.6B</td>
+          <td class="pct pos">+2.6%</td><td class="pct pos">+4.1%</td><td class="pct neg">-1.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">406</td>
+          <td class="sector-cell">Materials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">11</td>
+          <td class="ticker-cell">ELV</td>
+          <td class="name-cell" title="Elevance Health">Elevance Health</td>
+          <td class="num-cell">$82.9B</td>
+          <td class="pct pos">+2.4%</td><td class="pct neg">-10.1%</td><td class="pct neg">-2.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell">146</td>
+          <td class="sector-cell">Health Care</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">12</td>
+          <td class="ticker-cell">AKAM</td>
+          <td class="name-cell" title="Akamai Technologies">Akamai Technologies</td>
+          <td class="num-cell">$17.9B</td>
+          <td class="pct pos">+2.4%</td><td class="pct neg">-1.6%</td><td class="pct neg">-3.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">417</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">13</td>
+          <td class="ticker-cell">FIX</td>
+          <td class="name-cell" title="Comfort Systems USA">Comfort Systems USA</td>
+          <td class="num-cell">$60.2B</td>
+          <td class="pct pos">+2.3%</td><td class="pct neg">-1.1%</td><td class="pct neg">-11.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell">202</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">14</td>
+          <td class="ticker-cell">ISRG</td>
+          <td class="name-cell" title="Intuitive Surgical">Intuitive Surgical</td>
+          <td class="num-cell">$125.1B</td>
+          <td class="pct pos">+2.2%</td><td class="pct neg">-13.3%</td><td class="pct neg">-12.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell">94</td>
+          <td class="sector-cell">Health Care</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">15</td>
+          <td class="ticker-cell">MSFT</td>
+          <td class="name-cell" title="Microsoft">Microsoft</td>
+          <td class="num-cell">$2.99T</td>
+          <td class="pct pos">+2.2%</td><td class="pct pos">+2.9%</td><td class="pct pos">+6.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell">5</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">16</td>
+          <td class="ticker-cell">WDC</td>
+          <td class="name-cell" title="Western Digital">Western Digital</td>
+          <td class="num-cell">$168.0B</td>
+          <td class="pct pos">+2.1%</td><td class="pct neg">-12.3%</td><td class="pct neg">-31.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell">72</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">17</td>
+          <td class="ticker-cell">DPZ</td>
+          <td class="name-cell" title="Domino's">Domino's</td>
+          <td class="num-cell">$10.9B</td>
+          <td class="pct pos">+2.1%</td><td class="pct pos">+6.2%</td><td class="pct pos">+4.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell">482</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">18</td>
+          <td class="ticker-cell">FISV</td>
+          <td class="name-cell" title="Fiserv">Fiserv</td>
+          <td class="num-cell">$27.6B</td>
+          <td class="pct pos">+2.1%</td><td class="pct pos">+1.0%</td><td class="pct pos">+6.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">336</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">19</td>
+          <td class="ticker-cell">PGR</td>
+          <td class="name-cell" title="Progressive Corporation">Progressive Corporation</td>
+          <td class="num-cell">$123.4B</td>
+          <td class="pct pos">+2.1%</td><td class="pct neg">-9.5%</td><td class="pct pos">+3.9%</td><td class="pct flat">—%</td>
+          <td class="num-cell">96</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+
+        <tr class="top-row">
+          <td class="rank-cell">20</td>
+          <td class="ticker-cell">COIN</td>
+          <td class="name-cell" title="Coinbase">Coinbase</td>
+          <td class="num-cell">$42.3B</td>
+          <td class="pct pos">+2.1%</td><td class="pct pos">+1.9%</td><td class="pct neg">-2.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">259</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="table-card">
+      <div class="table-header">
+        <h2>📉 하위 종목 BOTTOM 20</h2>
+      </div>
+      <div class="table-wrapper">
+        <table id="botTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="left-align">티커</th>
+              <th class="left-align">종목명</th>
+              <th>시총</th>
+              <th>1일%</th>
+              <th>1주%</th>
+              <th>1개월%</th>
+              <th>3개월%</th>
+              <th>시총순위</th>
+              <th class="left-align">섹터</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr class="bot-row">
+          <td class="rank-cell">503</td>
+          <td class="ticker-cell">CVNA</td>
+          <td class="name-cell" title="Carvana">Carvana</td>
+          <td class="num-cell">$45.9B</td>
+          <td class="pct neg">-4.8%</td><td class="pct neg">-1.3%</td><td class="pct pos">+2.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">248</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">502</td>
+          <td class="ticker-cell">HONA</td>
+          <td class="name-cell" title="Honeywell Aerospace">Honeywell Aerospace</td>
+          <td class="num-cell">$64.2B</td>
+          <td class="pct neg">-4.3%</td><td class="pct neg">-5.0%</td><td class="pct neg">-25.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">194</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">501</td>
+          <td class="ticker-cell">ORCL</td>
+          <td class="name-cell" title="Oracle Corporation">Oracle Corporation</td>
+          <td class="num-cell">$349.6B</td>
+          <td class="pct neg">-4.0%</td><td class="pct neg">-7.7%</td><td class="pct neg">-33.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell">32</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">499</td>
+          <td class="ticker-cell">KKR</td>
+          <td class="name-cell" title="KKR & Co.">KKR & Co.</td>
+          <td class="num-cell">$87.1B</td>
+          <td class="pct neg">-3.9%</td><td class="pct pos">+0.1%</td><td class="pct neg">-0.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell">139</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">500</td>
+          <td class="ticker-cell">UPS</td>
+          <td class="name-cell" title="United Parcel Service">United Parcel Service</td>
+          <td class="num-cell">$96.2B</td>
+          <td class="pct neg">-3.9%</td><td class="pct pos">+0.2%</td><td class="pct pos">+7.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell">120</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">497</td>
+          <td class="ticker-cell">WBD</td>
+          <td class="name-cell" title="Warner Bros. Discovery">Warner Bros. Discovery</td>
+          <td class="num-cell">$64.8B</td>
+          <td class="pct neg">-3.8%</td><td class="pct neg">-4.5%</td><td class="pct neg">-1.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell">191</td>
+          <td class="sector-cell">Communication Services</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">498</td>
+          <td class="ticker-cell">CMG</td>
+          <td class="name-cell" title="Chipotle Mexican Grill">Chipotle Mexican Grill</td>
+          <td class="num-cell">$42.5B</td>
+          <td class="pct neg">-3.8%</td><td class="pct neg">-9.6%</td><td class="pct pos">+4.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">257</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">496</td>
+          <td class="ticker-cell">MRNA</td>
+          <td class="name-cell" title="Moderna">Moderna</td>
+          <td class="num-cell">$23.6B</td>
+          <td class="pct neg">-3.8%</td><td class="pct neg">-11.2%</td><td class="pct neg">-3.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell">365</td>
+          <td class="sector-cell">Health Care</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">495</td>
+          <td class="ticker-cell">DELL</td>
+          <td class="name-cell" title="Dell Technologies">Dell Technologies</td>
+          <td class="num-cell">$246.7B</td>
+          <td class="pct neg">-3.6%</td><td class="pct neg">-10.6%</td><td class="pct neg">-8.9%</td><td class="pct flat">—%</td>
+          <td class="num-cell">47</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">493</td>
+          <td class="ticker-cell">ARES</td>
+          <td class="name-cell" title="Ares Management">Ares Management</td>
+          <td class="num-cell">$27.3B</td>
+          <td class="pct neg">-3.5%</td><td class="pct pos">+0.7%</td><td class="pct neg">-5.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell">339</td>
+          <td class="sector-cell">Financials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">494</td>
+          <td class="ticker-cell">IP</td>
+          <td class="name-cell" title="International Paper">International Paper</td>
+          <td class="num-cell">$19.2B</td>
+          <td class="pct neg">-3.5%</td><td class="pct neg">-2.0%</td><td class="pct pos">+0.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell">408</td>
+          <td class="sector-cell">Materials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">492</td>
+          <td class="ticker-cell">RVTY</td>
+          <td class="name-cell" title="Revvity">Revvity</td>
+          <td class="num-cell">$11.9B</td>
+          <td class="pct neg">-3.4%</td><td class="pct neg">-4.1%</td><td class="pct pos">+8.9%</td><td class="pct flat">—%</td>
+          <td class="num-cell">472</td>
+          <td class="sector-cell">Health Care</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">491</td>
+          <td class="ticker-cell">FSLR</td>
+          <td class="name-cell" title="First Solar">First Solar</td>
+          <td class="num-cell">$22.1B</td>
+          <td class="pct neg">-3.2%</td><td class="pct neg">-7.1%</td><td class="pct neg">-19.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell">386</td>
+          <td class="sector-cell">Information Technology</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">489</td>
+          <td class="ticker-cell">WAT</td>
+          <td class="name-cell" title="Waters Corporation">Waters Corporation</td>
+          <td class="num-cell">$35.1B</td>
+          <td class="pct neg">-3.1%</td><td class="pct neg">-4.2%</td><td class="pct pos">+0.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell">288</td>
+          <td class="sector-cell">Health Care</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">490</td>
+          <td class="ticker-cell">DHI</td>
+          <td class="name-cell" title="D. R. Horton">D. R. Horton</td>
+          <td class="num-cell">$41.1B</td>
+          <td class="pct neg">-3.1%</td><td class="pct neg">-2.7%</td><td class="pct neg">-5.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell">263</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">488</td>
+          <td class="ticker-cell">URI</td>
+          <td class="name-cell" title="United Rentals">United Rentals</td>
+          <td class="num-cell">$63.4B</td>
+          <td class="pct neg">-3.1%</td><td class="pct neg">-6.7%</td><td class="pct neg">-3.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell">195</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">485</td>
+          <td class="ticker-cell">SWK</td>
+          <td class="name-cell" title="Stanley Black & Decker">Stanley Black & Decker</td>
+          <td class="num-cell">$13.6B</td>
+          <td class="pct neg">-3.0%</td><td class="pct pos">+1.1%</td><td class="pct pos">+6.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell">454</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">486</td>
+          <td class="ticker-cell">TSLA</td>
+          <td class="name-cell" title="Tesla, Inc.">Tesla, Inc.</td>
+          <td class="num-cell">$1.39T</td>
+          <td class="pct neg">-3.0%</td><td class="pct neg">-6.4%</td><td class="pct neg">-6.8%</td><td class="pct flat">—%</td>
+          <td class="num-cell">9</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">487</td>
+          <td class="ticker-cell">EXPD</td>
+          <td class="name-cell" title="Expeditors International">Expeditors International</td>
+          <td class="num-cell">$23.2B</td>
+          <td class="pct neg">-3.0%</td><td class="pct pos">+1.1%</td><td class="pct pos">+10.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell">372</td>
+          <td class="sector-cell">Industrials</td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">484</td>
+          <td class="ticker-cell">CRH</td>
+          <td class="name-cell" title="CRH plc">CRH plc</td>
+          <td class="num-cell">$66.8B</td>
+          <td class="pct neg">-2.9%</td><td class="pct neg">-2.7%</td><td class="pct neg">-8.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell">183</td>
+          <td class="sector-cell">Materials</td>
+        </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tables-grid -->
+
+  <footer>
+    데이터 출처: Yahoo Finance (yfinance) &nbsp;|&nbsp;
+    자동 생성: 2026-07-20 23:34 UTC &nbsp;|&nbsp;
+    <a href="https://github.com" style="color:var(--muted);">GitHub Actions</a>
+  </footer>
+
+</div><!-- /container -->
+
+<script>
+  // ── Breadth bar animation ──
+  window.addEventListener('load', () => {
+    const fill = document.getElementById('breadthFill');
+    const pct = 32.3;
+    setTimeout(() => { fill.style.width = pct + '%'; }, 200);
+  });
+
+  // ── Table sort ──
+  function makeSortable(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((th, colIdx) => {
+      th.addEventListener('click', () => {
+        const tbody = table.querySelector('tbody');
+        const rows  = Array.from(tbody.querySelectorAll('tr'));
+        const asc   = th.dataset.sorted !== 'asc';
+
+        rows.sort((a, b) => {
+          const aVal = a.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
+          const bVal = b.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
+          const aNum = parseFloat(aVal);
+          const bNum = parseFloat(bVal);
+          if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
+          return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        });
+
+        headers.forEach(h => delete h.dataset.sorted);
+        th.dataset.sorted = asc ? 'asc' : 'desc';
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  }
+
+  makeSortable('topTable');
+  makeSortable('botTable');
+</script>
+</body>
+</html>
