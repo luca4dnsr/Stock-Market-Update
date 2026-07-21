@@ -22,7 +22,7 @@ from calculator import (
 from ranker import get_top_bottom
 from company_profiles import add_business_summaries
 from market_summary import build_market_summary
-from nim_insights import enrich_with_nim
+from ai_insights import enrich_with_ai
 from excel_writer import write_excel
 from dashboard import generate_html
 
@@ -104,7 +104,7 @@ def run(dry_run: bool = False, verbose: bool = False):
             sector_df, advances, declines, top_df, bottom_df
         )
         combined_df = pd.concat([top_df, bottom_df], ignore_index=True)
-        combined_df, market_summary = enrich_with_nim(
+        combined_df, market_summary = enrich_with_ai(
             combined_df, data_date, base_market_summary
         )
         top_df = combined_df.iloc[:len(top_df)].copy()

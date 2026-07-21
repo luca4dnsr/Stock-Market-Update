@@ -11,7 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
-| 🤖 **Kimi 한글 인사이트** | NVIDIA NIM Kimi가 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
+| 🤖 **한글 AI 인사이트** | Gemini → NVIDIA Mistral → NVIDIA GPT-OSS 순으로 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
 
 ---
 
@@ -63,11 +63,14 @@ git push -u origin main
 
 이후 `https://<YOUR_USERNAME>.github.io/<YOUR_REPO>/` 에서 최신 대시보드를 확인할 수 있습니다.
 
-#### ④ NVIDIA NIM 설정 (선택)
+#### ④ AI 인사이트 API 설정 (선택)
 
-`Settings → Secrets and variables → Actions`에서 `NVIDIA_API_KEY`를 Repository Secret으로 등록하면
-NVIDIA NIM의 `moonshotai/kimi-k2.6` 모델이 표시 종목의 사업 설명과 Yahoo Finance 뉴스 헤드라인을 한국어로 요약합니다.
-키가 없거나 API 호출에 실패해도 보고서는 중단하지 않고, 기존 사업 설명과 "당일 뉴스·공시 근거를 확인하지 못했습니다."라는 안전한 대체 문구를 사용합니다.
+`Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
+
+- `GEMINI_API_KEY` — 기본: Google AI Studio의 `gemini-3.5-flash`
+- `NVIDIA_API_KEY` — 1차 대체: NVIDIA NIM `mistralai/mistral-medium-3.5-128b`, 2차 대체: `openai/gpt-oss-120b`
+
+실행 순서는 **Gemini → NVIDIA Mistral → NVIDIA GPT-OSS → 근거 기반 규칙 문구**입니다. Gemini는 JSON 스키마로 응답 형식을 강제합니다. API 키가 없거나 호출·형식 검증에 실패해도 보고서는 중단하지 않고, 사업은 GICS 기반 한 줄 설명으로, 등락 이유는 "당일 뉴스·공시 근거를 확인하지 못했습니다."라는 안전한 문구로 표시합니다.
 
 #### ③ 자동 실행 확인
 
@@ -87,6 +90,7 @@ NVIDIA NIM의 `moonshotai/kimi-k2.6` 모델이 표시 종목의 사업 설명과
 ├── ranker.py          # 상위/하위 종목 정렬
 ├── excel_writer.py    # Excel 파일 생성 (openpyxl)
 ├── dashboard.py       # HTML 대시보드 생성
+├── ai_insights.py     # Gemini/NVIDIA 다중 AI 인사이트 및 규칙 기반 대체
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
 ├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)

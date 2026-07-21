@@ -40,11 +40,18 @@ BUSINESS_PROFILE_CACHE_FILE = CACHE_DIR / "business_profiles.json"
 BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
-# ── NVIDIA NIM / Kimi ────────────────────────────────────
-NIM_API_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
-NIM_MODEL     = "moonshotai/kimi-k2.6"
-NIM_CACHE_FILE = CACHE_DIR / "nim_daily_insights.json"
-NIM_MAX_TOKENS = 7000
+# ── AI 인사이트 공급자 우선순위 ───────────────────────────
+# 1) Google Gemini API  2) NVIDIA NIM Mistral  3) NVIDIA NIM GPT-OSS
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GEMINI_MODEL = "gemini-3.5-flash"
+
+NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+NIM_MISTRAL_MODEL = "mistralai/mistral-medium-3.5-128b"
+NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
+
+AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
+AI_INSIGHTS_CACHE_VERSION = "v3"
+AI_INSIGHTS_MAX_TOKENS = 7000
 
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)

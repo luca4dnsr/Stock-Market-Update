@@ -58,6 +58,7 @@ jobs:
       # ── 4. SPX 업데이트 실행 ─────────────────────────────
       - name: Run SPX update
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
