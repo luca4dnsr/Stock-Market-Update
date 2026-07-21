@@ -202,6 +202,11 @@
     .name-cell   { max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: rgba(220,230,248,0.8); }
     .num-cell    { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
     .sector-cell { font-size: 11px; color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+    .business-cell, .reason-cell {
+      white-space: normal; min-width: 210px; max-width: 300px;
+      color: rgba(220,230,248,.84); font-size: 11px; line-height: 1.55;
+    }
+    .reason-cell { color: #9ed5ff; min-width: 270px; }
 
     .pct {
       text-align: right;
@@ -349,6 +354,8 @@
               <th>3개월%</th>
               <th>시총순위</th>
               <th class="left-align">섹터</th>
+              <th class="left-align">사업</th>
+              <th class="left-align">등락 이유</th>
             </tr>
           </thead>
           <tbody>
@@ -361,6 +368,8 @@
           <td class="pct pos">+5.8%</td><td class="pct pos">+7.2%</td><td class="pct pos">+24.1%</td><td class="pct flat">—%</td>
           <td class="num-cell">380</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">Global Payments Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -371,6 +380,8 @@
           <td class="pct pos">+4.5%</td><td class="pct neg">-0.3%</td><td class="pct neg">-12.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">204</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Lumentum Holdings Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -381,6 +392,8 @@
           <td class="pct pos">+3.5%</td><td class="pct neg">-2.2%</td><td class="pct neg">-18.3%</td><td class="pct flat">—%</td>
           <td class="num-cell">227</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Teradyne, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -391,6 +404,8 @@
           <td class="pct pos">+3.4%</td><td class="pct neg">-3.6%</td><td class="pct pos">+24.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">256</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">Axon Enterprise, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -401,6 +416,8 @@
           <td class="pct pos">+3.3%</td><td class="pct neg">-10.4%</td><td class="pct neg">-32.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">69</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Marvell Technology, Inc., together with its subsidiaries, provides data infrastructure semiconductor solutions and spanning the data center core to network edge in the United St...</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -411,6 +428,8 @@
           <td class="pct pos">+3.2%</td><td class="pct pos">+0.6%</td><td class="pct pos">+3.5%</td><td class="pct flat">—%</td>
           <td class="num-cell">469</td>
           <td class="sector-cell">Consumer Staples</td>
+          <td class="business-cell">Brown-Forman Corporation, together with its subsidiaries, manufactures, distills, bottles, imports, exports, markets, and sells a variety of alcohol beverages.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -421,6 +440,8 @@
           <td class="pct pos">+2.8%</td><td class="pct neg">-7.2%</td><td class="pct neg">-24.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">211</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Coherent Corp.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -431,6 +452,8 @@
           <td class="pct pos">+2.7%</td><td class="pct neg">-16.9%</td><td class="pct neg">-29.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">53</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Sandisk Corporation develops, manufactures, and sells data storage devices and solutions using NAND flash technology in the United States, Europe, the Middle East, Africa, Asia,...</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -441,6 +464,8 @@
           <td class="pct pos">+2.7%</td><td class="pct neg">-0.3%</td><td class="pct pos">+14.1%</td><td class="pct flat">—%</td>
           <td class="num-cell">147</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">DoorDash, Inc., together with its subsidiaries, operates a commerce platform that connects merchants, consumers, and dashers in the United States and internationally.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -451,6 +476,8 @@
           <td class="pct pos">+2.6%</td><td class="pct pos">+4.1%</td><td class="pct neg">-1.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">406</td>
           <td class="sector-cell">Materials</td>
+          <td class="business-cell">LyondellBasell Industries N.V.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -461,6 +488,8 @@
           <td class="pct pos">+2.4%</td><td class="pct neg">-10.1%</td><td class="pct neg">-2.3%</td><td class="pct flat">—%</td>
           <td class="num-cell">146</td>
           <td class="sector-cell">Health Care</td>
+          <td class="business-cell">Elevance Health, Inc., together with its subsidiaries, operates as a health benefits company in the United States.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -471,6 +500,8 @@
           <td class="pct pos">+2.4%</td><td class="pct neg">-1.6%</td><td class="pct neg">-3.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">417</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Akamai Technologies, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -481,6 +512,8 @@
           <td class="pct pos">+2.3%</td><td class="pct neg">-1.1%</td><td class="pct neg">-11.4%</td><td class="pct flat">—%</td>
           <td class="num-cell">202</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">Comfort Systems USA, Inc., together with its subsidiaries, provides mechanical and electrical installation, renovation, maintenance, repair, and replacement services for the mec...</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -491,6 +524,8 @@
           <td class="pct pos">+2.2%</td><td class="pct neg">-13.3%</td><td class="pct neg">-12.2%</td><td class="pct flat">—%</td>
           <td class="num-cell">94</td>
           <td class="sector-cell">Health Care</td>
+          <td class="business-cell">Intuitive Surgical, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -501,6 +536,8 @@
           <td class="pct pos">+2.2%</td><td class="pct pos">+2.9%</td><td class="pct pos">+6.2%</td><td class="pct flat">—%</td>
           <td class="num-cell">5</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Microsoft Corporation develops and supports software, services, devices, and solutions worldwide.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -511,16 +548,20 @@
           <td class="pct pos">+2.1%</td><td class="pct neg">-12.3%</td><td class="pct neg">-31.6%</td><td class="pct flat">—%</td>
           <td class="num-cell">72</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Western Digital Corporation develops, manufactures, and sells data storage devices and solutions based on hard disk drive (HDD) technology in the United States, Asia, Europe, th...</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">17</td>
           <td class="ticker-cell">DPZ</td>
-          <td class="name-cell" title="Domino's">Domino's</td>
+          <td class="name-cell" title="Domino&#x27;s">Domino&#x27;s</td>
           <td class="num-cell">$10.9B</td>
           <td class="pct pos">+2.1%</td><td class="pct pos">+6.2%</td><td class="pct pos">+4.6%</td><td class="pct flat">—%</td>
           <td class="num-cell">482</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">Domino&#x27;s Pizza, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -531,6 +572,8 @@
           <td class="pct pos">+2.1%</td><td class="pct pos">+1.0%</td><td class="pct pos">+6.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">336</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">Transaction &amp; Payment Processing Services 분야의 미국 상장 기업</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -541,6 +584,8 @@
           <td class="pct pos">+2.1%</td><td class="pct neg">-9.5%</td><td class="pct pos">+3.9%</td><td class="pct flat">—%</td>
           <td class="num-cell">96</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">The Progressive Corporation operates as an insurance company in the United States.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="top-row">
@@ -551,6 +596,8 @@
           <td class="pct pos">+2.1%</td><td class="pct pos">+1.9%</td><td class="pct neg">-2.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">259</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">Coinbase Global, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
           </tbody>
         </table>
@@ -576,6 +623,8 @@
               <th>3개월%</th>
               <th>시총순위</th>
               <th class="left-align">섹터</th>
+              <th class="left-align">사업</th>
+              <th class="left-align">등락 이유</th>
             </tr>
           </thead>
           <tbody>
@@ -588,6 +637,8 @@
           <td class="pct neg">-4.8%</td><td class="pct neg">-1.3%</td><td class="pct pos">+2.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">248</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">Carvana Co., together with its subsidiaries, operates an e-commerce platform for buying and selling used cars.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -598,6 +649,8 @@
           <td class="pct neg">-4.3%</td><td class="pct neg">-5.0%</td><td class="pct neg">-25.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">194</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">Honeywell Aerospace Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -608,16 +661,20 @@
           <td class="pct neg">-4.0%</td><td class="pct neg">-7.7%</td><td class="pct neg">-33.6%</td><td class="pct flat">—%</td>
           <td class="num-cell">32</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Oracle Corporation offers products and services that build, run and support enterprise information technology frameworks worldwide.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">499</td>
           <td class="ticker-cell">KKR</td>
-          <td class="name-cell" title="KKR & Co.">KKR & Co.</td>
+          <td class="name-cell" title="KKR &amp; Co.">KKR &amp; Co.</td>
           <td class="num-cell">$87.1B</td>
           <td class="pct neg">-3.9%</td><td class="pct pos">+0.1%</td><td class="pct neg">-0.2%</td><td class="pct flat">—%</td>
           <td class="num-cell">139</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">KKR &amp; Co.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -628,6 +685,8 @@
           <td class="pct neg">-3.9%</td><td class="pct pos">+0.2%</td><td class="pct pos">+7.6%</td><td class="pct flat">—%</td>
           <td class="num-cell">120</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">United Parcel Service, Inc., a package delivery and logistics provider, offers transportation and delivery services.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -638,6 +697,8 @@
           <td class="pct neg">-3.8%</td><td class="pct neg">-4.5%</td><td class="pct neg">-1.4%</td><td class="pct flat">—%</td>
           <td class="num-cell">191</td>
           <td class="sector-cell">Communication Services</td>
+          <td class="business-cell">Warner Bros.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -648,6 +709,8 @@
           <td class="pct neg">-3.8%</td><td class="pct neg">-9.6%</td><td class="pct pos">+4.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">257</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">Chipotle Mexican Grill, Inc., together with its subsidiaries, owns and operates Chipotle Mexican Grill restaurants.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -658,6 +721,8 @@
           <td class="pct neg">-3.8%</td><td class="pct neg">-11.2%</td><td class="pct neg">-3.7%</td><td class="pct flat">—%</td>
           <td class="num-cell">365</td>
           <td class="sector-cell">Health Care</td>
+          <td class="business-cell">Moderna, Inc., a biotechnology company, provides messenger RNA medicines in the United States, Europe, and internationally.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -668,6 +733,8 @@
           <td class="pct neg">-3.6%</td><td class="pct neg">-10.6%</td><td class="pct neg">-8.9%</td><td class="pct flat">—%</td>
           <td class="num-cell">47</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">Dell Technologies Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -678,6 +745,8 @@
           <td class="pct neg">-3.5%</td><td class="pct pos">+0.7%</td><td class="pct neg">-5.5%</td><td class="pct flat">—%</td>
           <td class="num-cell">339</td>
           <td class="sector-cell">Financials</td>
+          <td class="business-cell">Ares Management Corporation operates as an alternative asset manager.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -688,6 +757,8 @@
           <td class="pct neg">-3.5%</td><td class="pct neg">-2.0%</td><td class="pct pos">+0.2%</td><td class="pct flat">—%</td>
           <td class="num-cell">408</td>
           <td class="sector-cell">Materials</td>
+          <td class="business-cell">International Paper Company produces and sells renewable fiber-based packaging in North America, Latin America, Europe, South America, and North Africa.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -698,6 +769,8 @@
           <td class="pct neg">-3.4%</td><td class="pct neg">-4.1%</td><td class="pct pos">+8.9%</td><td class="pct flat">—%</td>
           <td class="num-cell">472</td>
           <td class="sector-cell">Health Care</td>
+          <td class="business-cell">Revvity, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -708,6 +781,8 @@
           <td class="pct neg">-3.2%</td><td class="pct neg">-7.1%</td><td class="pct neg">-19.4%</td><td class="pct flat">—%</td>
           <td class="num-cell">386</td>
           <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">First Solar, Inc., a solar technology company, provides photovoltaic (PV) solar energy solutions in the United States, France, India, Chile, and internationally.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -718,6 +793,8 @@
           <td class="pct neg">-3.1%</td><td class="pct neg">-4.2%</td><td class="pct pos">+0.2%</td><td class="pct flat">—%</td>
           <td class="num-cell">288</td>
           <td class="sector-cell">Health Care</td>
+          <td class="business-cell">Waters Corporation provides analytical workflow solutions in Asia, the Americas, and Europe.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -728,6 +805,8 @@
           <td class="pct neg">-3.1%</td><td class="pct neg">-2.7%</td><td class="pct neg">-5.0%</td><td class="pct flat">—%</td>
           <td class="num-cell">263</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">D.R.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -738,16 +817,20 @@
           <td class="pct neg">-3.1%</td><td class="pct neg">-6.7%</td><td class="pct neg">-3.5%</td><td class="pct flat">—%</td>
           <td class="num-cell">195</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">United Rentals, Inc., through its subsidiaries, operates as an equipment rental company in the United States, Canada, Europe, Australia, and New Zealand.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">485</td>
           <td class="ticker-cell">SWK</td>
-          <td class="name-cell" title="Stanley Black & Decker">Stanley Black & Decker</td>
+          <td class="name-cell" title="Stanley Black &amp; Decker">Stanley Black &amp; Decker</td>
           <td class="num-cell">$13.6B</td>
           <td class="pct neg">-3.0%</td><td class="pct pos">+1.1%</td><td class="pct pos">+6.1%</td><td class="pct flat">—%</td>
           <td class="num-cell">454</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">Stanley Black &amp; Decker, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -758,6 +841,8 @@
           <td class="pct neg">-3.0%</td><td class="pct neg">-6.4%</td><td class="pct neg">-6.8%</td><td class="pct flat">—%</td>
           <td class="num-cell">9</td>
           <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">Tesla, Inc.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -768,6 +853,8 @@
           <td class="pct neg">-3.0%</td><td class="pct pos">+1.1%</td><td class="pct pos">+10.4%</td><td class="pct flat">—%</td>
           <td class="num-cell">372</td>
           <td class="sector-cell">Industrials</td>
+          <td class="business-cell">Expeditors International of Washington, Inc., together with its subsidiaries, provides logistics services in the Americas, North Asia, South Asia, Europe, and Middle East, Afric...</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
 
         <tr class="bot-row">
@@ -778,6 +865,8 @@
           <td class="pct neg">-2.9%</td><td class="pct neg">-2.7%</td><td class="pct neg">-8.6%</td><td class="pct flat">—%</td>
           <td class="num-cell">183</td>
           <td class="sector-cell">Materials</td>
+          <td class="business-cell">CRH plc, together with its subsidiaries, provides building materials solutions in Ireland, the United States, the United Kingdom, rest of Europe, and internationally.</td>
+          <td class="reason-cell">당일 뉴스·공시 근거를 확인하지 못했습니다.</td>
         </tr>
           </tbody>
         </table>
@@ -792,12 +881,12 @@
     <h2>📈 하락 종목이 시장 전반으로 확산된 강한 위험회피 흐름</h2>
     <p><strong>관측</strong>상승 157개·하락 326개로 상승 비율은 33%였습니다. 강세 섹터는 Communication Services +1.0%, Energy +0.6%, 약세 섹터는 Health Care -1.2%, Materials -0.9%였습니다. 개별 종목 중 GPN(+5.8%)가 가장 강했고, CVNA(-4.8%)가 가장 약했습니다.</p>
     <p><strong>해석</strong>시장 폭이 약해 단기적으로 방어적 포지셔닝과 변동성 확대 가능성에 유의할 구간입니다.</p>
-    <p class="market-summary-note">본 요약은 가격·시장 폭·섹터 수익률에 근거한 관측이며, 뉴스·실적 등 원인을 직접 분석한 투자 의견은 아닙니다.</p>
+    <p class="market-summary-note">AI 요약은 제공된 Yahoo Finance 기업 설명·뉴스 헤드라인과 시장 데이터만 근거로 하며 투자 의견이 아닙니다.</p>
   </section>
 
   <footer>
     데이터 출처: Yahoo Finance (yfinance) &nbsp;|&nbsp;
-    자동 생성: 2026-07-21 05:54 UTC &nbsp;|&nbsp;
+    자동 생성: 2026-07-21 07:41 UTC &nbsp;|&nbsp;
     <a href="https://github.com" style="color:var(--muted);">GitHub Actions</a>
   </footer>
 
