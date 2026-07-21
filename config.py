@@ -40,6 +40,12 @@ BUSINESS_PROFILE_CACHE_FILE = CACHE_DIR / "business_profiles.json"
 BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
+# ── NVIDIA NIM / Kimi ────────────────────────────────────
+NIM_API_URL   = "https://integrate.api.nvidia.com/v1/chat/completions"
+NIM_MODEL     = "moonshotai/kimi-k2.6"
+NIM_CACHE_FILE = CACHE_DIR / "nim_daily_insights.json"
+NIM_MAX_TOKENS = 7000
+
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)
 SP500_CACHE_FILE   = CACHE_DIR / "sp500_components.csv"

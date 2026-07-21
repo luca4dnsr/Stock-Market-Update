@@ -74,7 +74,8 @@ COL_WIDTHS = {
     "H": 9,   # 3m
     "I": 9,   # mc_rank
     "J": 26,  # sector
-    "K": 62,  # business summary
+    "K": 46,  # business summary
+    "L": 62,  # move reason
 }
 
 
@@ -111,7 +112,7 @@ def _set_header(cell, text: str):
     cell.border = THIN_BORDER
 
 
-def _apply_row_fill(ws, row: int, fill: PatternFill, n_cols: int = 11):
+def _apply_row_fill(ws, row: int, fill: PatternFill, n_cols: int = 12):
     for col in range(1, n_cols + 1):
         ws.cell(row=row, column=col).fill = fill
 
@@ -205,6 +206,7 @@ def _write_table_headers(ws, header_row: int):
     _set_header(ws.cell(header_row, 9), "시총\n순위")
     _set_header(ws.cell(header_row, 10), "섹터")
     _set_header(ws.cell(header_row, 11), "주요 사업 요약")
+    _set_header(ws.cell(header_row, 12), "등락 이유 (뉴스 근거)")
 
     sub = header_row + 1
     _set_header(ws.cell(header_row, 2), "종목코드")
@@ -214,6 +216,7 @@ def _write_table_headers(ws, header_row: int):
     ws.merge_cells(f"I{header_row}:I{sub}")
     ws.merge_cells(f"J{header_row}:J{sub}")
     ws.merge_cells(f"K{header_row}:K{sub}")
+    ws.merge_cells(f"L{header_row}:L{sub}")
 
     for col, label in zip([5, 6, 7, 8], ["1일", "1주", "1개월", "3개월"]):
         _set_header(ws.cell(sub, col), label)
@@ -234,6 +237,7 @@ def _write_stock_row(ws, row: int, rec: dict, fill: PatternFill):
         (9,  rec.get("mc_rank", ""),    CENTER, Font(size=9, color="555555")),
         (10, rec.get("sector", ""),     LEFT,   Font(size=8, color="333333")),
         (11, rec.get("business_summary", ""), LEFT, Font(size=8, color="333333")),
+        (12, rec.get("move_reason", ""), LEFT, Font(size=8, color="333333")),
     ]
     for col, val, align, font in cells:
         c = ws.cell(row, col)
@@ -247,7 +251,8 @@ def _write_stock_row(ws, row: int, rec: dict, fill: PatternFill):
         _set_pct_cell(ws.cell(row, col), rec.get(key))
 
     ws.cell(row, 11).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
-    ws.row_dimensions[row].height = 28
+    ws.cell(row, 12).alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    ws.row_dimensions[row].height = 42
 
 
 # ──────────────────────────────────────────────────────────
@@ -255,7 +260,7 @@ def _write_stock_row(ws, row: int, rec: dict, fill: PatternFill):
 # ──────────────────────────────────────────────────────────
 
 def _write_separator(ws, row: int):
-    for col in range(1, 12):
+    for col in range(1, 13):
         c = ws.cell(row, col)
         c.fill   = PatternFill("solid", fgColor="CCCCCC")
         c.border = Border(
@@ -266,14 +271,14 @@ def _write_separator(ws, row: int):
 
 
 def _write_market_summary(ws, row: int, market_summary: dict):
-    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=11)
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=12)
     title = ws.cell(row, 1)
     title.value = "📈 금일 시황 요약 — " + market_summary["headline"]
     title.font = Font(bold=True, size=11, color="FFFFFF")
     title.fill = PatternFill("solid", fgColor="1F4E78")
     title.alignment = LEFT
 
-    ws.merge_cells(start_row=row + 1, start_column=1, end_row=row + 3, end_column=11)
+    ws.merge_cells(start_row=row + 1, start_column=1, end_row=row + 3, end_column=12)
     body = ws.cell(row + 1, 1)
     body.value = (
         f"관측: {market_summary['observation']}\n"

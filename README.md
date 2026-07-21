@@ -11,6 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
+| 🤖 **Kimi 한글 인사이트** | NVIDIA NIM Kimi가 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
 
 ---
 
@@ -61,6 +62,12 @@ git push -u origin main
 `Settings → Pages → Source: Deploy from branch → Branch: main / docs/`
 
 이후 `https://<YOUR_USERNAME>.github.io/<YOUR_REPO>/` 에서 최신 대시보드를 확인할 수 있습니다.
+
+#### ④ NVIDIA NIM 설정 (선택)
+
+`Settings → Secrets and variables → Actions`에서 `NVIDIA_API_KEY`를 Repository Secret으로 등록하면
+NVIDIA NIM의 `moonshotai/kimi-k2.6` 모델이 표시 종목의 사업 설명과 Yahoo Finance 뉴스 헤드라인을 한국어로 요약합니다.
+키가 없거나 API 호출에 실패해도 보고서는 중단하지 않고, 기존 사업 설명과 "당일 뉴스·공시 근거를 확인하지 못했습니다."라는 안전한 대체 문구를 사용합니다.
 
 #### ③ 자동 실행 확인
 

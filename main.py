@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pandas as pd
+
 from config import LOGS_DIR, OUTPUT_DIR
 from fetcher import fetch_all_data
 from calculator import (
@@ -20,6 +22,7 @@ from calculator import (
 from ranker import get_top_bottom
 from company_profiles import add_business_summaries
 from market_summary import build_market_summary
+from nim_insights import enrich_with_nim
 from excel_writer import write_excel
 from dashboard import generate_html
 
@@ -97,9 +100,15 @@ def run(dry_run: bool = False, verbose: bool = False):
         # 표시에 필요한 기업 프로필과 시황 문구는 파일 생성 시에만 만든다.
         top_df = add_business_summaries(top_df)
         bottom_df = add_business_summaries(bottom_df)
-        market_summary = build_market_summary(
+        base_market_summary = build_market_summary(
             sector_df, advances, declines, top_df, bottom_df
         )
+        combined_df = pd.concat([top_df, bottom_df], ignore_index=True)
+        combined_df, market_summary = enrich_with_nim(
+            combined_df, data_date, base_market_summary
+        )
+        top_df = combined_df.iloc[:len(top_df)].copy()
+        bottom_df = combined_df.iloc[len(top_df):].copy()
 
         # ── 파일 출력 ──
         date_tag = data_date.replace("-", "") if data_date else datetime.now().strftime("%Y%m%d")

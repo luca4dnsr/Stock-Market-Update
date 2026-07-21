@@ -74,6 +74,8 @@ def _build_stock_rows(df: pd.DataFrame, section_class: str) -> str:
         mc_rank = r.get("mc_rank", "")
         day_rank = r.get("day_rank", "")
         sector = str(r.get("sector", ""))
+        business = str(r.get("business_summary", ""))
+        move_reason = str(r.get("move_reason", ""))
 
         pct_cells = ""
         for val in [r.get("return_1d"), r.get("return_1w"),
@@ -84,12 +86,14 @@ def _build_stock_rows(df: pd.DataFrame, section_class: str) -> str:
         rows.append(f"""
         <tr class="{section_class}">
           <td class="rank-cell">{day_rank}</td>
-          <td class="ticker-cell">{ticker}</td>
-          <td class="name-cell" title="{name}">{name}</td>
+          <td class="ticker-cell">{escape(ticker)}</td>
+          <td class="name-cell" title="{escape(name)}">{escape(name)}</td>
           <td class="num-cell">{_mcap_str(mc_b)}</td>
           {pct_cells}
           <td class="num-cell">{mc_rank}</td>
-          <td class="sector-cell">{sector}</td>
+          <td class="sector-cell">{escape(sector)}</td>
+          <td class="business-cell">{escape(business)}</td>
+          <td class="reason-cell">{escape(move_reason)}</td>
         </tr>""")
     return "\n".join(rows)
 
@@ -330,6 +334,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .name-cell   {{ max-width: 220px; overflow: hidden; text-overflow: ellipsis; color: rgba(220,230,248,0.8); }}
     .num-cell    {{ text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }}
     .sector-cell {{ font-size: 11px; color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; }}
+    .business-cell, .reason-cell {{
+      white-space: normal; min-width: 210px; max-width: 300px;
+      color: rgba(220,230,248,.84); font-size: 11px; line-height: 1.55;
+    }}
+    .reason-cell {{ color: #9ed5ff; min-width: 270px; }}
 
     .pct {{
       text-align: right;
@@ -423,6 +432,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <th>3개월%</th>
               <th>시총순위</th>
               <th class="left-align">섹터</th>
+              <th class="left-align">사업</th>
+              <th class="left-align">등락 이유</th>
             </tr>
           </thead>
           <tbody>
@@ -451,6 +462,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
               <th>3개월%</th>
               <th>시총순위</th>
               <th class="left-align">섹터</th>
+              <th class="left-align">사업</th>
+              <th class="left-align">등락 이유</th>
             </tr>
           </thead>
           <tbody>
