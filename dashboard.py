@@ -4,6 +4,7 @@ dashboard.py — 프리미엄 다크모드 HTML 대시보드 생성
 
 import json
 import logging
+from html import escape
 from pathlib import Path
 
 import pandas as pd
@@ -107,6 +108,18 @@ def _build_sector_tiles(sector_df: pd.DataFrame) -> str:
           <div class="sector-val {cc}">{sign}%</div>
         </div>""")
     return "\n".join(tiles)
+
+
+def _build_market_summary_html(market_summary: dict) -> str:
+    """수치 기반 시황 요약을 대시보드용 안전한 HTML로 만든다."""
+    return f"""
+  <section class="market-summary-card">
+    <div class="market-summary-label">MARKET TAKEAWAY</div>
+    <h2>📈 {escape(market_summary['headline'])}</h2>
+    <p><strong>관측</strong>{escape(market_summary['observation'])}</p>
+    <p><strong>해석</strong>{escape(market_summary['interpretation'])}</p>
+    <p class="market-summary-note">{escape(market_summary['disclaimer'])}</p>
+  </section>"""
 
 
 # ──────────────────────────────────────────────────────────
@@ -251,6 +264,22 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }}
     .sector-name {{ font-size: 11px; color: rgba(220,230,248,0.75); margin-bottom: 6px; line-height: 1.3; }}
     .sector-val   {{ font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; }}
+
+    /* ── Daily market summary ── */
+    .market-summary-card {{
+      margin-top: 28px; padding: 24px 28px;
+      background: linear-gradient(135deg, rgba(27, 57, 93, 0.92), var(--card));
+      border: 1px solid rgba(128, 179, 255, 0.28);
+      border-radius: var(--radius); backdrop-filter: blur(12px);
+    }}
+    .market-summary-label {{
+      color: #8bbdff; font-size: 10px; font-weight: 700;
+      letter-spacing: .14em; margin-bottom: 8px;
+    }}
+    .market-summary-card h2 {{ font-size: 17px; margin-bottom: 16px; }}
+    .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }}
+    .market-summary-card strong {{ color: #fff; display: inline-block; width: 42px; }}
+    .market-summary-note {{ color: var(--muted) !important; font-size: 11px !important; margin-top: 14px !important; }}
 
     /* ── Tables ── */
     .tables-grid {{
@@ -433,6 +462,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   </div><!-- /tables-grid -->
 
+  {market_summary_html}
+
   <footer>
     데이터 출처: Yahoo Finance (yfinance) &nbsp;|&nbsp;
     자동 생성: {generated_at} &nbsp;|&nbsp;
@@ -498,12 +529,19 @@ def generate_html(
     output_path: Path,
     data_date: str = "",
     generated_at: str = "",
+    market_summary: dict | None = None,
 ):
     """
     프리미엄 다크모드 HTML 대시보드를 생성한다.
     """
     total = len(master_df)
     adv_pct = round(advances / max(advances + declines, 1) * 100, 1)
+    market_summary = market_summary or {
+        "headline": "시황 요약을 생성하지 못했습니다",
+        "observation": "수집된 데이터를 확인하세요.",
+        "interpretation": "",
+        "disclaimer": "",
+    }
 
     html = HTML_TEMPLATE.format(
         data_date     = data_date,
@@ -514,6 +552,7 @@ def generate_html(
         sector_tiles  = _build_sector_tiles(sector_df),
         top_rows      = _build_stock_rows(top_df, "top-row"),
         bottom_rows   = _build_stock_rows(bottom_df, "bot-row"),
+        market_summary_html = _build_market_summary_html(market_summary),
         top_n         = len(top_df),
         bottom_n      = len(bottom_df),
         generated_at  = generated_at,

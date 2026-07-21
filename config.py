@@ -35,6 +35,11 @@ MIN_PRICE_COVERAGE       = 0.98
 MIN_MARKET_CAP_COVERAGE  = 0.95
 MIN_LATEST_DATE_COVERAGE = 0.98
 
+# ── 기업 사업 요약 ──────────────────────────────────────
+BUSINESS_PROFILE_CACHE_FILE = CACHE_DIR / "business_profiles.json"
+BUSINESS_PROFILE_CACHE_DAYS = 30
+PROFILE_FETCH_WORKERS       = 6
+
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)
 SP500_CACHE_FILE   = CACHE_DIR / "sp500_components.csv"

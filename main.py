@@ -18,6 +18,8 @@ from calculator import (
     get_data_date,
 )
 from ranker import get_top_bottom
+from company_profiles import add_business_summaries
+from market_summary import build_market_summary
 from excel_writer import write_excel
 from dashboard import generate_html
 
@@ -92,6 +94,13 @@ def run(dry_run: bool = False, verbose: bool = False):
             logger.info("[DRY RUN] 파일 출력 생략")
             return
 
+        # 표시에 필요한 기업 프로필과 시황 문구는 파일 생성 시에만 만든다.
+        top_df = add_business_summaries(top_df)
+        bottom_df = add_business_summaries(bottom_df)
+        market_summary = build_market_summary(
+            sector_df, advances, declines, top_df, bottom_df
+        )
+
         # ── 파일 출력 ──
         date_tag = data_date.replace("-", "") if data_date else datetime.now().strftime("%Y%m%d")
         generated_at = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
@@ -103,6 +112,7 @@ def run(dry_run: bool = False, verbose: bool = False):
             excel_path,
             data_date=data_date,
             prev_date=prev_date,
+            market_summary=market_summary,
         )
 
         html_path = OUTPUT_DIR / f"SPX_daily_{date_tag}.html"
@@ -112,6 +122,7 @@ def run(dry_run: bool = False, verbose: bool = False):
             html_path,
             data_date=data_date,
             generated_at=generated_at,
+            market_summary=market_summary,
         )
 
         # ── 이메일용 요약 JSON 저장 ──
@@ -124,6 +135,7 @@ def run(dry_run: bool = False, verbose: bool = False):
             "top3":  top_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
             "bot3":  bottom_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
             "excel_name": excel_path.name,
+            "market_summary": market_summary,
         }
         (OUTPUT_DIR / "summary.json").write_text(
             json.dumps(summary, ensure_ascii=False, indent=2),
