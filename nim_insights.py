@@ -95,7 +95,9 @@ def _nim_request(items: list[dict], market_context: dict) -> dict:
         json=payload,
         timeout=(15, 180),
     )
-    response.raise_for_status()
+    if not response.ok:
+        # API 키는 응답에 포함하지 않고, NVIDIA가 반환한 진단 메시지만 남긴다.
+        raise RuntimeError(f"NIM HTTP {response.status_code}: {response.text[:500]}")
     content = response.json()["choices"][0]["message"]["content"]
     return _parse_json(content)
 
@@ -154,7 +156,8 @@ def enrich_with_nim(
     businesses, reasons = [], []
     for _, row in result.iterrows():
         entry = cache.get(cache_keys[str(row["ticker"])], {})
-        businesses.append(entry.get("business_summary") or row.get("business_summary") or "사업 설명을 확인하지 못했습니다.")
+        korean_fallback = f"{row.get('sub_sector') or row.get('sector') or '해당 산업'} 분야의 미국 상장 기업"
+        businesses.append(entry.get("business_summary") or korean_fallback)
         reasons.append(entry.get("move_reason") or FALLBACK_REASON)
     result["business_summary"] = businesses
     result["move_reason"] = reasons
