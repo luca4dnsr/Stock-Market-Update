@@ -1,47 +1,47 @@
 {
-  "data_date": "2026-07-20",
-  "advances": 157,
-  "declines": 326,
+  "data_date": "2026-07-21",
+  "advances": 225,
+  "declines": 266,
   "total": 503,
   "top3": [
     {
-      "ticker": "GPN",
-      "name": "Global Payments",
-      "return_1d": 5.8
+      "ticker": "SNDK",
+      "name": "Sandisk",
+      "return_1d": 14.3
     },
     {
-      "ticker": "LITE",
-      "name": "Lumentum",
-      "return_1d": 4.5
+      "ticker": "WDC",
+      "name": "Western Digital",
+      "return_1d": 12.5
     },
     {
-      "ticker": "TER",
-      "name": "Teradyne",
-      "return_1d": 3.5
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "return_1d": 12.2
     }
   ],
   "bot3": [
     {
-      "ticker": "CVNA",
-      "name": "Carvana",
-      "return_1d": -4.8
+      "ticker": "DHR",
+      "name": "Danaher Corporation",
+      "return_1d": -11.0
     },
     {
-      "ticker": "HONA",
-      "name": "Honeywell Aerospace",
-      "return_1d": -4.3
+      "ticker": "MSCI",
+      "name": "MSCI Inc.",
+      "return_1d": -10.1
     },
     {
-      "ticker": "ORCL",
-      "name": "Oracle Corporation",
-      "return_1d": -4.0
+      "ticker": "TYL",
+      "name": "Tyler Technologies",
+      "return_1d": -5.7
     }
   ],
-  "excel_name": "SPX_daily_20260720.xlsx",
+  "excel_name": "SPX_daily_20260721.xlsx",
   "market_summary": {
-    "headline": "하락 종목이 시장 전반으로 확산된 강한 위험회피 흐름",
-    "observation": "상승 157개·하락 326개로 상승 비율은 33%였습니다. 강세 섹터는 Communication Services +1.0%, Energy +0.6%, 약세 섹터는 Health Care -1.2%, Materials -0.9%였습니다. 개별 종목 중 GPN(+5.8%)가 가장 강했고, CVNA(-4.8%)가 가장 약했습니다.",
-    "interpretation": "시장 폭이 약해 단기적으로 방어적 포지셔닝과 변동성 확대 가능성에 유의할 구간입니다.",
+    "headline": "상승·하락 종목이 엇갈린 혼조 흐름",
+    "observation": "상승 225개·하락 266개로 상승 비율은 46%였습니다. 강세 섹터는 Information Technology +2.5%, Energy +1.2%, 약세 섹터는 Consumer Staples -1.1%, Communication Services -1.1%였습니다. 개별 종목 중 SNDK(+14.3%)가 가장 강했고, DHR(-11.0%)가 가장 약했습니다.",
+    "interpretation": "지수 내부의 방향성이 분산된 장세로, 전체 지수보다 주도 섹터와 개별 종목의 차별화가 두드러졌습니다.",
     "disclaimer": "AI 요약은 제공된 Yahoo Finance 기업 설명·뉴스 헤드라인과 시장 데이터만 근거로 하며 투자 의견이 아닙니다."
   }
 }
