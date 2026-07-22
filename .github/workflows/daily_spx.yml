@@ -204,7 +204,9 @@ jobs:
         if: github.event.inputs.dry_run != 'true'
         run: |
           REPORT_DATE=$(python3 -c "import json; print(json.load(open('output/summary.json'))['data_date'])")
+          REPORT_EXCEL=$(python3 -c "import json; print(json.load(open('output/summary.json'))['excel_name'])")
           echo "REPORT_DATE=${REPORT_DATE}" >> "$GITHUB_ENV"
+          echo "REPORT_EXCEL=output/${REPORT_EXCEL}" >> "$GITHUB_ENV"
 
       # ── 9. 이메일 발송 ────────────────────────────────────
       # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO 등록
@@ -223,7 +225,7 @@ jobs:
           html_body: file://output/email_body.html
           to: ${{ secrets.EMAIL_TO }}
           from: "SPX Daily Monitor <${{ secrets.EMAIL_USERNAME }}>"
-          attachments: output/SPX_daily_*.xlsx
+          attachments: ${{ env.REPORT_EXCEL }}
 
       # ── 10. 실행 요약 ─────────────────────────────────────
       - name: Summary
