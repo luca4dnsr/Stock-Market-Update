@@ -11,7 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
-| 🤖 **한글 AI 인사이트** | Yahoo Finance 기본 데이터를 유지하고 Gemini Google Search로 당일 뉴스 근거를 검증해 한글 요약 |
+| 🤖 **한글 AI 인사이트** | Gemini 3.6 Flash → Llama 3.3 70B → GPT-OSS 순으로 한글 요약 생성 |
 
 ---
 
@@ -67,9 +67,12 @@ git push -u origin main
 
 `Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
 
-- `GEMINI_API_KEY` — Google AI Studio의 `gemini-3.5-flash` 및 Google Search Grounding에 사용
+- `GEMINI_API_KEY` — Google AI Studio의 `gemini-3.6-flash` 및 Google Search Grounding에 사용
+- `NVIDIA_API_KEY` — NVIDIA NIM의 `meta/llama-3.3-70b-instruct`, `openai/gpt-oss-120b`에 사용
 
-주가·기업 기본정보·Yahoo Finance 헤드라인은 기존처럼 유지합니다. Gemini는 상승 20개·하락 20개 종목을 4개씩 나눠 별도 Google Search로 확인합니다. 종목의 등락 이유는 거래일 전 2일~후 1일 사이에 발행된, 해당 기업을 직접 언급하는 기사·공시가 실제 검색 결과 URL로 검증될 때만 작성합니다. 근거가 부족하면 `당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
+실행 순서는 **Gemini 3.6 Flash → NVIDIA NIM Llama 3.3 70B → NVIDIA NIM GPT-OSS 120B**입니다. 주가·기업 기본정보·Yahoo Finance 헤드라인은 기존처럼 유지합니다. Gemini는 상승 20개·하락 20개 종목을 4개씩 나눠 별도 Google Search로 확인합니다. 종목의 등락 이유는 거래일 전 2일~후 1일 사이에 발행된, 해당 기업을 직접 언급하는 기사·공시가 실제 검색 결과 URL로 검증될 때만 작성합니다. 근거가 부족하면 `당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
+
+Llama와 GPT-OSS는 Google Search Grounding이 없으므로 Gemini가 실패했을 때 **사업 설명과 가격·섹터 기반 관측만** 보완합니다. 두 fallback은 검증되지 않은 뉴스성 등락 이유나 시황 인과관계를 만들지 않고 제한 문구를 유지합니다.
 
 시황 요약은 별도 검색으로 검증된 당일 전후 기사 3~5건이 있어야 해석을 채택하며, 대시보드와 Excel에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
 
@@ -91,7 +94,7 @@ git push -u origin main
 ├── ranker.py          # 상위/하위 종목 정렬
 ├── excel_writer.py    # Excel 파일 생성 (openpyxl)
 ├── dashboard.py       # HTML 대시보드 생성
-├── ai_insights.py     # Gemini Google Search 기반 뉴스 검증·한글 인사이트
+├── ai_insights.py     # Gemini → Llama → GPT-OSS 인사이트·뉴스 검증
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
 ├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
