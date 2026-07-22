@@ -38,5 +38,12 @@
     }
   ],
   "excel_name": "SPX_daily_20260721.xlsx",
-  "market_summary": null
+  "market_summary": {
+    "headline": "상승·하락 종목이 엇갈린 혼조 흐름",
+    "observation": "상승 225개·하락 266개로 상승 비율은 46%였습니다. 강세 섹터는 Information Technology +2.5%, Energy +1.2%, 약세 섹터는 Consumer Staples -1.1%, Communication Services -1.1%였습니다. 개별 종목 중 SNDK(+14.3%)가 가장 강했고, DHR(-11.0%)가 가장 약했습니다.",
+    "interpretation": "당일 전후 시황 기사 3건 이상을 검증하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
+    "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
+    "source_urls": [],
+    "source_titles": []
+  }
 }
