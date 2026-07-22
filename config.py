@@ -41,17 +41,21 @@ BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
 # ── AI 인사이트 공급자 우선순위 ───────────────────────────
-# 1) Google Gemini API  2) NVIDIA NIM Mistral  3) NVIDIA NIM GPT-OSS
+# 1) Google Gemini API  2) NVIDIA NIM Kimi  3) NVIDIA NIM GPT-OSS
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODEL = "gemini-3.5-flash"
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-NIM_MISTRAL_MODEL = "mistralai/mistral-medium-3.5-128b"
+NIM_KIMI_MODEL = "moonshotai/kimi-k2.6"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v3"
-AI_INSIGHTS_MAX_TOKENS = 7000
+AI_INSIGHTS_CACHE_VERSION = "v4"
+GEMINI_INSIGHTS_MAX_TOKENS = 7000
+NIM_INSIGHTS_MAX_TOKENS = 2500
+NIM_INSIGHTS_BATCH_SIZE = 8
+NIM_CONNECT_TIMEOUT_SEC = 10
+NIM_READ_TIMEOUT_SEC = 60
 
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)

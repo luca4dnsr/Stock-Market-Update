@@ -1,8 +1,7 @@
-"""기업·시황 인사이트를 여러 AI 공급자로 생성한다.
+"""기업·시황 인사이트를 Gemini와 NVIDIA NIM으로 순차 생성한다.
 
-우선순위는 Gemini 3.5 Flash, NVIDIA NIM Mistral Medium 3.5,
-NVIDIA NIM GPT-OSS 120B이다. 어느 호출도 보고서 생성을 중단시키지 않으며,
-모두 실패하면 수집된 시장 데이터만 사용하는 보수적 문구로 대체한다.
+우선순위: Gemini 3.5 Flash → NVIDIA Kimi K2.6 → NVIDIA GPT-OSS 120B.
+어느 모델도 유효한 결과를 만들지 못하면 추정 문구를 쓰지 않고 빈칸으로 남긴다.
 """
 
 import json
@@ -10,7 +9,6 @@ import logging
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
 
 import pandas as pd
 import requests
@@ -19,18 +17,21 @@ import yfinance as yf
 from config import (
     AI_INSIGHTS_CACHE_FILE,
     AI_INSIGHTS_CACHE_VERSION,
-    AI_INSIGHTS_MAX_TOKENS,
     GEMINI_API_URL,
+    GEMINI_INSIGHTS_MAX_TOKENS,
     GEMINI_MODEL,
     NIM_API_URL,
+    NIM_CONNECT_TIMEOUT_SEC,
     NIM_GPT_OSS_MODEL,
-    NIM_MISTRAL_MODEL,
+    NIM_INSIGHTS_BATCH_SIZE,
+    NIM_INSIGHTS_MAX_TOKENS,
+    NIM_KIMI_MODEL,
+    NIM_READ_TIMEOUT_SEC,
     PROFILE_FETCH_WORKERS,
 )
 
 logger = logging.getLogger(__name__)
 
-FALLBACK_REASON = "당일 뉴스·공시 근거를 확인하지 못했습니다."
 DISCLAIMER = (
     "AI 요약은 제공된 Yahoo Finance 뉴스 헤드라인과 시장 데이터만 근거로 하며, "
     "투자 조언이 아닙니다."
@@ -76,6 +77,12 @@ def _load_cache() -> dict:
         return json.loads(AI_INSIGHTS_CACHE_FILE.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
+
+
+def _save_cache(cache: dict) -> None:
+    AI_INSIGHTS_CACHE_FILE.write_text(
+        json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def _unwrap_url(value) -> str:
@@ -137,11 +144,14 @@ def _request_gemini(items: list[dict], market_context: dict) -> dict:
 
     payload = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": [{"role": "user", "parts": [{"text": json.dumps({"market_context": market_context, "stocks": items}, ensure_ascii=False)}]}],
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": json.dumps({"market_context": market_context, "stocks": items}, ensure_ascii=False)}],
+        }],
         "generationConfig": {
             "temperature": 0.2,
             "topP": 0.7,
-            "maxOutputTokens": AI_INSIGHTS_MAX_TOKENS,
+            "maxOutputTokens": GEMINI_INSIGHTS_MAX_TOKENS,
             "responseFormat": {
                 "text": {"mimeType": "APPLICATION_JSON", "schema": RESPONSE_SCHEMA}
             },
@@ -151,7 +161,7 @@ def _request_gemini(items: list[dict], market_context: dict) -> dict:
         GEMINI_API_URL.format(model=GEMINI_MODEL),
         headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
         json=payload,
-        timeout=(15, 180),
+        timeout=(15, 120),
     )
     if not response.ok:
         raise RuntimeError(f"Gemini HTTP {response.status_code}: {response.text[:500]}")
@@ -176,15 +186,14 @@ def _request_nim(model: str, items: list[dict], market_context: dict) -> dict:
         ],
         "temperature": 0.2,
         "top_p": 0.7,
-        "max_tokens": AI_INSIGHTS_MAX_TOKENS,
-        "reasoning_effort": "low",
+        "max_tokens": NIM_INSIGHTS_MAX_TOKENS,
         "stream": False,
     }
     response = requests.post(
         NIM_API_URL,
         headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
         json=payload,
-        timeout=(15, 180),
+        timeout=(NIM_CONNECT_TIMEOUT_SEC, NIM_READ_TIMEOUT_SEC),
     )
     if not response.ok:
         raise RuntimeError(f"NIM HTTP {response.status_code}: {response.text[:500]}")
@@ -196,8 +205,9 @@ def _normalise_response(
     generated: dict,
     expected_tickers: list[str],
     allowed_urls: set[str],
+    provider_name: str,
 ) -> tuple[dict[str, dict], dict]:
-    """완전한 종목 결과만 수용해 부분·환각 응답은 다음 제공자로 넘긴다."""
+    """완전한 종목 결과만 수용해 불완전·환각 응답은 다음 제공자로 넘긴다."""
     received = {}
     for item in generated.get("items", []):
         if not isinstance(item, dict):
@@ -217,6 +227,7 @@ def _normalise_response(
             "business_summary": business,
             "move_reason": reason,
             "source_urls": source_urls,
+            "provider": provider_name,
         }
 
     missing = set(expected_tickers) - set(received)
@@ -224,35 +235,75 @@ def _normalise_response(
         raise ValueError(f"AI 응답에 필요한 종목 결과가 없습니다: {', '.join(sorted(missing))}")
 
     market = generated.get("market_summary", {})
-    if not isinstance(market, dict) or not all(str(market.get(k, "")).strip() for k in ("headline", "observation", "interpretation")):
+    if not isinstance(market, dict) or not all(str(market.get(key, "")).strip() for key in ("headline", "observation", "interpretation")):
         raise ValueError("AI 응답에 유효한 시황 요약이 없습니다.")
     clean_market = {key: str(market[key]).strip() for key in ("headline", "observation", "interpretation")}
     return received, clean_market
 
 
-def _provider_chain() -> list[tuple[str, Callable[[list[dict], dict], dict]]]:
-    chain = []
-    if os.getenv("GEMINI_API_KEY"):
-        chain.append((f"Gemini ({GEMINI_MODEL})", _request_gemini))
-    else:
-        logger.warning("GEMINI_API_KEY 미설정: Gemini를 건너뜁니다.")
+def _chunked(items: list[dict], chunk_size: int) -> list[list[dict]]:
+    return [items[index:index + chunk_size] for index in range(0, len(items), chunk_size)]
 
-    if os.getenv("NVIDIA_API_KEY"):
-        chain.extend([
-            (f"NVIDIA NIM Mistral ({NIM_MISTRAL_MODEL})", lambda items, context: _request_nim(NIM_MISTRAL_MODEL, items, context)),
-            (f"NVIDIA NIM GPT-OSS ({NIM_GPT_OSS_MODEL})", lambda items, context: _request_nim(NIM_GPT_OSS_MODEL, items, context)),
-        ])
-    else:
-        logger.warning("NVIDIA_API_KEY 미설정: Mistral·GPT-OSS를 건너뜁니다.")
-    return chain
+
+def _allowed_urls(items: list[dict]) -> set[str]:
+    return {
+        str(news_item.get("url", ""))
+        for item in items
+        for news_item in item.get("news", [])
+        if news_item.get("url")
+    }
+
+
+def _try_nim_fallbacks(
+    items: list[dict],
+    market_context: dict,
+    cache: dict,
+    cache_keys: dict[str, str],
+    market_key: str,
+) -> None:
+    """Gemini 실패분을 Kimi, GPT-OSS 순으로 작은 묶음 단위에서 처리한다."""
+    if not os.getenv("NVIDIA_API_KEY"):
+        logger.warning("NVIDIA_API_KEY 미설정: Kimi·GPT-OSS를 건너뛰고 빈칸 처리합니다.")
+        return
+
+    market_saved = market_key in cache
+    providers = [
+        ("NVIDIA NIM Kimi", NIM_KIMI_MODEL),
+        ("NVIDIA NIM GPT-OSS", NIM_GPT_OSS_MODEL),
+    ]
+    for chunk_index, chunk in enumerate(_chunked(items, NIM_INSIGHTS_BATCH_SIZE), start=1):
+        tickers = [str(item["ticker"]) for item in chunk]
+        for provider_name, model in providers:
+            try:
+                generated = _request_nim(model, chunk, market_context)
+                entries, market = _normalise_response(
+                    generated, tickers, _allowed_urls(chunk), provider_name
+                )
+                for ticker, entry in entries.items():
+                    cache[cache_keys[ticker]] = entry
+                if not market_saved:
+                    cache[market_key] = market
+                    market_saved = True
+                _save_cache(cache)
+                logger.info("AI 인사이트 생성 완료: %s (묶음 %d)", provider_name, chunk_index)
+                break
+            except Exception as exc:
+                logger.warning(
+                    "%s 인사이트 생성 실패 (묶음 %d), 다음 우선순위를 시도합니다: %s",
+                    provider_name,
+                    chunk_index,
+                    exc,
+                )
+        else:
+            logger.warning("묶음 %d의 AI 인사이트를 생성하지 못해 빈칸으로 둡니다.", chunk_index)
 
 
 def enrich_with_ai(
     stocks_df: pd.DataFrame,
     data_date: str,
     base_market_summary: dict,
-) -> tuple[pd.DataFrame, dict]:
-    """사업 설명, 뉴스 근거 기반 등락 이유, 시황을 우선순위대로 생성한다."""
+) -> tuple[pd.DataFrame, dict | None]:
+    """사업·등락 이유·시황을 우선순위대로 생성하고, 실패 값은 공란으로 남긴다."""
     result = stocks_df.copy()
     cache = _load_cache()
     tickers = result["ticker"].astype(str).tolist()
@@ -278,42 +329,31 @@ def enrich_with_ai(
             }
             for ticker in target_tickers
         ]
-        allowed_urls = {
-            str(news_item.get("url", ""))
-            for news in news_map.values()
-            for news_item in news
-            if news_item.get("url")
-        }
 
-        for provider_name, request_fn in _provider_chain():
-            try:
-                generated = request_fn(items, base_market_summary)
-                entries, market = _normalise_response(generated, target_tickers, allowed_urls)
-                for ticker, entry in entries.items():
-                    cache[cache_keys[ticker]] = entry
-                cache[market_key] = market
-                AI_INSIGHTS_CACHE_FILE.write_text(
-                    json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8"
-                )
-                logger.info("AI 인사이트 생성 완료: %s", provider_name)
-                break
-            except Exception as exc:
-                logger.warning("%s 인사이트 생성 실패, 다음 우선순위를 시도합니다: %s", provider_name, exc)
-        else:
-            logger.warning("모든 AI 공급자 호출에 실패했습니다. 근거 기반 대체 문구를 사용합니다.")
+        try:
+            generated = _request_gemini(items, base_market_summary)
+            entries, market = _normalise_response(
+                generated, target_tickers, _allowed_urls(items), "Gemini"
+            )
+            for ticker, entry in entries.items():
+                cache[cache_keys[ticker]] = entry
+            cache[market_key] = market
+            _save_cache(cache)
+            logger.info("AI 인사이트 생성 완료: Gemini (%d개 종목)", len(target_tickers))
+        except Exception as exc:
+            logger.warning("Gemini 인사이트 생성 실패, Kimi fallback을 시도합니다: %s", exc)
+            _try_nim_fallbacks(items, base_market_summary, cache, cache_keys, market_key)
 
     businesses, reasons = [], []
-    for _, row in result.iterrows():
-        entry = cache.get(cache_keys[str(row["ticker"])], {})
-        korean_fallback = (
-            f"{row.get('sub_sector') or row.get('sector') or '해당 산업'} 분야의 미국 상장 기업"
-        )
-        businesses.append(entry.get("business_summary") or korean_fallback)
-        reasons.append(entry.get("move_reason") or FALLBACK_REASON)
+    for ticker in tickers:
+        entry = cache.get(cache_keys[ticker], {})
+        businesses.append(entry.get("business_summary", ""))
+        reasons.append(entry.get("move_reason", ""))
     result["business_summary"] = businesses
     result["move_reason"] = reasons
 
-    final_market_summary = dict(base_market_summary)
-    final_market_summary.update(cache.get(market_key, {}))
-    final_market_summary["disclaimer"] = DISCLAIMER
-    return result, final_market_summary
+    market_summary = cache.get(market_key)
+    if market_summary:
+        market_summary = dict(market_summary)
+        market_summary["disclaimer"] = DISCLAIMER
+    return result, market_summary

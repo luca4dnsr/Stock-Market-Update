@@ -11,7 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
-| 🤖 **한글 AI 인사이트** | Gemini → NVIDIA Mistral → NVIDIA GPT-OSS 순으로 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
+| 🤖 **한글 AI 인사이트** | Gemini → NVIDIA Kimi → NVIDIA GPT-OSS 순으로 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
 
 ---
 
@@ -68,9 +68,9 @@ git push -u origin main
 `Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
 
 - `GEMINI_API_KEY` — 기본: Google AI Studio의 `gemini-3.5-flash`
-- `NVIDIA_API_KEY` — 1차 대체: NVIDIA NIM `mistralai/mistral-medium-3.5-128b`, 2차 대체: `openai/gpt-oss-120b`
+- `NVIDIA_API_KEY` — 1차 대체: NVIDIA NIM `moonshotai/kimi-k2.6`, 2차 대체: `openai/gpt-oss-120b`
 
-실행 순서는 **Gemini → NVIDIA Mistral → NVIDIA GPT-OSS → 근거 기반 규칙 문구**입니다. Gemini는 JSON 스키마로 응답 형식을 강제합니다. API 키가 없거나 호출·형식 검증에 실패해도 보고서는 중단하지 않고, 사업은 GICS 기반 한 줄 설명으로, 등락 이유는 "당일 뉴스·공시 근거를 확인하지 못했습니다."라는 안전한 문구로 표시합니다.
+실행 순서는 **Gemini → NVIDIA Kimi → NVIDIA GPT-OSS → 공란**입니다. Gemini는 JSON 스키마로 응답 형식을 강제합니다. Gemini 실패 시 NVIDIA 모델은 8개 종목씩 처리하며, 각 묶음에서 Kimi와 GPT-OSS가 모두 실패하면 사업 설명·등락 이유를 비웁니다. 모든 모델이 시황 요약을 생성하지 못하면 Excel·대시보드의 시황 요약 영역도 표시하지 않습니다.
 
 #### ③ 자동 실행 확인
 

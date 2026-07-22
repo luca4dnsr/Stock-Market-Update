@@ -549,13 +549,6 @@ def generate_html(
     """
     total = len(master_df)
     adv_pct = round(advances / max(advances + declines, 1) * 100, 1)
-    market_summary = market_summary or {
-        "headline": "시황 요약을 생성하지 못했습니다",
-        "observation": "수집된 데이터를 확인하세요.",
-        "interpretation": "",
-        "disclaimer": "",
-    }
-
     html = HTML_TEMPLATE.format(
         data_date     = data_date,
         advances      = advances,
@@ -565,7 +558,7 @@ def generate_html(
         sector_tiles  = _build_sector_tiles(sector_df),
         top_rows      = _build_stock_rows(top_df, "top-row"),
         bottom_rows   = _build_stock_rows(bottom_df, "bot-row"),
-        market_summary_html = _build_market_summary_html(market_summary),
+        market_summary_html = _build_market_summary_html(market_summary) if market_summary else "",
         top_n         = len(top_df),
         bottom_n      = len(bottom_df),
         generated_at  = generated_at,
