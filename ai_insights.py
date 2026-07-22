@@ -252,7 +252,8 @@ def _request_gemini_grounded(prompt: str, response_schema: dict) -> tuple[dict, 
         "generationConfig": {
             "maxOutputTokens": GEMINI_INSIGHTS_MAX_TOKENS,
             "responseFormat": {
-                "text": {"mimeType": "application/json", "schema": response_schema}
+                # v1beta TextResponseFormat은 일반 MIME 문자열이 아니라 enum 식별자를 받는다.
+                "text": {"mimeType": "APPLICATION_JSON", "schema": response_schema}
             },
         },
     }
