@@ -41,7 +41,7 @@ BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
 # ── AI 인사이트 공급자 우선순위 ───────────────────────────
-# 1) Google Gemini API  2) NVIDIA NIM Kimi  3) NVIDIA NIM GPT-OSS
+# Google Gemini API: Google Search Grounding을 사용한 당일 뉴스 조사
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODEL = "gemini-3.5-flash"
 
@@ -50,8 +50,14 @@ NIM_KIMI_MODEL = "moonshotai/kimi-k2.6"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v4"
-GEMINI_INSIGHTS_MAX_TOKENS = 7000
+AI_INSIGHTS_CACHE_VERSION = "v5-grounded-news"
+GEMINI_INSIGHTS_MAX_TOKENS = 3000
+GEMINI_SEARCH_BATCH_SIZE = 4
+GEMINI_GROUNDING_TIMEOUT_SEC = 120
+NEWS_WINDOW_DAYS_BEFORE = 2
+NEWS_WINDOW_DAYS_AFTER = 1
+MARKET_MIN_GROUNDED_SOURCES = 3
+MARKET_MAX_GROUNDED_SOURCES = 5
 NIM_INSIGHTS_MAX_TOKENS = 2500
 NIM_INSIGHTS_BATCH_SIZE = 8
 NIM_CONNECT_TIMEOUT_SEC = 10

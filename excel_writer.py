@@ -278,18 +278,25 @@ def _write_market_summary(ws, row: int, market_summary: dict):
     title.fill = PatternFill("solid", fgColor="1F4E78")
     title.alignment = LEFT
 
-    ws.merge_cells(start_row=row + 1, start_column=1, end_row=row + 3, end_column=12)
+    ws.merge_cells(start_row=row + 1, start_column=1, end_row=row + 4, end_column=12)
     body = ws.cell(row + 1, 1)
+    source_pairs = zip(
+        market_summary.get("source_titles", []), market_summary.get("source_urls", [])
+    )
+    source_text = " | ".join(
+        f"{str(title)[:80]} ({url})" for title, url in source_pairs if url
+    )
     body.value = (
         f"관측: {market_summary['observation']}\n"
         f"해석: {market_summary['interpretation']}\n"
-        f"유의: {market_summary['disclaimer']}"
+        + (f"근거 기사: {source_text}\n" if source_text else "")
+        + f"유의: {market_summary['disclaimer']}"
     )
     body.font = Font(size=9, color="333333")
     body.fill = PatternFill("solid", fgColor="EAF2F8")
     body.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
     body.border = THIN_BORDER
-    ws.row_dimensions[row + 1].height = 58
+    ws.row_dimensions[row + 1].height = 82
 
 
 # ──────────────────────────────────────────────────────────

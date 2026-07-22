@@ -115,13 +115,29 @@ def _build_sector_tiles(sector_df: pd.DataFrame) -> str:
 
 
 def _build_market_summary_html(market_summary: dict) -> str:
-    """수치 기반 시황 요약을 대시보드용 안전한 HTML로 만든다."""
+    """검증된 시황 요약과 Google Search 근거를 안전한 HTML로 만든다."""
+    links = []
+    for title, url in zip(
+        market_summary.get("source_titles", []), market_summary.get("source_urls", [])
+    ):
+        safe_url = str(url).strip()
+        if safe_url.startswith(("https://", "http://")):
+            links.append(
+                f'<a href="{escape(safe_url, quote=True)}" target="_blank" rel="noopener noreferrer">'
+                f"{escape(str(title) or '기사')}</a>"
+            )
+    sources_html = (
+        f'<p class="market-summary-sources"><strong>근거</strong>{" · ".join(links)}</p>'
+        if links
+        else ""
+    )
     return f"""
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
     <h2>📈 {escape(market_summary['headline'])}</h2>
     <p><strong>관측</strong>{escape(market_summary['observation'])}</p>
     <p><strong>해석</strong>{escape(market_summary['interpretation'])}</p>
+    {sources_html}
     <p class="market-summary-note">{escape(market_summary['disclaimer'])}</p>
   </section>"""
 
@@ -283,6 +299,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .market-summary-card h2 {{ font-size: 17px; margin-bottom: 16px; }}
     .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }}
     .market-summary-card strong {{ color: #fff; display: inline-block; width: 42px; }}
+    .market-summary-sources a {{ color: #9bc8ff; text-decoration: underline; }}
     .market-summary-note {{ color: var(--muted) !important; font-size: 11px !important; margin-top: 14px !important; }}
 
     /* ── Tables ── */

@@ -11,7 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
-| 🤖 **한글 AI 인사이트** | Gemini → NVIDIA Kimi → NVIDIA GPT-OSS 순으로 사업 설명·뉴스 근거 기반 등락 이유·시황을 한글로 요약 |
+| 🤖 **한글 AI 인사이트** | Yahoo Finance 기본 데이터를 유지하고 Gemini Google Search로 당일 뉴스 근거를 검증해 한글 요약 |
 
 ---
 
@@ -67,10 +67,11 @@ git push -u origin main
 
 `Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
 
-- `GEMINI_API_KEY` — 기본: Google AI Studio의 `gemini-3.5-flash`
-- `NVIDIA_API_KEY` — 1차 대체: NVIDIA NIM `moonshotai/kimi-k2.6`, 2차 대체: `openai/gpt-oss-120b`
+- `GEMINI_API_KEY` — Google AI Studio의 `gemini-3.5-flash` 및 Google Search Grounding에 사용
 
-실행 순서는 **Gemini → NVIDIA Kimi → NVIDIA GPT-OSS → 공란**입니다. Gemini는 JSON 스키마로 응답 형식을 강제합니다. Gemini 실패 시 NVIDIA 모델은 8개 종목씩 처리하며, 각 묶음에서 Kimi와 GPT-OSS가 모두 실패하면 사업 설명·등락 이유를 비웁니다. 모든 모델이 시황 요약을 생성하지 못하면 Excel·대시보드의 시황 요약 영역도 표시하지 않습니다.
+주가·기업 기본정보·Yahoo Finance 헤드라인은 기존처럼 유지합니다. Gemini는 상승 20개·하락 20개 종목을 4개씩 나눠 별도 Google Search로 확인합니다. 종목의 등락 이유는 거래일 전 2일~후 1일 사이에 발행된, 해당 기업을 직접 언급하는 기사·공시가 실제 검색 결과 URL로 검증될 때만 작성합니다. 근거가 부족하면 `당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
+
+시황 요약은 별도 검색으로 검증된 당일 전후 기사 3~5건이 있어야 해석을 채택하며, 대시보드와 Excel에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
 
 #### ③ 자동 실행 확인
 
@@ -90,7 +91,7 @@ git push -u origin main
 ├── ranker.py          # 상위/하위 종목 정렬
 ├── excel_writer.py    # Excel 파일 생성 (openpyxl)
 ├── dashboard.py       # HTML 대시보드 생성
-├── ai_insights.py     # Gemini/NVIDIA 다중 AI 인사이트 및 규칙 기반 대체
+├── ai_insights.py     # Gemini Google Search 기반 뉴스 검증·한글 인사이트
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
 ├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
@@ -132,5 +133,6 @@ MIN_PRICE_COVERAGE = 0.98  # 최소 주가 수집 비율
 - **주가 데이터**: [yfinance](https://github.com/ranaroussi/yfinance) (Yahoo Finance 비공식 API)
 - **S&P 500 구성종목**: [Wikipedia](https://en.wikipedia.org/wiki/List_of_S%26P_500_companies)
 - **섹터 분류**: GICS (Global Industry Classification Standard)
+- **등락 이유·시황 뉴스**: Gemini Google Search Grounding (대시보드·Excel에 검증된 기사 URL 표시)
 
 > ⚠️ yfinance는 비공식 API로, 대량 요청 시 일시적으로 제한될 수 있습니다.
