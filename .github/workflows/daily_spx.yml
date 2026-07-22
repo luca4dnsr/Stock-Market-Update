@@ -61,60 +61,67 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ── 4. SPX 업데이트 실행 ─────────────────────────────
+      # ── 4. NVIDIA NIM 최소 응답 진단 (수동 실행 전용) ─────
+      - name: Probe NVIDIA NIM
+        if: github.event.inputs.nim_probe == 'true'
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          python - <<'PYEOF'
+          import os
+          import sys
+          import time
+
+          import requests
+
+          api_key = os.getenv("NVIDIA_API_KEY")
+          if not api_key:
+              raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
+
+          endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
+          models = [
+              ("Llama 3.3 70B", "meta/llama-3.3-70b-instruct"),
+              ("GPT-OSS 120B", "openai/gpt-oss-120b"),
+          ]
+          failures = 0
+          for label, model in models:
+              started = time.monotonic()
+              try:
+                  response = requests.post(
+                      endpoint,
+                      headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                      json={
+                          "model": model,
+                          "messages": [
+                              {"role": "system", "content": "Return only JSON."},
+                              {"role": "user", "content": '{"ok":true}'},
+                          ],
+                          "temperature": 0,
+                          "max_tokens": 32,
+                          "stream": False,
+                      },
+                      timeout=(10, 180),
+                  )
+                  elapsed = time.monotonic() - started
+                  print(f"NIM probe | {label} | HTTP {response.status_code} | {elapsed:.1f}s")
+                  if not response.ok:
+                      print(response.text[:500])
+                      failures += 1
+              except requests.RequestException as exc:
+                  elapsed = time.monotonic() - started
+                  print(f"NIM probe | {label} | request error after {elapsed:.1f}s | {exc}")
+                  failures += 1
+          sys.exit(1 if failures else 0)
+          PYEOF
+
+      # ── 5. SPX 업데이트 실행 ─────────────────────────────
       - name: Run SPX update
+        if: github.event.inputs.nim_probe != 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          if [ "${{ github.event.inputs.nim_probe }}" = "true" ]; then
-            python - << 'PYEOF'
-            import os
-            import sys
-            import time
-
-            import requests
-
-            api_key = os.getenv("NVIDIA_API_KEY")
-            if not api_key:
-                raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
-
-            endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
-            models = [
-                ("Llama 3.3 70B", "meta/llama-3.3-70b-instruct"),
-                ("GPT-OSS 120B", "openai/gpt-oss-120b"),
-            ]
-            failures = 0
-            for label, model in models:
-                started = time.monotonic()
-                try:
-                    response = requests.post(
-                        endpoint,
-                        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                        json={
-                            "model": model,
-                            "messages": [
-                                {"role": "system", "content": "Return only JSON."},
-                                {"role": "user", "content": '{"ok":true}'},
-                            ],
-                            "temperature": 0,
-                            "max_tokens": 32,
-                            "stream": False,
-                        },
-                        timeout=(10, 180),
-                    )
-                    elapsed = time.monotonic() - started
-                    print(f"NIM probe | {label} | HTTP {response.status_code} | {elapsed:.1f}s")
-                    if not response.ok:
-                        print(response.text[:500])
-                        failures += 1
-                except requests.RequestException as exc:
-                    elapsed = time.monotonic() - started
-                    print(f"NIM probe | {label} | request error after {elapsed:.1f}s | {exc}")
-                    failures += 1
-            sys.exit(1 if failures else 0)
-            PYEOF
-          elif [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             python main.py --dry-run --verbose
           else
             python main.py --verbose
