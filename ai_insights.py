@@ -143,7 +143,7 @@ def _request_gemini(items: list[dict], market_context: dict) -> dict:
             "topP": 0.7,
             "maxOutputTokens": AI_INSIGHTS_MAX_TOKENS,
             "responseFormat": {
-                "text": {"mimeType": "application/json", "schema": RESPONSE_SCHEMA}
+                "text": {"mimeType": "APPLICATION_JSON", "schema": RESPONSE_SCHEMA}
             },
         },
     }
