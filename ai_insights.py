@@ -31,7 +31,6 @@ from config import (
     NIM_CONNECT_TIMEOUT_SEC,
     NIM_GPT_OSS_MODEL,
     NIM_INSIGHTS_MAX_TOKENS,
-    NIM_LLAMA_MODEL,
     NIM_READ_TIMEOUT_SEC,
     NEWS_WINDOW_DAYS_AFTER,
     NEWS_WINDOW_DAYS_BEFORE,
@@ -463,43 +462,39 @@ def _normalise_stock_batch(
 
 
 def _fallback_stock_entries(items: list[dict]) -> dict[str, dict]:
-    """웹 검색이 불가한 NIM 모델은 사업 설명만 보완하고 등락 이유는 제한 처리한다."""
+    """GPT-OSS는 사업 설명만 보완하고 등락 이유는 제한 처리한다."""
     system_prompt = (
         "당신은 한국어 금융 데이터 정리 보조자입니다. 제공된 영문 사업 설명만 번역·요약하십시오. "
         "뉴스 원인이나 시장 상황을 추정하지 말고 JSON만 답하십시오."
     )
     expected = {str(item["ticker"]): item for item in items}
-    providers = [
-        ("NVIDIA NIM Llama 3.3 70B", NIM_LLAMA_MODEL),
-        ("NVIDIA NIM GPT-OSS 120B", NIM_GPT_OSS_MODEL),
-    ]
-    for provider_name, model in providers:
-        try:
-            generated = _request_nim_json(
-                model, system_prompt, _fallback_stock_prompt(items)
-            )
-            received = {
-                str(item.get("ticker", "")).strip(): item
-                for item in generated.get("items", [])
-                if isinstance(item, dict)
-                and str(item.get("ticker", "")).strip() in expected
-                and str(item.get("business_ko", "")).strip()
+    provider_name = "NVIDIA NIM GPT-OSS 120B"
+    try:
+        generated = _request_nim_json(
+            NIM_GPT_OSS_MODEL, system_prompt, _fallback_stock_prompt(items)
+        )
+        received = {
+            str(item.get("ticker", "")).strip(): item
+            for item in generated.get("items", [])
+            if isinstance(item, dict)
+            and str(item.get("ticker", "")).strip() in expected
+            and str(item.get("business_ko", "")).strip()
+        }
+        if set(received) != set(expected):
+            raise ValueError("GPT-OSS 응답에 일부 종목 사업 설명이 없습니다.")
+        logger.info("Gemini 실패 묶음의 사업 설명 보완 완료: %s", provider_name)
+        return {
+            ticker: {
+                "business_summary": str(received[ticker]["business_ko"]).strip()[:140],
+                "move_reason": LIMITED_REASON,
+                "source_urls": [],
+                "source_titles": [],
+                "provider": provider_name,
             }
-            if set(received) != set(expected):
-                raise ValueError("NIM 응답에 일부 종목 사업 설명이 없습니다.")
-            logger.info("Gemini 실패 묶음의 사업 설명 보완 완료: %s", provider_name)
-            return {
-                ticker: {
-                    "business_summary": str(received[ticker]["business_ko"]).strip()[:140],
-                    "move_reason": LIMITED_REASON,
-                    "source_urls": [],
-                    "source_titles": [],
-                    "provider": provider_name,
-                }
-                for ticker in expected
-            }
-        except Exception as exc:
-            logger.warning("%s fallback 실패, 다음 모델을 시도합니다: %s", provider_name, exc)
+            for ticker in expected
+        }
+    except Exception as exc:
+        logger.warning("%s fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
     return {}
 
 
@@ -515,38 +510,34 @@ def _limited_market_summary(base_market_summary: dict) -> dict:
 
 
 def _fallback_market_summary(base_market_summary: dict) -> dict:
-    """NIM fallback은 수치 관측만 다듬으며 뉴스 인과 해석은 허용하지 않는다."""
+    """GPT-OSS fallback은 수치 관측만 다듬으며 뉴스 인과 해석은 허용하지 않는다."""
     system_prompt = (
         "당신은 한국어 금융 데이터 정리 보조자입니다. 제공된 수치만 사용하고 뉴스·정책·실적의 "
         "원인을 추정하지 마십시오. JSON만 답하십시오."
     )
-    providers = [
-        ("NVIDIA NIM Llama 3.3 70B", NIM_LLAMA_MODEL),
-        ("NVIDIA NIM GPT-OSS 120B", NIM_GPT_OSS_MODEL),
-    ]
-    for provider_name, model in providers:
-        try:
-            generated = _request_nim_json(
-                model, system_prompt, _fallback_market_prompt(base_market_summary)
-            )
-            headline = str(generated.get("headline", "")).strip()
-            observation = str(generated.get("observation", "")).strip()
-            if not headline or not observation:
-                raise ValueError("NIM 시황 응답에 필수 문구가 없습니다.")
-            logger.info("Gemini 실패 시황의 수치 관측 보완 완료: %s", provider_name)
-            return {
-                "headline": headline[:300],
-                "observation": observation[:600],
-                "interpretation": LIMITED_MARKET_INTERPRETATION,
-                "disclaimer": (
-                    f"{provider_name}가 가격·시장 폭·섹터 수익률만 정리한 자동 요약이며 "
-                    "뉴스 근거 기반 해석이나 투자 조언이 아닙니다."
-                ),
-                "source_urls": [],
-                "source_titles": [],
-            }
-        except Exception as exc:
-            logger.warning("%s 시황 fallback 실패, 다음 모델을 시도합니다: %s", provider_name, exc)
+    provider_name = "NVIDIA NIM GPT-OSS 120B"
+    try:
+        generated = _request_nim_json(
+            NIM_GPT_OSS_MODEL, system_prompt, _fallback_market_prompt(base_market_summary)
+        )
+        headline = str(generated.get("headline", "")).strip()
+        observation = str(generated.get("observation", "")).strip()
+        if not headline or not observation:
+            raise ValueError("GPT-OSS 시황 응답에 필수 문구가 없습니다.")
+        logger.info("Gemini 실패 시황의 수치 관측 보완 완료: %s", provider_name)
+        return {
+            "headline": headline[:300],
+            "observation": observation[:600],
+            "interpretation": LIMITED_MARKET_INTERPRETATION,
+            "disclaimer": (
+                f"{provider_name}가 가격·시장 폭·섹터 수익률만 정리한 자동 요약이며 "
+                "뉴스 근거 기반 해석이나 투자 조언이 아닙니다."
+            ),
+            "source_urls": [],
+            "source_titles": [],
+        }
+    except Exception as exc:
+        logger.warning("%s 시황 fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
     return _limited_market_summary(base_market_summary)
 
 

@@ -17,7 +17,7 @@ on:
         type: choice
         options: ['false', 'true']
       nim_probe:
-        description: 'NVIDIA NIM 최소 응답 진단 (파일 생성·이메일 발송 없음)'
+        description: 'NVIDIA NIM GPT-OSS 최소 응답 진단 (파일 생성·이메일 발송 없음)'
         required: false
         default: 'false'
         type: choice
@@ -79,10 +79,7 @@ jobs:
               raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
 
           endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
-          models = [
-              ("Llama 3.3 70B", "meta/llama-3.3-70b-instruct"),
-              ("GPT-OSS 120B", "openai/gpt-oss-120b"),
-          ]
+          models = [("GPT-OSS 120B", "openai/gpt-oss-120b")]
           failures = 0
           for label, model in models:
               started = time.monotonic()

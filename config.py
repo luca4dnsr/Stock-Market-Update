@@ -41,16 +41,15 @@ BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
 # ── AI 인사이트 공급자 우선순위 ───────────────────────────
-# 1) Gemini Google Search  2) NVIDIA NIM Llama 3.3 70B  3) NVIDIA NIM GPT-OSS
+# 1) Gemini Google Search  2) NVIDIA NIM GPT-OSS  3) 규칙 기반 제한 문구
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODEL = "gemini-3.6-flash"
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-NIM_LLAMA_MODEL = "meta/llama-3.3-70b-instruct"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v6-gemini36-llama-gptoss"
+AI_INSIGHTS_CACHE_VERSION = "v7-gemini36-gptoss-rules"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_SEARCH_BATCH_SIZE = 4
 GEMINI_GROUNDING_TIMEOUT_SEC = 120
@@ -58,7 +57,8 @@ NEWS_WINDOW_DAYS_BEFORE = 2
 NEWS_WINDOW_DAYS_AFTER = 1
 MARKET_MIN_GROUNDED_SOURCES = 3
 MARKET_MAX_GROUNDED_SOURCES = 5
-NIM_INSIGHTS_MAX_TOKENS = 2500
+# 사업 설명 4건 또는 시황 수치 관측만 생성하므로 과도한 출력 대기를 막는다.
+NIM_INSIGHTS_MAX_TOKENS = 700
 NIM_INSIGHTS_BATCH_SIZE = 8
 NIM_CONNECT_TIMEOUT_SEC = 10
 NIM_READ_TIMEOUT_SEC = 60
