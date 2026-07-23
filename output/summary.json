@@ -1,48 +1,48 @@
 {
-  "data_date": "2026-07-21",
-  "advances": 225,
-  "declines": 266,
+  "data_date": "2026-07-23",
+  "advances": 209,
+  "declines": 286,
   "total": 503,
   "top3": [
     {
-      "ticker": "SNDK",
-      "name": "Sandisk",
-      "return_1d": 14.3
+      "ticker": "LMT",
+      "name": "Lockheed Martin",
+      "return_1d": 10.5
     },
     {
-      "ticker": "WDC",
-      "name": "Western Digital",
-      "return_1d": 12.5
+      "ticker": "ALLE",
+      "name": "Allegion",
+      "return_1d": 10.4
     },
     {
-      "ticker": "MU",
-      "name": "Micron Technology",
-      "return_1d": 12.2
+      "ticker": "URI",
+      "name": "United Rentals",
+      "return_1d": 10.1
     }
   ],
   "bot3": [
     {
-      "ticker": "DHR",
-      "name": "Danaher Corporation",
-      "return_1d": -11.0
+      "ticker": "TSLA",
+      "name": "Tesla, Inc.",
+      "return_1d": -14.5
     },
     {
-      "ticker": "MSCI",
-      "name": "MSCI Inc.",
-      "return_1d": -10.1
+      "ticker": "TMUS",
+      "name": "T-Mobile US",
+      "return_1d": -10.7
     },
     {
-      "ticker": "TYL",
-      "name": "Tyler Technologies",
-      "return_1d": -5.7
+      "ticker": "ROL",
+      "name": "Rollins, Inc.",
+      "return_1d": -9.3
     }
   ],
-  "excel_name": "SPX_daily_20260721.xlsx",
+  "excel_name": "SPX_daily_20260723.xlsx",
   "market_summary": {
-    "headline": "상승·하락 종목이 엇갈린 혼조 흐름",
-    "observation": "상승 225개·하락 266개로 상승 비율은 46%였습니다. 강세 섹터는 Information Technology +2.5%, Energy +1.2%, 약세 섹터는 Consumer Staples -1.1%, Communication Services -1.1%였습니다. 개별 종목 중 SNDK(+14.3%)가 가장 강했고, DHR(-11.0%)가 가장 약했습니다.",
+    "headline": "하락 종목이 다소 우세한 약한 위험 회피 흐름",
+    "observation": "전체 495개 종목 중 상승 209개(42%), 하락 286개로 하락 비율이 높았습니다. 강세 섹터는 Industrials +1.8%, Health Care +1.4%였으며, 약세 섹터는 Communication Services -5.9%, Consumer Discretionary -5.3%를 기록했습니다. 개별 종목 중 LMT가 +10.5%로 가장 큰 상승을 보였고, TSLA는 -14.5%로 가장 큰 하락을 보였습니다.",
     "interpretation": "당일 전후 시황 기사 3건 이상을 검증하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
-    "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
+    "disclaimer": "NVIDIA NIM GPT-OSS 120B가 가격·시장 폭·섹터 수익률만 정리한 자동 요약이며 뉴스 근거 기반 해석이나 투자 조언이 아닙니다.",
     "source_urls": [],
     "source_titles": []
   }
