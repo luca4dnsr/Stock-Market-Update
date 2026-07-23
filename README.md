@@ -11,7 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
-| 🤖 **한글 AI 인사이트** | Gemini 3.6 Flash → GPT-OSS → 규칙 기반 문구 순으로 한글 요약 생성 |
+| 🤖 **한글 AI 인사이트** | Yahoo Finance + Finnhub 뉴스 → Gemini 3.6 Flash → GPT-OSS → 규칙 기반 문구 |
 
 ---
 
@@ -67,14 +67,15 @@ git push -u origin main
 
 `Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
 
-- `GEMINI_API_KEY` — Google AI Studio의 `gemini-3.6-flash` 및 Google Search Grounding에 사용
+- `GEMINI_API_KEY` — Google AI Studio의 `gemini-3.6-flash`에 사용
+- `FINNHUB_API_KEY` — Finnhub의 종목별·시장 전체 뉴스에 사용
 - `NVIDIA_API_KEY` — NVIDIA NIM의 `openai/gpt-oss-120b`에 사용
 
-실행 순서는 **Gemini 3.6 Flash → NVIDIA NIM GPT-OSS 120B → 규칙 기반 제한 문구**입니다. 주가·기업 기본정보·Yahoo Finance 헤드라인은 기존처럼 유지합니다. Gemini는 상승 20개·하락 20개 종목을 4개씩 나눠 별도 Google Search로 확인합니다. 종목의 등락 이유는 거래일 전 2일~후 1일 사이에 발행된, 해당 기업을 직접 언급하는 기사·공시가 실제 검색 결과 URL로 검증될 때만 작성합니다. 근거가 부족하면 `당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
+주가·시가총액·섹터·기업 기본 설명과 상승·하락 Top 20 선정은 **Yahoo Finance**를 유지합니다. 뉴스는 **Finnhub**만 사용합니다. 상승 20개·하락 20개 종목마다 거래일 전 2일~후 1일의 `company-news`를 받고, 시장 전체는 `general news`를 받습니다. Gemini는 웹 검색 없이 이 기사 제목·요약·발행 시각·URL만 한국어로 해석합니다. Finnhub 기사 ID·발행일·관련 티커가 코드 검증을 통과한 경우에만 종목 등락 이유를 작성하며, 근거가 부족하면 `당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
 
-GPT-OSS는 Google Search Grounding이 없으므로 Gemini가 실패했을 때 **사업 설명과 가격·섹터 기반 관측만** 보완합니다. GPT-OSS도 실패하면 규칙 기반 문구를 표시하며, 어느 경우에도 검증되지 않은 뉴스성 등락 이유나 시황 인과관계를 만들지 않습니다.
+실행 순서는 **Gemini 3.6 Flash → NVIDIA NIM GPT-OSS 120B → 규칙 기반 제한 문구**입니다. GPT-OSS는 Gemini가 실패했을 때 사업 설명과 가격·섹터 기반 관측만 보완합니다. GPT-OSS도 실패하면 규칙 기반 문구를 표시하며, 어느 경우에도 검증되지 않은 뉴스성 등락 이유나 시황 인과관계를 만들지 않습니다.
 
-시황 요약은 별도 검색으로 검증된 당일 전후 기사 3~5건이 있어야 해석을 채택하며, 대시보드와 Excel에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
+시황 요약은 Finnhub 일반 시장 기사 중 거래일 창을 통과한 서로 다른 기사 3~5건이 있어야 해석을 채택하며, 대시보드와 Excel에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
 
 #### ③ 자동 실행 확인
 
@@ -94,7 +95,7 @@ GPT-OSS는 Google Search Grounding이 없으므로 Gemini가 실패했을 때 **
 ├── ranker.py          # 상위/하위 종목 정렬
 ├── excel_writer.py    # Excel 파일 생성 (openpyxl)
 ├── dashboard.py       # HTML 대시보드 생성
-├── ai_insights.py     # Gemini → GPT-OSS → 규칙 기반 인사이트·뉴스 검증
+├── ai_insights.py     # Yahoo Finance + Finnhub → Gemini → GPT-OSS → 규칙 기반 검증
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
 ├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
@@ -136,6 +137,6 @@ MIN_PRICE_COVERAGE = 0.98  # 최소 주가 수집 비율
 - **주가 데이터**: [yfinance](https://github.com/ranaroussi/yfinance) (Yahoo Finance 비공식 API)
 - **S&P 500 구성종목**: [Wikipedia](https://en.wikipedia.org/wiki/List_of_S%26P_500_companies)
 - **섹터 분류**: GICS (Global Industry Classification Standard)
-- **등락 이유·시황 뉴스**: Gemini Google Search Grounding (대시보드·Excel에 검증된 기사 URL 표시)
+- **등락 이유·시황 뉴스**: Finnhub 뉴스 API + Gemini 해석 (대시보드·Excel에 검증된 기사 URL 표시)
 
 > ⚠️ yfinance는 비공식 API로, 대량 요청 시 일시적으로 제한될 수 있습니다.

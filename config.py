@@ -41,25 +41,33 @@ BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
 # ── AI 인사이트 공급자 우선순위 ───────────────────────────
-# 1) Gemini Google Search  2) NVIDIA NIM GPT-OSS  3) 규칙 기반 제한 문구
+# 1) Gemini (Finnhub 기사 해석)  2) NVIDIA NIM GPT-OSS  3) 규칙 기반 제한 문구
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_MODEL = "gemini-3.6-flash"
+
+# Yahoo Finance는 주가·기업 기본정보를 유지하고, 뉴스 근거는 Finnhub에서만 받는다.
+FINNHUB_API_BASE_URL = "https://finnhub.io/api/v1"
+FINNHUB_REQUEST_TIMEOUT_SEC = 25
+# 무료 키의 호출량을 보수적으로 관리한다. 상·하위 40종목 조회는 약 40초가 걸린다.
+FINNHUB_NEWS_REQUEST_DELAY_SEC = 1.0
+FINNHUB_NEWS_MAX_PER_TICKER = 3
+FINNHUB_MARKET_NEWS_CATEGORY = "general"
+FINNHUB_MARKET_NEWS_MAX_INPUT = 20
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v7-gemini36-gptoss-rules"
+AI_INSIGHTS_CACHE_VERSION = "v8-yahoo-finnhub-gemini-gptoss-rules"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
-GEMINI_SEARCH_BATCH_SIZE = 4
-GEMINI_GROUNDING_TIMEOUT_SEC = 120
+GEMINI_INSIGHTS_BATCH_SIZE = 4
+GEMINI_INSIGHTS_TIMEOUT_SEC = 120
 NEWS_WINDOW_DAYS_BEFORE = 2
 NEWS_WINDOW_DAYS_AFTER = 1
-MARKET_MIN_GROUNDED_SOURCES = 3
-MARKET_MAX_GROUNDED_SOURCES = 5
+MARKET_MIN_NEWS_SOURCES = 3
+MARKET_MAX_NEWS_SOURCES = 5
 # 사업 설명 4건 또는 시황 수치 관측만 생성하므로 과도한 출력 대기를 막는다.
 NIM_INSIGHTS_MAX_TOKENS = 700
-NIM_INSIGHTS_BATCH_SIZE = 8
 NIM_CONNECT_TIMEOUT_SEC = 10
 NIM_READ_TIMEOUT_SEC = 60
 

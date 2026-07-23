@@ -115,7 +115,7 @@ def _build_sector_tiles(sector_df: pd.DataFrame) -> str:
 
 
 def _build_market_summary_html(market_summary: dict) -> str:
-    """검증된 시황 요약과 Google Search 근거를 안전한 HTML로 만든다."""
+    """검증된 시황 요약과 Finnhub 기사 근거를 안전한 HTML로 만든다."""
     links = []
     for title, url in zip(
         market_summary.get("source_titles", []), market_summary.get("source_urls", [])
