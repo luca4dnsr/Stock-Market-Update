@@ -1,45 +1,45 @@
 {
-  "data_date": "2026-07-23",
-  "advances": 209,
-  "declines": 286,
+  "data_date": "2026-07-24",
+  "advances": 357,
+  "declines": 136,
   "total": 503,
   "top3": [
     {
-      "ticker": "LMT",
-      "name": "Lockheed Martin",
-      "return_1d": 10.5
+      "ticker": "IP",
+      "name": "International Paper",
+      "return_1d": 11.2
     },
     {
-      "ticker": "ALLE",
-      "name": "Allegion",
-      "return_1d": 10.4
+      "ticker": "SW",
+      "name": "Smurfit Westrock",
+      "return_1d": 11.1
     },
     {
-      "ticker": "URI",
-      "name": "United Rentals",
-      "return_1d": 10.1
+      "ticker": "SLB",
+      "name": "Schlumberger",
+      "return_1d": 11.0
     }
   ],
   "bot3": [
     {
-      "ticker": "TSLA",
-      "name": "Tesla, Inc.",
-      "return_1d": -14.5
+      "ticker": "SNDK",
+      "name": "Sandisk",
+      "return_1d": -10.8
     },
     {
-      "ticker": "TMUS",
-      "name": "T-Mobile US",
-      "return_1d": -10.7
+      "ticker": "COHR",
+      "name": "Coherent Corp.",
+      "return_1d": -9.8
     },
     {
-      "ticker": "ROL",
-      "name": "Rollins, Inc.",
-      "return_1d": -9.3
+      "ticker": "CHRW",
+      "name": "C.H. Robinson",
+      "return_1d": -9.2
     }
   ],
   "market_summary": {
-    "headline": "하락 종목이 다소 우세한 약한 위험회피 흐름",
-    "observation": "상승 209개·하락 286개로 상승 비율은 42%였습니다. 강세 섹터는 Industrials +1.8%, Health Care +1.4%, 약세 섹터는 Communication Services -5.9%, Consumer Discretionary -5.4%였습니다. 개별 종목 중 LMT(+10.5%)가 가장 강했고, TSLA(-14.5%)가 가장 약했습니다.",
+    "headline": "상승 종목이 시장 전반으로 확산된 강한 위험선호 흐름",
+    "observation": "상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate +2.4%, Materials +1.5%, 약세 섹터는 Information Technology -0.8%, Consumer Discretionary +0.0%였습니다. 개별 종목 중 IP(+11.2%)가 가장 강했고, SNDK(-10.8%)가 가장 약했습니다.",
     "interpretation": "최근 한 달 내 시황 기사 3건 이상을 코드 기준으로 확인하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
     "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [],
