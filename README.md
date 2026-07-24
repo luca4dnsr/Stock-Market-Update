@@ -1,12 +1,11 @@
 # 📈 SPX Daily Monitor
 
-S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 자동으로 Excel + HTML 보고서를 생성합니다.
+S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 최신 HTML 대시보드를 생성·배포합니다.
 
 ## 기능
 
 | 기능 | 설명 |
 |------|------|
-| 📊 **Excel 자동 생성** | 원본 레이아웃(섹터표 + SPX 타이틀 + 상/하위 종목표) 재현 |
 | 🌐 **HTML 대시보드** | 프리미엄 다크모드, 섹터 히트맵, 정렬 가능한 테이블 |
 | ⏰ **GitHub Actions 자동화** | 평일 미국 장 마감 후 자동 실행 (KST 기준 다음날 오전 7시) |
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
@@ -35,7 +34,7 @@ pip install -r requirements.txt
 ### 3. 로컬 실행
 
 ```bash
-# 정상 실행 (output/ 에 Excel + HTML 생성)
+# 정상 실행 (output/ 에 HTML 대시보드와 요약 JSON 생성)
 python main.py
 
 # 데이터 수집만 테스트 (파일 미생성)
@@ -75,7 +74,7 @@ git push -u origin main
 
 실행 순서는 **Gemini 3.6 Flash → NVIDIA NIM GPT-OSS 120B → 규칙 기반 제한 문구**입니다. Gemini가 JSON 형식 오류 등으로 실패하면 GPT-OSS도 동일하게 코드가 확정한 Finnhub 기사와 시장 수치를 받아 사업·등락 이유·시황 해석을 작성합니다. GPT-OSS는 JSON mode를 요청하며, 둘 다 실패할 때만 규칙 기반 문구를 표시합니다. 어느 경우에도 검증되지 않은 뉴스성 등락 이유나 시황 인과관계를 만들지 않습니다.
 
-시황 요약은 Finnhub 일반 시장 기사 중 코드가 관련성·최신성·출처 분산 기준으로 확정한 서로 다른 기사 3~5건이 있어야 해석을 채택하며, 대시보드와 Excel에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
+시황 요약은 Finnhub 일반 시장 기사 중 코드가 관련성·최신성·출처 분산 기준으로 확정한 서로 다른 기사 3~5건이 있어야 해석을 채택하며, 대시보드에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
 
 #### ③ 자동 실행 확인
 
@@ -93,13 +92,12 @@ git push -u origin main
 ├── fetcher.py         # S&P 500 구성종목 + 주가 + 시가총액 수집
 ├── calculator.py      # 수익률 / 섹터 집계 / 시장 폭 계산
 ├── ranker.py          # 상위/하위 종목 정렬
-├── excel_writer.py    # Excel 파일 생성 (openpyxl)
 ├── dashboard.py       # HTML 대시보드 생성
 ├── ai_insights.py     # Yahoo Finance + Finnhub → Gemini → GPT-OSS → 규칙 기반 검증
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
 ├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
-├── output/            # 생성된 Excel + HTML (Actions이 커밋)
+├── output/            # 생성된 HTML + 요약 JSON (Actions이 커밋)
 ├── docs/              # GitHub Pages용 HTML (Actions이 관리)
 ├── logs/              # 실행 로그 (gitignored)
 └── .github/
@@ -137,6 +135,6 @@ MIN_PRICE_COVERAGE = 0.98  # 최소 주가 수집 비율
 - **주가 데이터**: [yfinance](https://github.com/ranaroussi/yfinance) (Yahoo Finance 비공식 API)
 - **S&P 500 구성종목**: [Wikipedia](https://en.wikipedia.org/wiki/List_of_S%26P_500_companies)
 - **섹터 분류**: GICS (Global Industry Classification Standard)
-- **등락 이유·시황 뉴스**: Finnhub 뉴스 API + Gemini 해석 (대시보드·Excel에 검증된 기사 URL 표시)
+- **등락 이유·시황 뉴스**: Finnhub 뉴스 API + Gemini 해석 (대시보드에 검증된 기사 URL 표시)
 
 > ⚠️ yfinance는 비공식 API로, 대량 요청 시 일시적으로 제한될 수 있습니다.

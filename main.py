@@ -5,7 +5,7 @@ main.py — SPX 일간 등락률 자동화 파이프라인 진입점
 import argparse
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -23,7 +23,6 @@ from ranker import get_top_bottom
 from company_profiles import add_business_summaries
 from market_summary import build_market_summary
 from ai_insights import enrich_with_ai
-from excel_writer import write_excel
 from dashboard import generate_html
 
 
@@ -77,13 +76,6 @@ def run(dry_run: bool = False, verbose: bool = False):
         advances, declines = count_advances_declines(master_df)
         data_date = get_data_date(master_df)
 
-        # 전일 날짜 추정 (표시용)
-        try:
-            dt = datetime.strptime(data_date, "%Y-%m-%d")
-            prev_date = (dt - timedelta(days=1)).strftime("%Y-%m-%d")
-        except (ValueError, TypeError):
-            prev_date = ""
-
         # Step 5: 정렬
         logger.info("[5/5] 종목 정렬 중...")
         top_df, bottom_df = get_top_bottom(master_df)
@@ -114,16 +106,6 @@ def run(dry_run: bool = False, verbose: bool = False):
         date_tag = data_date.replace("-", "") if data_date else datetime.now().strftime("%Y%m%d")
         generated_at = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
 
-        excel_path = OUTPUT_DIR / f"SPX_daily_{date_tag}.xlsx"
-        write_excel(
-            top_df, bottom_df, sector_df,
-            advances, declines,
-            excel_path,
-            data_date=data_date,
-            prev_date=prev_date,
-            market_summary=market_summary,
-        )
-
         html_path = OUTPUT_DIR / f"SPX_daily_{date_tag}.html"
         generate_html(
             top_df, bottom_df, sector_df, master_df,
@@ -134,7 +116,7 @@ def run(dry_run: bool = False, verbose: bool = False):
             market_summary=market_summary,
         )
 
-        # ── 이메일용 요약 JSON 저장 ──
+        # ── 대시보드·이메일용 요약 JSON 저장 ──
         import json
         summary = {
             "data_date":  data_date,
@@ -143,7 +125,6 @@ def run(dry_run: bool = False, verbose: bool = False):
             "total":      len(master_df),
             "top3":  top_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
             "bot3":  bottom_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
-            "excel_name": excel_path.name,
             "market_summary": market_summary,
         }
         (OUTPUT_DIR / "summary.json").write_text(
@@ -155,7 +136,6 @@ def run(dry_run: bool = False, verbose: bool = False):
         elapsed = (datetime.now() - t0).total_seconds()
         logger.info("=" * 55)
         logger.info("  완료 in %.1f초", elapsed)
-        logger.info("  📊 Excel : %s", excel_path)
         logger.info("  🌐 HTML  : %s", html_path)
         logger.info("=" * 55)
 

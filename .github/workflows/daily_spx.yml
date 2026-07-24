@@ -34,13 +34,13 @@ jobs:
     steps:
       # ── 1. 코드 체크아웃 ──────────────────────────────────
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── 2. Python 설정 ────────────────────────────────────
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -48,7 +48,7 @@ jobs:
       # 캐시는 7일 유효한 구성종목 CSV를 다음 실행에 복원한다.
       # 매 실행마다 고유 키를 저장하고, 최신 캐시를 prefix로 복원한다.
       - name: Restore S&P 500 components cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: cache/
           key: spx-components-${{ runner.os }}-${{ github.run_id }}
@@ -142,13 +142,15 @@ jobs:
             echo "GitHub Pages: $LATEST → docs/index.html"
           fi
 
-      # ── 6. 생성 파일을 Actions Artifact로 업로드 ─────────
-      - name: Upload output as artifact
+      # ── 6. 최신 웹 대시보드를 Actions Artifact로 업로드 ───
+      - name: Upload dashboard as artifact
         if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: spx-daily-${{ github.run_number }}
-          path: output/
+          name: spx-dashboard-${{ github.run_number }}
+          path: |
+            output/summary.json
+            docs/index.html
           retention-days: 30    # 30일 보관 후 자동 삭제
 
       # ── 7. output/ + docs/ 를 저장소에 커밋 ──────────────
@@ -251,7 +253,7 @@ jobs:
             <!-- 푸터 -->
             <div style="background:#f9fafb;padding:16px 32px;border-radius:0 0 12px 12px;border-top:1px solid #e5e7eb">
               <p style="margin:0;font-size:12px;color:#9ca3af">
-                📎 전체 데이터는 첨부된 <b>Excel 파일</b>을 확인하세요.<br>
+                🌐 최신 전체 결과는 웹 대시보드에서 확인하세요.<br>
                 자동 생성: SPX Daily Monitor (GitHub Actions)
               </p>
             </div>
@@ -267,9 +269,7 @@ jobs:
         if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
         run: |
           REPORT_DATE=$(python3 -c "import json; print(json.load(open('output/summary.json'))['data_date'])")
-          REPORT_EXCEL=$(python3 -c "import json; print(json.load(open('output/summary.json'))['excel_name'])")
           echo "REPORT_DATE=${REPORT_DATE}" >> "$GITHUB_ENV"
-          echo "REPORT_EXCEL=output/${REPORT_EXCEL}" >> "$GITHUB_ENV"
 
       # ── 9. 이메일 발송 ────────────────────────────────────
       # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO 등록
@@ -277,7 +277,7 @@ jobs:
       - name: Send email report
         if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
         continue-on-error: true   # 이메일 미설정 시에도 워크플로우 실패 X
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v18
         with:
           server_address: smtp.naver.com
           server_port: 465
@@ -288,7 +288,6 @@ jobs:
           html_body: file://output/email_body.html
           to: ${{ secrets.EMAIL_TO }}
           from: "SPX Daily Monitor <${{ secrets.EMAIL_USERNAME }}>"
-          attachments: ${{ env.REPORT_EXCEL }}
 
       # ── 10. 실행 요약 ─────────────────────────────────────
       - name: Summary
@@ -302,7 +301,6 @@ jobs:
           echo "| 실행 번호 | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Dry Run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| NIM Probe | ${{ github.event.inputs.nim_probe || 'false' }} |" >> $GITHUB_STEP_SUMMARY
-          if ls output/SPX_daily_*.xlsx 1>/dev/null 2>&1; then
-            echo "| Excel 생성 | ✅ |" >> $GITHUB_STEP_SUMMARY
-            echo "| HTML 생성  | ✅ |" >> $GITHUB_STEP_SUMMARY
+          if [ -f docs/index.html ]; then
+            echo "| 웹 대시보드 생성 | ✅ |" >> $GITHUB_STEP_SUMMARY
           fi

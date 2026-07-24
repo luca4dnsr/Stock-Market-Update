@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -128,6 +129,38 @@ MARKET_RELEVANCE_KEYWORDS = {
 }
 MARKET_PROXY_TICKERS = {"SPY", "QQQ", "DIA", "IWM", "VIX", "^GSPC", "^IXIC", "^DJI"}
 
+# 종목 뉴스는 직접 관련 티커 조건을 먼저 통과한 기사 안에서, 실제 등락 촉매를 우선한다.
+COMPANY_CATALYST_KEYWORDS = {
+    "earnings": 8,
+    "quarterly results": 8,
+    "revenue": 5,
+    "profit": 5,
+    "eps": 5,
+    "guidance": 8,
+    "outlook": 5,
+    "forecast": 4,
+    "contract": 7,
+    "agreement": 6,
+    "order": 5,
+    "award": 5,
+    "partnership": 5,
+    "merger": 8,
+    "acquisition": 8,
+    "acquire": 6,
+    "takeover": 7,
+    "regulatory": 6,
+    "regulation": 5,
+    "fda": 8,
+    "approval": 6,
+    "antitrust": 5,
+    "investigation": 4,
+    "product launch": 5,
+    "clinical trial": 6,
+    "recall": 5,
+    "buyback": 5,
+    "dividend": 4,
+}
+
 
 def _load_cache() -> dict:
     try:
@@ -142,6 +175,41 @@ def _save_cache(cache: dict) -> None:
     )
 
 
+def _json_has_unclosed_string(value: str) -> bool:
+    escaped = False
+    in_string = False
+    for char in value:
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == '"':
+            in_string = not in_string
+    return in_string
+
+
+def _repair_json_syntax(value: str) -> str | None:
+    """모델이 만든 완결된 내용의 흔한 문법 오류만 보수적으로 고친다."""
+    if _json_has_unclosed_string(value):
+        return None
+
+    repaired = re.sub(r",\s*([}\]])", r"\1", value)
+    # 배열에서 객체·배열 항목 사이의 쉼표 누락만 보완한다.
+    repaired = re.sub(r"([}\]])(\s*)(?=[{\[])", r"\1,\2", repaired)
+
+    stack: list[str] = []
+    for char in repaired:
+        if char in "{[":
+            stack.append(char)
+        elif char == "}":
+            if not stack or stack.pop() != "{":
+                return None
+        elif char == "]":
+            if not stack or stack.pop() != "[":
+                return None
+    return repaired + "".join("}" if opener == "{" else "]" for opener in reversed(stack))
+
+
 def _parse_json(content: str | dict) -> dict:
     if isinstance(content, dict):
         return content
@@ -149,7 +217,19 @@ def _parse_json(content: str | dict) -> dict:
     start, end = cleaned.find("{"), cleaned.rfind("}")
     if start < 0 or end < start:
         raise ValueError("AI 응답에서 JSON 객체를 찾지 못했습니다.")
-    return json.loads(cleaned[start : end + 1])
+    candidate = cleaned[start : end + 1]
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError as original_error:
+        repaired = _repair_json_syntax(candidate)
+        if not repaired:
+            raise original_error
+        try:
+            parsed = json.loads(repaired)
+        except json.JSONDecodeError:
+            raise original_error
+        logger.info("AI JSON 문법 복구 성공: 쉼표·괄호 오류를 보정했습니다.")
+        return parsed
 
 
 def _chunked(items: list[dict], chunk_size: int) -> list[list[dict]]:
@@ -200,9 +280,20 @@ def _published_in_new_york(raw_timestamp) -> tuple[datetime, date] | None:
     return published_at, published_at.date()
 
 
+def _company_catalyst_score(article: dict) -> int:
+    """기사 제목의 촉매 신호를 요약보다 높게 반영한다."""
+    headline = str(article.get("headline", "")).lower()
+    summary = str(article.get("summary", "")).lower()
+    return sum(
+        weight * (2 if keyword in headline else 0) + weight * (keyword in summary)
+        for keyword, weight in COMPANY_CATALYST_KEYWORDS.items()
+    )
+
+
 def _normalise_company_articles(
     ticker: str, raw_items: list[dict], start: date, end: date
-) -> list[dict]:
+) -> tuple[list[dict], int]:
+    """날짜·URL·관련 티커를 통과한 기사와 필터 통과 총건수를 반환한다."""
     expected_ticker = _canonical_ticker(ticker)
     articles: list[dict] = []
     seen_ids: set[str] = set()
@@ -244,13 +335,19 @@ def _normalise_company_articles(
                 "related": related,
             }
         )
-    articles.sort(key=lambda item: item["published_at"], reverse=True)
-    return articles[:FINNHUB_NEWS_MAX_PER_TICKER]
+    # 점수가 같으면 최신 기사를 우선한다. 촉매 신호가 없을 때만 기존 최신순과 같다.
+    articles.sort(
+        key=lambda item: (_company_catalyst_score(item), item["published_at"]), reverse=True
+    )
+    return articles[:FINNHUB_NEWS_MAX_PER_TICKER], len(articles)
 
 
-def _collect_company_news(tickers: list[str], start: date, end: date) -> dict[str, list[dict]]:
+def _collect_company_news(
+    tickers: list[str], start: date, end: date
+) -> tuple[dict[str, list[dict]], dict[str, dict]]:
     """무료 API의 예측 가능한 요청량을 위해 종목 뉴스를 순차 수집한다."""
     result: dict[str, list[dict]] = {}
+    diagnostics: dict[str, dict] = {}
     for index, ticker in enumerate(tickers):
         if index:
             time.sleep(FINNHUB_NEWS_REQUEST_DELAY_SEC)
@@ -263,13 +360,27 @@ def _collect_company_news(tickers: list[str], start: date, end: date) -> dict[st
                     "to": end.isoformat(),
                 },
             )
-            result[ticker] = _normalise_company_articles(
-                ticker, raw_items if isinstance(raw_items, list) else [], start, end
+            raw_articles = raw_items if isinstance(raw_items, list) else []
+            selected_articles, passed_count = _normalise_company_articles(
+                ticker, raw_articles, start, end
             )
+            result[ticker] = selected_articles
+            diagnostics[ticker] = {
+                "finnhub_collected": len(raw_articles),
+                "finnhub_filter_passed": passed_count,
+                "finnhub_selected": len(selected_articles),
+                "finnhub_status": "ok",
+            }
         except Exception as exc:
             logger.warning("Finnhub 종목 뉴스 조회 실패 (%s): %s", ticker, exc)
             result[ticker] = []
-    return result
+            diagnostics[ticker] = {
+                "finnhub_collected": 0,
+                "finnhub_filter_passed": 0,
+                "finnhub_selected": 0,
+                "finnhub_status": f"error:{type(exc).__name__}",
+            }
+    return result, diagnostics
 
 
 def _normalise_market_articles(raw_items: list[dict], start: date, end: date) -> list[dict]:
@@ -420,7 +531,7 @@ def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
         "generationConfig": {
             "maxOutputTokens": GEMINI_INSIGHTS_MAX_TOKENS,
             "responseFormat": {
-                "text": {"mimeType": "APPLICATION_JSON", "schema": response_schema}
+                "text": {"mimeType": "application/json", "schema": response_schema}
             },
         },
     }
@@ -435,14 +546,20 @@ def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
     candidates = response.json().get("candidates", [])
     if not candidates:
         raise ValueError("Gemini 응답에 후보가 없습니다.")
+    candidate = candidates[0]
+    finish_reason = str(candidate.get("finishReason", "UNKNOWN"))
     content = "".join(
         str(part.get("text", ""))
-        for part in candidates[0].get("content", {}).get("parts", [])
+        for part in candidate.get("content", {}).get("parts", [])
     )
     try:
         return _parse_json(content)
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
-        logger.warning("Gemini JSON 파싱 실패 원문 일부: %r", content[:500])
+        logger.warning(
+            "Gemini JSON 파싱 실패 | finishReason=%s | 원문 일부: %r",
+            finish_reason,
+            content[:500],
+        )
         raise ValueError(f"Gemini JSON 파싱 실패: {exc}") from exc
 
 
@@ -581,21 +698,77 @@ def _normalise_stock_batch(
         raw = received.get(ticker, {})
         business = str(raw.get("business_ko", "")).strip() or _business_fallback(source_item)
         sources = source_item.get("selected_finnhub_articles", [])
+        raw_evidence_status = str(raw.get("evidence_status", "")).strip()
+        raw_move_reason = str(raw.get("move_reason_ko", "")).strip()
         is_verified = (
-            raw.get("evidence_status") == "verified"
+            raw_evidence_status == "verified"
             and bool(sources)
-            and bool(str(raw.get("move_reason_ko", "")).strip())
+            and bool(raw_move_reason)
         )
+        if not raw:
+            model_verdict = "missing_item"
+        elif is_verified:
+            model_verdict = "verified"
+        elif raw_evidence_status == "verified":
+            model_verdict = "invalid_verified_response"
+        elif raw_evidence_status == "limited":
+            model_verdict = "limited"
+        else:
+            model_verdict = "invalid_evidence_status"
         entries[ticker] = {
             "business_summary": business[:140],
-            "move_reason": str(raw.get("move_reason_ko", "")).strip()[:280]
-            if is_verified
-            else LIMITED_REASON,
+            "move_reason": raw_move_reason[:280] if is_verified else LIMITED_REASON,
             "source_urls": [source["url"] for source in sources] if is_verified else [],
             "source_titles": [source["headline"] for source in sources] if is_verified else [],
             "provider": provider_name if is_verified else f"{provider_name} (Finnhub 근거 부족)",
+            "model_verdict": model_verdict,
         }
     return entries
+
+
+def _require_complete_stock_response(generated: dict, expected_items: list[dict]) -> None:
+    """문법만 복구된 부분 응답이 결과를 덮어쓰지 못하게 막는다."""
+    expected_tickers = {str(item["ticker"]) for item in expected_items}
+    received = {
+        str(item.get("ticker", "")).strip(): item
+        for item in generated.get("items", [])
+        if isinstance(item, dict) and str(item.get("ticker", "")).strip() in expected_tickers
+    }
+    if set(received) != expected_tickers:
+        missing = ", ".join(sorted(expected_tickers - set(received)))
+        raise ValueError(f"AI 응답에 종목이 누락됐습니다: {missing}")
+    for ticker, item in received.items():
+        if not str(item.get("business_ko", "")).strip():
+            raise ValueError(f"AI 응답에 사업 설명이 없습니다: {ticker}")
+        if str(item.get("evidence_status", "")).strip() not in {"verified", "limited"}:
+            raise ValueError(f"AI 응답의 근거 상태가 올바르지 않습니다: {ticker}")
+
+
+def _log_stock_diagnostic(
+    ticker: str,
+    diagnostic: dict,
+    gemini_verdict: str,
+    gpt_fallback: str,
+    *,
+    cache_hit: bool = False,
+) -> None:
+    """종목별 뉴스 수집·판정 경로를 Actions 로그 한 줄로 남긴다."""
+    collected = diagnostic.get("finnhub_collected", "-")
+    passed = diagnostic.get("finnhub_filter_passed", "-")
+    selected = diagnostic.get("finnhub_selected", "-")
+    finnhub_status = diagnostic.get("finnhub_status", "unknown")
+    logger.info(
+        "종목 뉴스 진단 | ticker=%s | cache=%s | Finnhub 수집=%s | 필터통과=%s | "
+        "LLM전달=%s | Finnhub=%s | Gemini=%s | GPT fallback=%s",
+        ticker,
+        "hit" if cache_hit else "miss",
+        collected,
+        passed,
+        selected,
+        finnhub_status,
+        gemini_verdict,
+        gpt_fallback,
+    )
 
 
 def _fallback_stock_entries(
@@ -705,10 +878,19 @@ def enrich_with_ai(
 
     if missing:
         try:
-            news_map = _collect_company_news(missing, start, end)
+            news_map, news_diagnostics = _collect_company_news(missing, start, end)
         except Exception as exc:
             logger.warning("Finnhub 종목 뉴스 수집을 시작하지 못했습니다: %s", exc)
             news_map = {ticker: [] for ticker in missing}
+            news_diagnostics = {
+                ticker: {
+                    "finnhub_collected": 0,
+                    "finnhub_filter_passed": 0,
+                    "finnhub_selected": 0,
+                    "finnhub_status": f"collection_error:{type(exc).__name__}",
+                }
+                for ticker in missing
+            }
 
         items = [
             {
@@ -729,9 +911,24 @@ def enrich_with_ai(
                 generated = _request_gemini_json(
                     _stock_prompt(batch, data_date, start, end), STOCK_RESPONSE_SCHEMA
                 )
+                _require_complete_stock_response(generated, batch)
                 entries = _normalise_stock_batch(generated, batch, "Gemini + Finnhub")
                 for ticker, entry in entries.items():
+                    diagnostic = dict(news_diagnostics[ticker])
+                    diagnostic.update(
+                        {
+                            "gemini_verdict": entry["model_verdict"],
+                            "gpt_fallback": "not_used",
+                        }
+                    )
+                    entry["diagnostic"] = diagnostic
                     cache[cache_keys[ticker]] = entry
+                    _log_stock_diagnostic(
+                        ticker,
+                        diagnostic,
+                        diagnostic["gemini_verdict"],
+                        diagnostic["gpt_fallback"],
+                    )
                 _save_cache(cache)
                 verified_count = sum(
                     entry["provider"] == "Gemini + Finnhub" for entry in entries.values()
@@ -749,10 +946,47 @@ def enrich_with_ai(
                     exc,
                 )
                 entries = _fallback_stock_entries(batch, data_date, start, end)
-                for ticker, entry in entries.items():
-                    cache[cache_keys[ticker]] = entry
                 if entries:
+                    for ticker, entry in entries.items():
+                        diagnostic = dict(news_diagnostics[ticker])
+                        diagnostic.update(
+                            {
+                                "gemini_verdict": f"error:{type(exc).__name__}",
+                                "gpt_fallback": f"used:{entry['model_verdict']}",
+                            }
+                        )
+                        entry["diagnostic"] = diagnostic
+                        cache[cache_keys[ticker]] = entry
+                        _log_stock_diagnostic(
+                            ticker,
+                            diagnostic,
+                            diagnostic["gemini_verdict"],
+                            diagnostic["gpt_fallback"],
+                        )
                     _save_cache(cache)
+                else:
+                    for item in batch:
+                        ticker = str(item["ticker"])
+                        diagnostic = news_diagnostics[ticker]
+                        _log_stock_diagnostic(
+                            ticker,
+                            diagnostic,
+                            f"error:{type(exc).__name__}",
+                            "failed",
+                        )
+
+    for ticker in tickers:
+        if ticker in missing:
+            continue
+        entry = cache.get(cache_keys[ticker], {})
+        diagnostic = entry.get("diagnostic", {})
+        _log_stock_diagnostic(
+            ticker,
+            diagnostic,
+            str(diagnostic.get("gemini_verdict", "cached_legacy")),
+            str(diagnostic.get("gpt_fallback", "cached_legacy")),
+            cache_hit=True,
+        )
 
     result["business_summary"] = [
         cache.get(cache_keys[ticker], {}).get("business_summary")

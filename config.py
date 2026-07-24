@@ -60,7 +60,7 @@ NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v9-deterministic-finnhub-sources"
+AI_INSIGHTS_CACHE_VERSION = "v11-catalyst-ranked-finnhub-sources"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120
@@ -72,7 +72,8 @@ MARKET_MAX_NEWS_SOURCES = 5
 # 사업 설명·뉴스 해석을 함께 생성할 수 있도록 여유를 둔다.
 NIM_INSIGHTS_MAX_TOKENS = 1200
 NIM_CONNECT_TIMEOUT_SEC = 10
-NIM_READ_TIMEOUT_SEC = 60
+# GPT-OSS 120B는 혼잡 시 60초를 넘길 수 있어, 전체 워크플로 한도 내에서 120초를 허용한다.
+NIM_READ_TIMEOUT_SEC = 120
 
 # ── 캐시 설정 ──────────────────────────────────────────
 SP500_CACHE_DAYS   = 7     # S&P 500 구성종목 캐시 유효기간(일)
