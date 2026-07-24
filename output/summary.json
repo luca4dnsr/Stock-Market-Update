@@ -39,11 +39,24 @@
   ],
   "excel_name": "SPX_daily_20260723.xlsx",
   "market_summary": {
-    "headline": "하락 종목이 다소 우세한 약한 위험 회피 흐름",
-    "observation": "전체 495개 종목 중 상승 209개(42%), 하락 286개로 하락 비율이 높았습니다. 강세 섹터는 Industrials +1.8%, Health Care +1.4%였으며, 약세 섹터는 Communication Services -5.9%, Consumer Discretionary -5.3%를 기록했습니다. 개별 종목 중 LMT가 +10.5%로 가장 큰 상승을 보였고, TSLA는 -14.5%로 가장 큰 하락을 보였습니다.",
-    "interpretation": "당일 전후 시황 기사 3건 이상을 검증하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
-    "disclaimer": "NVIDIA NIM GPT-OSS 120B가 가격·시장 폭·섹터 수익률만 정리한 자동 요약이며 뉴스 근거 기반 해석이나 투자 조언이 아닙니다.",
-    "source_urls": [],
-    "source_titles": []
+    "headline": "빅테크 현금 소진 우려와 유가 상승 속 하락 우세 시장 흐름",
+    "observation": "상승 209개, 하락 286개로 상승 비율 42%를 기록하며 하락 종목이 다소 우세를 보였습니다. 섹터별로는 산업재(+1.8%)와 헬스케어(+1.4%)가 강세를 나타낸 반면, 커뮤니케이션 서비스(-5.9%)와 경기소비재(-5.4%)는 약세를 보였습니다. 개별 종목 중에서는 LMT(+10.5%)가 가장 큰 폭으로 상승했고, 매출은 예상을 상회했으나 순이익이 시장 전망에 미달한 TSLA(-14.5%)가 가장 큰 하락 폭을 기록했습니다. 주요 보도에 따르면 빅테크의 현금 소진 우려로 주가가 하락하고 유가가 100달러를 돌파했으며, 미-이란 갈등에 따른 유가 상승과 미 국채 수익률 상승, ECB의 에너지 가격 상승 및 인플레이션 우려가 관측되었습니다.",
+    "interpretation": "빅테크 기업들의 현금 소진 우려와 테슬라 등 주요 기업의 실적 이슈, 유가 100달러 돌파 및 인플레이션 지속 전망 등 악재가 겹치며 경기소비재와 커뮤니케이션 서비스 섹터를 중심으로 매도 압력이 나타났습니다. 다만 산업재 및 헬스케어 섹터와 방어적 종목군이 상승세를 나타내며 일방적인 시장 전체 하락보다는 약한 위험회피 양상을 보여주었습니다.",
+    "disclaimer": "Gemini + Finnhub가 코드가 선정한 Finnhub 기사 5건과 시장 수치를 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
+    "source_urls": [
+      "https://www.cnbc.com/2026/07/23/interest-rate-hike-iran-european-central-bank.html",
+      "https://www.cnbc.com/2026/07/23/jim-cramers-top-10-things-to-watch-in-the-stock-market-thursday.html",
+      "https://news.google.com/rss/articles/CBMiowFBVV95cUxOUDZOb0lyeDNtSHo4bVQ4MlJ3RnhPUUR2WmxYT2xqaWRVNFFVNkNUdHBNUUIxWm5kZGpVaVc0SFZicnBmN1F0RWI3RXpqNUpCbjQ3RHhPZEJkTmlaeGI3YXp3MUlSSXN2RGdBZ3dfekVaQzQxbFJzeHhuNU9veGtKMzdidFZ1N2QwbFE3Z3B1VmxoY1VuTUFtU3Rfa09XMlRMWl9B?oc=5",
+      "https://news.google.com/rss/articles/CBMie0FVX3lxTE01ZXA2WXo2VDZMLUZycUVJVDJ3bTlRSnpyUFg0VnRDUkU1OGVtNGVwQTlSYWgwbjlRRE1NS3RJWE0xTlJrekNsZnJEeHAyZlpGSkJCM2R5LU5uMmFTY2gtS3dmVHBhMGRnZ083S3pycEl0OS1jd2g5SngxQQ?oc=5",
+      "https://www.bloomberg.com/news/articles/2026-07-21/yen-slides-past-163-mark-to-fresh-four-decade-low-against-dollar"
+    ],
+    "source_titles": [
+      "Traders see September rate hike as European Central Bank mulls energy price spike",
+      "Jim Cramer's top 10 things to watch in the stock market Thursday",
+      "Wall St ends higher on chip stocks recovery; earnings in focus - Reuters",
+      "Stocks sink on Big Tech cash burn; oil hits $100 for first time since May - Reuters",
+      "Yen slides past 163 mark to fresh 40-year low against US dollar"
+    ],
+    "provider": "Gemini + Finnhub"
   }
 }
