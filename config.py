@@ -52,22 +52,25 @@ FINNHUB_REQUEST_TIMEOUT_SEC = 25
 FINNHUB_NEWS_REQUEST_DELAY_SEC = 1.0
 FINNHUB_NEWS_MAX_PER_TICKER = 3
 FINNHUB_MARKET_NEWS_CATEGORY = "general"
-FINNHUB_MARKET_NEWS_MAX_INPUT = 20
+# /news는 최신 기사만 반환하므로, 매일 받은 기사를 캐시에 누적해 한 달 창을 만든다.
+FINNHUB_MARKET_NEWS_POOL_FILE = CACHE_DIR / "finnhub_market_news.json"
+FINNHUB_MARKET_NEWS_POOL_MAX_ITEMS = 300
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v8-yahoo-finnhub-gemini-gptoss-rules"
+AI_INSIGHTS_CACHE_VERSION = "v9-deterministic-finnhub-sources"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120
-NEWS_WINDOW_DAYS_BEFORE = 2
+# 거래일 30일 전부터 다음 날까지를 확인한다. 시장 전체 뉴스는 롤링 캐시로 누적한다.
+NEWS_WINDOW_DAYS_BEFORE = 30
 NEWS_WINDOW_DAYS_AFTER = 1
 MARKET_MIN_NEWS_SOURCES = 3
 MARKET_MAX_NEWS_SOURCES = 5
-# 사업 설명 4건 또는 시황 수치 관측만 생성하므로 과도한 출력 대기를 막는다.
-NIM_INSIGHTS_MAX_TOKENS = 700
+# 사업 설명·뉴스 해석을 함께 생성할 수 있도록 여유를 둔다.
+NIM_INSIGHTS_MAX_TOKENS = 1200
 NIM_CONNECT_TIMEOUT_SEC = 10
 NIM_READ_TIMEOUT_SEC = 60
 

@@ -62,7 +62,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Validate Python sources
-        run: python -m py_compile *.py
+        run: |
+          python -m py_compile *.py
+          python -m unittest discover -s tests -v
 
       # ── 4. NVIDIA NIM 최소 응답 진단 (수동 실행 전용) ─────
       - name: Probe NVIDIA NIM

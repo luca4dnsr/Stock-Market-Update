@@ -21,7 +21,8 @@ from config import (
     AI_INSIGHTS_CACHE_VERSION,
     FINNHUB_API_BASE_URL,
     FINNHUB_MARKET_NEWS_CATEGORY,
-    FINNHUB_MARKET_NEWS_MAX_INPUT,
+    FINNHUB_MARKET_NEWS_POOL_FILE,
+    FINNHUB_MARKET_NEWS_POOL_MAX_ITEMS,
     FINNHUB_NEWS_MAX_PER_TICKER,
     FINNHUB_NEWS_REQUEST_DELAY_SEC,
     FINNHUB_REQUEST_TIMEOUT_SEC,
@@ -43,16 +44,16 @@ from config import (
 
 logger = logging.getLogger(__name__)
 
-LIMITED_REASON = "당일 전후의 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다."
+LIMITED_REASON = "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다."
 LIMITED_MARKET_INTERPRETATION = (
-    "당일 전후 시황 기사 3건 이상을 검증하지 못했습니다. "
+    "최근 한 달 내 시황 기사 3건 이상을 코드 기준으로 확인하지 못했습니다. "
     "아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다."
 )
 
 SYSTEM_PROMPT = """당신은 미국 주식 리서치 보조자입니다.
 모든 결과를 한국어로 작성하십시오. 제공된 Yahoo Finance 수치·기업 설명과 Finnhub 기사만 사용하십시오.
-웹 검색·외부 지식·기사에 없는 사실을 사용하지 마십시오. 종목 등락 이유는 Finnhub 기사 제목 또는
-요약에 직접 촉매가 명시되고 실제 article_id를 근거로 제시할 수 있을 때만 작성하십시오.
+웹 검색·외부 지식·기사에 없는 사실을 사용하지 마십시오. 코드가 선정해 제공한 Finnhub 기사만
+근거로 사용하십시오. 종목 등락 이유는 기사 제목 또는 요약에 직접 촉매가 명시될 때만 작성하고,
 시장 시황 해석도 제공된 시장 기사 3건 이상에서만 작성하십시오. JSON 외 텍스트를 반환하지 마십시오."""
 
 STOCK_RESPONSE_SCHEMA = {
@@ -70,17 +71,12 @@ STOCK_RESPONSE_SCHEMA = {
                         "type": "STRING",
                         "enum": ["verified", "limited"],
                     },
-                    "source_article_ids": {
-                        "type": "ARRAY",
-                        "items": {"type": "STRING"},
-                    },
                 },
                 "required": [
                     "ticker",
                     "business_ko",
                     "move_reason_ko",
                     "evidence_status",
-                    "source_article_ids",
                 ],
             },
         },
@@ -94,13 +90,43 @@ MARKET_RESPONSE_SCHEMA = {
         "headline": {"type": "STRING"},
         "observation": {"type": "STRING"},
         "interpretation": {"type": "STRING"},
-        "source_article_ids": {
-            "type": "ARRAY",
-            "items": {"type": "STRING"},
-        },
     },
-    "required": ["headline", "observation", "interpretation", "source_article_ids"],
+    "required": ["headline", "observation", "interpretation"],
 }
+
+# Finnhub의 general 뉴스에서 미국 주식시장과 직접 관련된 기사를 코드로 고르기 위한 기준이다.
+# 키워드 점수가 없는 기사는 LLM에 근거 기사로 전달하지 않는다.
+MARKET_RELEVANCE_KEYWORDS = {
+    "s&p 500": 6,
+    "s&p": 4,
+    "nasdaq": 5,
+    "dow jones": 5,
+    "wall street": 5,
+    "stock market": 5,
+    "stocks": 3,
+    "equities": 3,
+    "federal reserve": 6,
+    "interest rate": 5,
+    "rate cut": 5,
+    "rate hike": 5,
+    "treasury": 3,
+    "bond yield": 4,
+    "inflation": 4,
+    "cpi": 5,
+    "pce": 5,
+    "payroll": 4,
+    "jobs report": 4,
+    "unemployment": 3,
+    "earnings": 3,
+    "guidance": 3,
+    "tariff": 3,
+    "trade war": 4,
+    "oil": 2,
+    "crude": 2,
+    "opec": 2,
+    "volatility": 3,
+}
+MARKET_PROXY_TICKERS = {"SPY", "QQQ", "DIA", "IWM", "VIX", "^GSPC", "^IXIC", "^DJI"}
 
 
 def _load_cache() -> dict:
@@ -246,11 +272,11 @@ def _collect_company_news(tickers: list[str], start: date, end: date) -> dict[st
     return result
 
 
-def _collect_market_news(start: date, end: date) -> list[dict]:
-    raw_items = _finnhub_get("news", {"category": FINNHUB_MARKET_NEWS_CATEGORY})
+def _normalise_market_articles(raw_items: list[dict], start: date, end: date) -> list[dict]:
+    """Finnhub general 뉴스 중 날짜·형식 조건을 통과한 기사만 표준화한다."""
     articles: list[dict] = []
     seen_ids: set[str] = set()
-    for raw in raw_items if isinstance(raw_items, list) else []:
+    for raw in raw_items:
         if not isinstance(raw, dict):
             continue
         article_id = str(raw.get("id") or "").strip()
@@ -286,7 +312,101 @@ def _collect_market_news(start: date, end: date) -> list[dict]:
             }
         )
     articles.sort(key=lambda item: item["published_at"], reverse=True)
-    return articles[:FINNHUB_MARKET_NEWS_MAX_INPUT]
+    return articles
+
+
+def _load_market_news_pool() -> list[dict]:
+    try:
+        payload = json.loads(FINNHUB_MARKET_NEWS_POOL_FILE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+    articles = payload.get("articles", []) if isinstance(payload, dict) else []
+    return [article for article in articles if isinstance(article, dict)]
+
+
+def _save_market_news_pool(articles: list[dict]) -> None:
+    FINNHUB_MARKET_NEWS_POOL_FILE.write_text(
+        json.dumps({"articles": articles}, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def _article_date(article: dict) -> date | None:
+    try:
+        return datetime.strptime(str(article.get("published_date", "")), "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
+def _collect_market_news(start: date, end: date) -> list[dict]:
+    """최신 general 뉴스를 한 달 롤링 풀에 합쳐 반환한다.
+
+    Finnhub의 /news 엔드포인트는 날짜 범위 조회가 아니라 최신 뉴스만 제공하므로, Actions cache에
+    매일 확보한 기사를 누적한 뒤 기간 밖 기사를 제거한다.
+    """
+    raw_items = _finnhub_get("news", {"category": FINNHUB_MARKET_NEWS_CATEGORY})
+    fresh = _normalise_market_articles(
+        raw_items if isinstance(raw_items, list) else [], start, end
+    )
+    merged: dict[str, dict] = {}
+    for article in [*_load_market_news_pool(), *fresh]:
+        article_id = str(article.get("article_id", "")).strip()
+        published_date = _article_date(article)
+        if article_id and published_date and start <= published_date <= end:
+            merged[article_id] = article
+
+    articles = sorted(merged.values(), key=lambda item: item["published_at"], reverse=True)
+    articles = articles[:FINNHUB_MARKET_NEWS_POOL_MAX_ITEMS]
+    _save_market_news_pool(articles)
+    logger.info("Finnhub 시장 뉴스 풀: 최신 %d건, 한 달 창 %d건", len(fresh), len(articles))
+    return articles
+
+
+def _market_relevance_score(article: dict, end: date) -> float:
+    text = " ".join(
+        [str(article.get("headline", "")), str(article.get("summary", ""))]
+    ).lower()
+    score = sum(weight for keyword, weight in MARKET_RELEVANCE_KEYWORDS.items() if keyword in text)
+    related = {str(value).upper() for value in article.get("related", [])}
+    if related & MARKET_PROXY_TICKERS:
+        score += 5
+    published_date = _article_date(article)
+    if published_date:
+        age_days = max(0, (end - published_date).days)
+        score += max(0, 7 - age_days) / 10
+    return score
+
+
+def _select_market_articles(articles: list[dict], end: date) -> list[dict]:
+    """코드 기준으로 미국 증시 관련성과 최신성을 반영해 3~5건을 확정한다."""
+    ranked = sorted(
+        (
+            (score, article)
+            for article in articles
+            if (score := _market_relevance_score(article, end)) >= 3
+        ),
+        key=lambda item: (item[0], item[1]["published_at"]),
+        reverse=True,
+    )
+    selected: list[dict] = []
+    source_counts: dict[str, int] = {}
+    for _, article in ranked:
+        source = str(article.get("source") or "unknown").strip().lower()
+        if source_counts.get(source, 0) >= 2:
+            continue
+        source_counts[source] = source_counts.get(source, 0) + 1
+        selected.append(article)
+        if len(selected) == MARKET_MAX_NEWS_SOURCES:
+            break
+    if len(selected) < MARKET_MIN_NEWS_SOURCES:
+        logger.info(
+            "코드 기준 시장 근거 기사 부족: 후보 %d건, 선정 %d건", len(articles), len(selected)
+        )
+        return []
+    logger.info(
+        "코드 기준 시장 근거 기사 선정: %d건 (%s)",
+        len(selected), ", ".join(article["article_id"] for article in selected),
+    )
+    return selected
 
 
 def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
@@ -345,15 +465,20 @@ def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
             ],
             "temperature": 0.1,
             "max_tokens": NIM_INSIGHTS_MAX_TOKENS,
+            "reasoning_effort": "low",
+            "response_format": {"type": "json_object"},
             "stream": False,
         },
         timeout=(NIM_CONNECT_TIMEOUT_SEC, NIM_READ_TIMEOUT_SEC),
     )
     if not response.ok:
         raise RuntimeError(f"NIM HTTP {response.status_code}: {response.text[:500]}")
+    content = ""
     try:
-        return _parse_json(response.json()["choices"][0]["message"]["content"])
+        content = response.json()["choices"][0]["message"]["content"]
+        return _parse_json(content)
     except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        logger.warning("NIM JSON 파싱 실패 원문 일부: %r", str(content)[:500])
         raise ValueError(f"NIM JSON 파싱 실패: {exc}") from exc
 
 
@@ -380,15 +505,15 @@ def _stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> 
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 기업 정보와 Finnhub 기사만 사용하십시오. 웹 검색은 하지 마십시오.
 
-허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}입니다. 각 종목의 finnhub_articles는
-코드가 이미 이 날짜 범위·원문 URL·관련 티커 조건을 확인한 기사입니다.
+허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}입니다. 각 종목의 selected_finnhub_articles는
+코드가 이미 이 날짜 범위·원문 URL·관련 티커 조건을 확인하고 선정한 기사입니다. 기사 ID를 고르거나
+반환하지 마십시오.
 
 business_ko는 business_source_en을 바탕으로 70자 이내 한국어 한 문장으로 작성하십시오.
 move_reason_ko는 기사 제목 또는 요약에 해당 종목의 직접 촉매(실적, 전망, 계약, 규제, M&A,
-제품, 가이던스 등)가 명시된 경우에만 140자 이내로 작성하십시오. 이때 evidence_status는
-verified로, source_article_ids에는 실제 사용한 해당 종목의 article_id를 1개 이상 넣으십시오.
-그 외에는 evidence_status를 limited로 하고 move_reason_ko에는 빈 문자열, source_article_ids에는
-빈 배열을 넣으십시오. 가격 변동이나 일반 시장 분위기를 원인으로 추정하지 마십시오.
+제품, 가이던스 등)가 명시된 경우에만 140자 이내로 작성하고 evidence_status를 verified로 하십시오.
+그 외에는 evidence_status를 limited로 하고 move_reason_ko는 빈 문자열로 두십시오. 가격 변동이나
+일반 시장 분위기를 원인으로 추정하지 마십시오.
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
@@ -401,57 +526,49 @@ def _market_prompt(
     return f"""미국 거래일은 {data_date}입니다.
 아래 시장 수치와 Finnhub 일반 시장 기사만 사용하십시오. 웹 검색이나 외부 지식은 사용하지 마십시오.
 
-기사는 {start.isoformat()}~{end.isoformat()}에 발행된 것만 입력되어 있습니다. 미국 증시 전체 또는
-주요 섹터 움직임과 직접 관련된 서로 다른 기사 3~5건을 골라 headline, observation, interpretation을
-작성하십시오. source_article_ids에는 실제 사용한 article_id를 3~5개 넣으십시오.
-기사 3건 이상으로 뒷받침할 수 없으면 headline·observation에는 시장 수치 관측만 쓰고,
-interpretation에는 정확히 '{LIMITED_MARKET_INTERPRETATION}'을 넣으며 source_article_ids는 빈 배열로 하십시오.
-기사에 없는 인과관계, 투자 조언, 단순 가격 변동의 원인 추정은 금지합니다.
+기사는 {start.isoformat()}~{end.isoformat()}에 발행된 것만 입력되어 있으며, 코드가 미국 증시·주요
+섹터 관련성 기준으로 확정한 3~5건입니다. 기사 ID를 선택하거나 반환하지 마십시오. 모든 해석은 이
+확정 기사와 시장 수치에서만 도출하고, 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은
+금지합니다.
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
 
 
-def _fallback_stock_prompt(items: list[dict]) -> str:
-    return f"""아래 기업의 영문 사업 설명만 바탕으로 business_ko를 한국어 한 문장(70자 이내)으로 작성하십시오.
-뉴스나 시장 상황을 추정하지 말고, 반드시 {{"items":[{{"ticker":"...","business_ko":"..."}}]}} JSON만 반환하십시오.
+def _fallback_stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> str:
+    payload = {"data_date": data_date, "stocks": items}
+    return f"""미국 거래일은 {data_date}입니다.
+아래 Yahoo Finance 영문 사업 설명과 코드가 선정한 Finnhub 종목 기사만 사용하십시오. 외부 지식이나
+웹 검색을 사용하지 마십시오. selected_finnhub_articles는 {start.isoformat()}~{end.isoformat()}의
+직접 관련 기사이며, 기사 ID를 선택하거나 반환하지 마십시오.
 
-{json.dumps(items, ensure_ascii=False)}"""
+각 종목에 ticker, business_ko, move_reason_ko, evidence_status를 반환하십시오. business_ko는 70자 이내
+한국어 사업 요약입니다. 기사에 직접 촉매가 명시된 경우에만 evidence_status를 verified와 140자 이내
+move_reason_ko로 작성하십시오. 그렇지 않으면 evidence_status는 limited, move_reason_ko는 빈 문자열로
+두십시오. JSON 외 텍스트를 반환하지 마십시오.
+
+입력 데이터:
+{json.dumps(payload, ensure_ascii=False)}"""
 
 
-def _fallback_market_prompt(base_market_summary: dict) -> str:
-    return f"""아래 수치 데이터만 바탕으로 한국어 headline과 observation을 작성하십시오.
-뉴스·실적·정책 등의 원인을 추정하지 말고, 반드시 {{"headline":"...","observation":"..."}} JSON만 반환하십시오.
+def _fallback_market_prompt(
+    base_market_summary: dict, articles: list[dict], data_date: str, start: date, end: date
+) -> str:
+    payload = {"market_data": base_market_summary, "finnhub_market_articles": articles}
+    return f"""미국 거래일은 {data_date}입니다.
+아래 시장 수치와 코드가 확정한 Finnhub 시장 기사 3~5건만 사용하십시오. 기사는
+{start.isoformat()}~{end.isoformat()}에 발행됐으며, 기사 ID를 선택하거나 반환하지 마십시오.
 
-{json.dumps(base_market_summary, ensure_ascii=False)}"""
+headline, observation, interpretation을 한국어로 작성하십시오. 모든 해석은 제공 기사와 시장 수치에
+한정하고, 기사에 없는 인과관계·투자 조언·가격 변동 원인 추정은 금지합니다. JSON 외 텍스트를
+반환하지 마십시오.
 
-
-def _validated_sources(
-    source_ids, articles: list[dict], start: date, end: date, ticker: str | None = None
-) -> list[dict]:
-    """LLM이 참조한 ID를 실제 Finnhub 기사·거래일 창과 다시 대조한다."""
-    lookup = {str(article["article_id"]): article for article in articles}
-    verified: list[dict] = []
-    seen: set[str] = set()
-    for source_id in source_ids if isinstance(source_ids, list) else []:
-        article = lookup.get(str(source_id))
-        if not article or article["article_id"] in seen:
-            continue
-        try:
-            published_date = datetime.strptime(article["published_date"], "%Y-%m-%d").date()
-        except (TypeError, ValueError):
-            continue
-        if not start <= published_date <= end:
-            continue
-        if ticker and _canonical_ticker(ticker) not in article.get("related", []):
-            continue
-        seen.add(article["article_id"])
-        verified.append(article)
-    return verified
+입력 데이터:
+{json.dumps(payload, ensure_ascii=False)}"""
 
 
 def _normalise_stock_batch(
-    generated: dict, expected_items: list[dict], start: date, end: date
+    generated: dict, expected_items: list[dict], provider_name: str
 ) -> dict[str, dict]:
     expected = {str(item["ticker"]): item for item in expected_items}
     received = {
@@ -463,9 +580,7 @@ def _normalise_stock_batch(
     for ticker, source_item in expected.items():
         raw = received.get(ticker, {})
         business = str(raw.get("business_ko", "")).strip() or _business_fallback(source_item)
-        sources = _validated_sources(
-            raw.get("source_article_ids"), source_item.get("finnhub_articles", []), start, end, ticker
-        )
+        sources = source_item.get("selected_finnhub_articles", [])
         is_verified = (
             raw.get("evidence_status") == "verified"
             and bool(sources)
@@ -478,18 +593,20 @@ def _normalise_stock_batch(
             else LIMITED_REASON,
             "source_urls": [source["url"] for source in sources] if is_verified else [],
             "source_titles": [source["headline"] for source in sources] if is_verified else [],
-            "provider": "Gemini + Finnhub" if is_verified else "Gemini (Finnhub 근거 부족)",
+            "provider": provider_name if is_verified else f"{provider_name} (Finnhub 근거 부족)",
         }
     return entries
 
 
-def _fallback_stock_entries(items: list[dict]) -> dict[str, dict]:
+def _fallback_stock_entries(
+    items: list[dict], data_date: str, start: date, end: date
+) -> dict[str, dict]:
     provider_name = "NVIDIA NIM GPT-OSS 120B"
     try:
         generated = _request_nim_json(
             NIM_GPT_OSS_MODEL,
-            "제공된 영문 사업 설명만 번역·요약하고 뉴스 원인을 추정하지 마십시오. JSON만 답하십시오.",
-            _fallback_stock_prompt(items),
+            "제공된 사업 설명과 코드가 확정한 Finnhub 뉴스만 사용하십시오. JSON만 답하십시오.",
+            _fallback_stock_prompt(items, data_date, start, end),
         )
         expected = {str(item["ticker"]): item for item in items}
         received = {
@@ -501,16 +618,7 @@ def _fallback_stock_entries(items: list[dict]) -> dict[str, dict]:
         }
         if set(received) != set(expected):
             raise ValueError("GPT-OSS 응답에 일부 종목 사업 설명이 없습니다.")
-        return {
-            ticker: {
-                "business_summary": str(received[ticker]["business_ko"]).strip()[:140],
-                "move_reason": LIMITED_REASON,
-                "source_urls": [],
-                "source_titles": [],
-                "provider": provider_name,
-            }
-            for ticker in expected
-        }
+        return _normalise_stock_batch(generated, items, provider_name)
     except Exception as exc:
         logger.warning("%s fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
         return {}
@@ -524,32 +632,40 @@ def _limited_market_summary(base_market_summary: dict) -> dict:
         "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
         "source_urls": [],
         "source_titles": [],
+        "provider": "규칙 기반 제한 문구",
     }
 
 
-def _fallback_market_summary(base_market_summary: dict) -> dict:
+def _build_market_summary(
+    generated: dict, sources: list[dict], provider_name: str
+) -> dict:
+    fields = ("headline", "observation", "interpretation")
+    if not all(str(generated.get(field, "")).strip() for field in fields):
+        raise ValueError("시황 응답에 필수 문구가 없습니다.")
+    return {
+        field: str(generated[field]).strip()[:600] for field in fields
+    } | {
+        "disclaimer": (
+            f"{provider_name}가 코드가 선정한 Finnhub 기사 {len(sources)}건과 시장 수치를 바탕으로 "
+            "작성한 자동 요약이며 투자 조언이 아닙니다."
+        ),
+        "source_urls": [source["url"] for source in sources],
+        "source_titles": [source["headline"] for source in sources],
+        "provider": provider_name,
+    }
+
+
+def _fallback_market_summary(
+    base_market_summary: dict, sources: list[dict], data_date: str, start: date, end: date
+) -> dict:
     provider_name = "NVIDIA NIM GPT-OSS 120B"
     try:
         generated = _request_nim_json(
             NIM_GPT_OSS_MODEL,
-            "제공된 수치만 사용하고 뉴스·정책·실적 원인을 추정하지 마십시오. JSON만 답하십시오.",
-            _fallback_market_prompt(base_market_summary),
+            "제공된 시장 수치와 코드가 확정한 Finnhub 기사만 사용하십시오. JSON만 답하십시오.",
+            _fallback_market_prompt(base_market_summary, sources, data_date, start, end),
         )
-        headline = str(generated.get("headline", "")).strip()
-        observation = str(generated.get("observation", "")).strip()
-        if not headline or not observation:
-            raise ValueError("GPT-OSS 시황 응답에 필수 문구가 없습니다.")
-        return {
-            "headline": headline[:300],
-            "observation": observation[:600],
-            "interpretation": LIMITED_MARKET_INTERPRETATION,
-            "disclaimer": (
-                f"{provider_name}가 가격·시장 폭·섹터 수익률만 정리한 자동 요약이며 "
-                "뉴스 근거 기반 해석이나 투자 조언이 아닙니다."
-            ),
-            "source_urls": [],
-            "source_titles": [],
-        }
+        return _build_market_summary(generated, sources, provider_name)
     except Exception as exc:
         logger.warning("%s 시황 fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
         return _limited_market_summary(base_market_summary)
@@ -558,31 +674,17 @@ def _fallback_market_summary(base_market_summary: dict) -> dict:
 def _research_market_summary(
     base_market_summary: dict, articles: list[dict], data_date: str, start: date, end: date
 ) -> dict:
+    if len(articles) < MARKET_MIN_NEWS_SOURCES:
+        return _limited_market_summary(base_market_summary)
     try:
         generated = _request_gemini_json(
             _market_prompt(base_market_summary, articles, data_date, start, end),
             MARKET_RESPONSE_SCHEMA,
         )
-        sources = _validated_sources(generated.get("source_article_ids"), articles, start, end)
-        fields = ("headline", "observation", "interpretation")
-        if not all(str(generated.get(field, "")).strip() for field in fields):
-            raise ValueError("Gemini 시황 응답에 필수 문구가 없습니다.")
-        if len(sources) < MARKET_MIN_NEWS_SOURCES:
-            raise ValueError(f"검증된 Finnhub 시황 기사 수 부족: {len(sources)}건")
-        sources = sources[:MARKET_MAX_NEWS_SOURCES]
-        return {
-            field: str(generated[field]).strip()[:600] for field in fields
-        } | {
-            "disclaimer": (
-                f"Finnhub에서 확인된 거래일 전후 기사 {len(sources)}건을 바탕으로 한 자동 요약이며 "
-                "투자 조언이 아닙니다."
-            ),
-            "source_urls": [source["url"] for source in sources],
-            "source_titles": [source["headline"] for source in sources],
-        }
+        return _build_market_summary(generated, articles, "Gemini + Finnhub")
     except Exception as exc:
         logger.warning("Gemini + Finnhub 시황 조사 실패, NIM fallback을 시도합니다: %s", exc)
-        return _fallback_market_summary(base_market_summary)
+        return _fallback_market_summary(base_market_summary, articles, data_date, start, end)
 
 
 def enrich_with_ai(
@@ -615,7 +717,8 @@ def enrich_with_ai(
                 "sector": records[ticker].get("sector", ""),
                 "return_1d": records[ticker].get("return_1d"),
                 "business_source_en": records[ticker].get("business_summary", ""),
-                "finnhub_articles": news_map.get(ticker, []),
+                # 날짜·URL·관련 티커를 코드가 확인한 기사만 모델에 전달한다.
+                "selected_finnhub_articles": news_map.get(ticker, []),
             }
             for ticker in missing
         ]
@@ -626,7 +729,7 @@ def enrich_with_ai(
                 generated = _request_gemini_json(
                     _stock_prompt(batch, data_date, start, end), STOCK_RESPONSE_SCHEMA
                 )
-                entries = _normalise_stock_batch(generated, batch, start, end)
+                entries = _normalise_stock_batch(generated, batch, "Gemini + Finnhub")
                 for ticker, entry in entries.items():
                     cache[cache_keys[ticker]] = entry
                 _save_cache(cache)
@@ -645,7 +748,7 @@ def enrich_with_ai(
                     batch_index,
                     exc,
                 )
-                entries = _fallback_stock_entries(batch)
+                entries = _fallback_stock_entries(batch, data_date, start, end)
                 for ticker, entry in entries.items():
                     cache[cache_keys[ticker]] = entry
                 if entries:
@@ -665,7 +768,8 @@ def enrich_with_ai(
     market_summary = cache.get(market_key)
     if not market_summary:
         try:
-            market_articles = _collect_market_news(start, end)
+            market_candidates = _collect_market_news(start, end)
+            market_articles = _select_market_articles(market_candidates, end)
         except Exception as exc:
             logger.warning("Finnhub 시장 뉴스 조회 실패: %s", exc)
             market_articles = []
