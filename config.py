@@ -23,6 +23,7 @@ DAYS_1M = 21
 DAYS_3M = 63
 
 # ── 데이터 수집 설정 ───────────────────────────────────
+PRICE_HISTORY_PERIOD = "6mo"  # 63거래일 수익률 계산을 위한 휴장일·결측 버퍼
 BATCH_SIZE         = 50    # yfinance 배치당 티커 수
 REQUEST_DELAY_SEC  = 0.5   # 배치 간 대기(초)
 MC_FETCH_WORKERS   = 20    # 시가총액 조회 동시 스레드 수
@@ -34,6 +35,7 @@ MC_TIMEOUT_SEC     = 120   # 시가총액 조회 전체 타임아웃(초)
 MIN_PRICE_COVERAGE       = 0.98
 MIN_MARKET_CAP_COVERAGE  = 0.95
 MIN_LATEST_DATE_COVERAGE = 0.98
+MIN_RETURN_HISTORY_COVERAGE = 0.98
 
 # ── 기업 사업 요약 ──────────────────────────────────────
 BUSINESS_PROFILE_CACHE_FILE = CACHE_DIR / "business_profiles.json"

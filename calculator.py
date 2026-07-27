@@ -53,8 +53,23 @@ def calculate_returns(price_data: dict[str, pd.Series]) -> pd.DataFrame:
             "latest_date": series.index[-1].date() if len(series) > 0 else None,
         })
     df = pd.DataFrame(records)
-    valid = df["return_1d"].notna().sum()
-    logger.info("수익률 계산 완료: %d/%d 종목 유효", valid, len(df))
+    valid_counts = {
+        label: int(df[column].notna().sum())
+        for label, column in (
+            ("1일", "return_1d"),
+            ("1주", "return_1w"),
+            ("1개월", "return_1m"),
+            ("3개월", "return_3m"),
+        )
+    }
+    logger.info(
+        "수익률 계산 완료: 총 %d종목 | 1일 %d | 1주 %d | 1개월 %d | 3개월 %d",
+        len(df),
+        valid_counts["1일"],
+        valid_counts["1주"],
+        valid_counts["1개월"],
+        valid_counts["3개월"],
+    )
     return df
 
 

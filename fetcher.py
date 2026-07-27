@@ -15,11 +15,16 @@ import yfinance as yf
 
 from config import (
     BATCH_SIZE,
+    DAYS_1M,
+    DAYS_1W,
+    DAYS_3M,
     MC_FETCH_WORKERS,
     MC_TIMEOUT_SEC,
     MIN_LATEST_DATE_COVERAGE,
     MIN_MARKET_CAP_COVERAGE,
     MIN_PRICE_COVERAGE,
+    MIN_RETURN_HISTORY_COVERAGE,
+    PRICE_HISTORY_PERIOD,
     REQUEST_DELAY_SEC,
     SP500_CACHE_DAYS,
     SP500_CACHE_FILE,
@@ -82,7 +87,7 @@ def get_sp500_components() -> pd.DataFrame:
 
 def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
     """
-    yfinance.download으로 3개월치 일봉 종가를 배치 수집한다.
+    yfinance.download으로 6개월치 일봉 종가를 배치 수집한다.
 
     Returns
     -------
@@ -99,7 +104,7 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
         try:
             raw = yf.download(
                 batch,
-                period="3mo",
+                period=PRICE_HISTORY_PERIOD,
                 interval="1d",
                 auto_adjust=True,
                 progress=False,
@@ -129,6 +134,41 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
 
     logger.info("주가 수집 완료: %d/%d 종목", len(all_prices), len(tickers))
     return all_prices
+
+
+def _validate_return_history_coverage(
+    price_data: dict[str, pd.Series], total_tickers: int
+) -> None:
+    """각 수익률 기간을 계산할 수 있는 종목 비율을 검증한다."""
+    requirements = (
+        ("1일", 2),
+        ("1주", DAYS_1W + 1),
+        ("1개월", DAYS_1M + 1),
+        ("3개월", DAYS_3M + 1),
+    )
+    denominator = max(total_tickers, 1)
+    diagnostics = []
+    failures = []
+
+    for label, minimum_rows in requirements:
+        valid_count = sum(
+            len(series) >= minimum_rows
+            and pd.notna(series.iloc[-1])
+            and pd.notna(series.iloc[-minimum_rows])
+            and series.iloc[-minimum_rows] != 0
+            for series in price_data.values()
+        )
+        coverage = valid_count / denominator
+        diagnostics.append(f"{label} {valid_count}/{total_tickers} ({coverage:.1%})")
+        if coverage < MIN_RETURN_HISTORY_COVERAGE:
+            failures.append(f"{label} {valid_count}/{total_tickers} ({coverage:.1%})")
+
+    logger.info("수익률 이력 커버리지: %s", " | ".join(diagnostics))
+    if failures:
+        raise RuntimeError(
+            "수익률 이력 커버리지가 기준 미달입니다: "
+            f"{' | '.join(failures)}, 최소 {MIN_RETURN_HISTORY_COVERAGE:.0%} 필요"
+        )
 
 
 # ──────────────────────────────────────────────────────────
@@ -193,6 +233,7 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
             f"{len(price_data)}/{len(tickers)} ({price_coverage:.1%}), "
             f"최소 {MIN_PRICE_COVERAGE:.0%} 필요"
         )
+    _validate_return_history_coverage(price_data, len(tickers))
 
     # 모든 종목의 최신 거래일이 거의 같은지 확인한다. 일부 종목의 stale price가
     # 당일 등락률·시장 폭 계산에 섞이는 것을 방지한다.

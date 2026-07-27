@@ -6,6 +6,7 @@ import json
 import logging
 from html import escape
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pandas as pd
 
@@ -35,6 +36,41 @@ def _mcap_str(val_b) -> str:
     if val_b >= 1000:
         return f"${val_b/1000:.2f}T"
     return f"${val_b:.1f}B"
+
+
+def _numeric_sort_value(value) -> str:
+    try:
+        if pd.isna(value):
+            return ""
+        return f"{float(value):.15g}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def _build_stock_source_links(titles, urls) -> str:
+    if not isinstance(urls, (list, tuple)):
+        return ""
+    safe_titles = titles if isinstance(titles, (list, tuple)) else []
+    links = []
+    for index, raw_url in enumerate(urls):
+        url = str(raw_url).strip()
+        try:
+            parsed = urlsplit(url)
+        except ValueError:
+            continue
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+            continue
+        title = safe_titles[index] if index < len(safe_titles) else ""
+        label = str(title).strip() or f"기사 {len(links) + 1}"
+        links.append(
+            f'<a href="{escape(url, quote=True)}" target="_blank" '
+            f'rel="noopener noreferrer">{escape(label)}</a>'
+        )
+        if len(links) == 3:
+            break
+    if not links:
+        return ""
+    return f'<div class="stock-source-links">근거: {" · ".join(links)}</div>'
 
 
 def _color_class(val) -> str:
@@ -76,6 +112,10 @@ def _build_stock_rows(df: pd.DataFrame, section_class: str) -> str:
         sector = str(r.get("sector", ""))
         business = str(r.get("business_summary", ""))
         move_reason = str(r.get("move_reason", ""))
+        source_links = _build_stock_source_links(
+            r.get("source_titles", []), r.get("source_urls", [])
+        )
+        mc_sort_value = _numeric_sort_value(mc_b)
 
         pct_cells = ""
         for val in [r.get("return_1d"), r.get("return_1w"),
@@ -88,12 +128,12 @@ def _build_stock_rows(df: pd.DataFrame, section_class: str) -> str:
           <td class="rank-cell">{day_rank}</td>
           <td class="ticker-cell">{escape(ticker)}</td>
           <td class="name-cell" title="{escape(name)}">{escape(name)}</td>
-          <td class="num-cell">{_mcap_str(mc_b)}</td>
+          <td class="num-cell" data-sort-value="{mc_sort_value}">{_mcap_str(mc_b)}</td>
           {pct_cells}
           <td class="num-cell">{mc_rank}</td>
           <td class="sector-cell">{escape(sector)}</td>
           <td class="business-cell">{escape(business)}</td>
-          <td class="reason-cell">{escape(move_reason)}</td>
+          <td class="reason-cell">{escape(move_reason)}{source_links}</td>
         </tr>""")
     return "\n".join(rows)
 
@@ -356,6 +396,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       color: rgba(220,230,248,.84); font-size: 11px; line-height: 1.55;
     }}
     .reason-cell {{ color: #9ed5ff; min-width: 270px; }}
+    .stock-source-links {{ margin-top: 5px; color: var(--muted); font-size: 10px; }}
+    .stock-source-links a {{ color: #79b8ff; }}
 
     .pct {{
       text-align: right;
@@ -522,8 +564,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         const asc   = th.dataset.sorted !== 'asc';
 
         rows.sort((a, b) => {{
-          const aVal = a.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
-          const bVal = b.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
+          const aCell = a.cells[colIdx];
+          const bCell = b.cells[colIdx];
+          const aVal = aCell?.dataset.sortValue ??
+            aCell?.innerText.trim().replace(/[%$,↑↓+]/g, '') ?? '';
+          const bVal = bCell?.dataset.sortValue ??
+            bCell?.innerText.trim().replace(/[%$,↑↓+]/g, '') ?? '';
           const aNum = parseFloat(aVal);
           const bNum = parseFloat(bVal);
           if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;

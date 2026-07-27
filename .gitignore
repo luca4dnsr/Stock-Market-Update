@@ -25,3 +25,7 @@ docs/
 .vscode/
 .idea/
 *.swp
+
+# Local-only project files
+/AGENTS.md
+/Stock-Market-Update.code-workspace

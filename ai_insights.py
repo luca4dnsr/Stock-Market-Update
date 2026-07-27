@@ -531,7 +531,7 @@ def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
         "generationConfig": {
             "maxOutputTokens": GEMINI_INSIGHTS_MAX_TOKENS,
             "responseFormat": {
-                "text": {"mimeType": "application/json", "schema": response_schema}
+                "text": {"mimeType": "APPLICATION_JSON", "schema": response_schema}
             },
         },
     }
@@ -563,6 +563,22 @@ def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
         raise ValueError(f"Gemini JSON 파싱 실패: {exc}") from exc
 
 
+def _is_non_retryable_gemini_error(exc: Exception) -> bool:
+    """같은 실행의 후속 배치에서도 반복될 요청·인증 오류인지 판별한다."""
+    if not isinstance(exc, RuntimeError):
+        return False
+    message = str(exc)
+    if "GEMINI_API_KEY" in message or message.startswith(
+        ("Gemini HTTP 401:", "Gemini HTTP 403:", "Gemini HTTP 404:")
+    ):
+        return True
+    lowered = message.lower()
+    return message.startswith("Gemini HTTP 400:") and (
+        "generation_config.response_format.text.mime_type" in lowered
+        or "generationconfig.responseformat.text.mimetype" in lowered
+    )
+
+
 def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
     api_key = os.getenv("NVIDIA_API_KEY")
     if not api_key:
@@ -590,13 +606,51 @@ def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
     )
     if not response.ok:
         raise RuntimeError(f"NIM HTTP {response.status_code}: {response.text[:500]}")
+
+    finish_reason = "UNKNOWN"
     content = ""
+    reasoning_content = ""
     try:
-        content = response.json()["choices"][0]["message"]["content"]
-        return _parse_json(content)
+        choice = response.json()["choices"][0]
+        finish_reason = str(choice.get("finish_reason", "UNKNOWN"))
+        message = choice["message"]
+        content = str(message.get("content") or "")
+        reasoning_content = str(message.get("reasoning_content") or "")
+        generated = _parse_json(content)
+        if not isinstance(generated, dict):
+            raise ValueError("NIM JSON 최상위 값이 객체가 아닙니다.")
     except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        logger.warning("NIM JSON 파싱 실패 원문 일부: %r", str(content)[:500])
+        logger.warning(
+            "NIM JSON 파싱 실패 | model=%s | finish_reason=%s | content_chars=%d | "
+            "reasoning_chars=%d",
+            model,
+            finish_reason,
+            len(content),
+            len(reasoning_content),
+        )
         raise ValueError(f"NIM JSON 파싱 실패: {exc}") from exc
+    logger.info(
+        "NIM 응답 진단 | model=%s | finish_reason=%s | content_chars=%d | "
+        "reasoning_chars=%d | top_level_keys=%s | unknown_key_count=%d",
+        model,
+        finish_reason,
+        len(content),
+        len(reasoning_content),
+        ",".join(
+            sorted(
+                key
+                for key in generated
+                if key
+                in {"items", "headline", "observation", "interpretation"}
+            )
+        )
+        or "-",
+        sum(
+            key not in {"items", "headline", "observation", "interpretation"}
+            for key in generated
+        ),
+    )
+    return generated
 
 
 def _business_fallback(record: dict) -> str:
@@ -664,6 +718,11 @@ def _fallback_stock_prompt(items: list[dict], data_date: str, start: date, end: 
 move_reason_ko로 작성하십시오. 그렇지 않으면 evidence_status는 limited, move_reason_ko는 빈 문자열로
 두십시오. JSON 외 텍스트를 반환하지 마십시오.
 
+반환 형식은 반드시 아래와 같은 최상위 JSON 객체여야 합니다. 입력 stocks의 모든 ticker를 정확히
+한 번씩 items 배열에 넣고, 네 필드를 모두 포함하십시오.
+{{"items":[{{"ticker":"ABC","business_ko":"한국어 사업 요약","move_reason_ko":"",
+"evidence_status":"limited"}}]}}
+
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
 
@@ -679,6 +738,10 @@ def _fallback_market_prompt(
 headline, observation, interpretation을 한국어로 작성하십시오. 모든 해석은 제공 기사와 시장 수치에
 한정하고, 기사에 없는 인과관계·투자 조언·가격 변동 원인 추정은 금지합니다. JSON 외 텍스트를
 반환하지 마십시오.
+
+반환 형식은 반드시 아래 세 필드를 모두 가진 최상위 JSON 객체여야 합니다.
+{{"headline":"한국어 제목","observation":"수치와 기사에 근거한 관측",
+"interpretation":"기사와 시장 수치에 한정한 해석"}}
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
@@ -726,6 +789,31 @@ def _normalise_stock_batch(
     return entries
 
 
+def _stock_item_field_issues(item: dict) -> list[str]:
+    """종목 응답 필드의 누락·타입·값 오류를 반환한다."""
+    issues = []
+    business = item.get("business_ko")
+    move_reason = item.get("move_reason_ko")
+    evidence_status = item.get("evidence_status")
+
+    if not isinstance(business, str) or not business.strip():
+        issues.append("business_ko")
+    if not isinstance(move_reason, str):
+        issues.append("move_reason_ko")
+    if not isinstance(evidence_status, str) or evidence_status.strip() not in {
+        "verified",
+        "limited",
+    }:
+        issues.append("evidence_status")
+    elif (
+        evidence_status.strip() == "verified"
+        and (not isinstance(move_reason, str) or not move_reason.strip())
+        and "move_reason_ko" not in issues
+    ):
+        issues.append("move_reason_ko")
+    return issues
+
+
 def _require_complete_stock_response(generated: dict, expected_items: list[dict]) -> None:
     """문법만 복구된 부분 응답이 결과를 덮어쓰지 못하게 막는다."""
     expected_tickers = {str(item["ticker"]) for item in expected_items}
@@ -738,10 +826,70 @@ def _require_complete_stock_response(generated: dict, expected_items: list[dict]
         missing = ", ".join(sorted(expected_tickers - set(received)))
         raise ValueError(f"AI 응답에 종목이 누락됐습니다: {missing}")
     for ticker, item in received.items():
-        if not str(item.get("business_ko", "")).strip():
-            raise ValueError(f"AI 응답에 사업 설명이 없습니다: {ticker}")
-        if str(item.get("evidence_status", "")).strip() not in {"verified", "limited"}:
-            raise ValueError(f"AI 응답의 근거 상태가 올바르지 않습니다: {ticker}")
+        issues = _stock_item_field_issues(item)
+        if issues:
+            raise ValueError(
+                f"AI 응답 필드 누락/형식 오류: {ticker}: {', '.join(issues)}"
+            )
+
+
+def _valid_stock_response_items(
+    generated: dict, expected_items: list[dict], attempt: int
+) -> dict[str, dict]:
+    """NIM 응답에서 필수 필드가 완전한 종목만 추려 구조 진단을 남긴다."""
+    expected_tickers = [str(item["ticker"]) for item in expected_items]
+    expected_set = set(expected_tickers)
+    raw_items = generated.get("items")
+    items = raw_items if isinstance(raw_items, list) else []
+    received: dict[str, list[dict]] = {}
+    returned_tickers = []
+    unexpected_count = 0
+
+    for item in items:
+        if not isinstance(item, dict):
+            unexpected_count += 1
+            continue
+        ticker = str(item.get("ticker", "")).strip()
+        if ticker not in expected_set:
+            unexpected_count += 1
+            continue
+        returned_tickers.append(ticker)
+        received.setdefault(ticker, []).append(item)
+
+    valid: dict[str, dict] = {}
+    issues: dict[str, list[str]] = {}
+    for ticker in expected_tickers:
+        candidates = received.get(ticker, [])
+        if not candidates:
+            issues[ticker] = ["missing_item"]
+            continue
+        if len(candidates) > 1:
+            issues[ticker] = ["duplicate_ticker"]
+            continue
+
+        item = candidates[0]
+        field_issues = _stock_item_field_issues(item)
+
+        if field_issues:
+            issues[ticker] = field_issues
+        else:
+            valid[ticker] = item
+
+    issue_text = ";".join(
+        f"{ticker}:{','.join(fields)}" for ticker, fields in issues.items()
+    )
+    logger.info(
+        "NIM 종목 응답 진단 | attempt=%d | items_shape=%s | expected=%s | "
+        "returned=%s | valid=%s | issues=%s | unexpected_count=%d",
+        attempt,
+        "array" if isinstance(raw_items, list) else "not_array",
+        ",".join(expected_tickers) or "-",
+        ",".join(returned_tickers) or "-",
+        ",".join(valid) or "-",
+        issue_text or "-",
+        unexpected_count,
+    )
+    return valid
 
 
 def _log_stock_diagnostic(
@@ -775,26 +923,63 @@ def _fallback_stock_entries(
     items: list[dict], data_date: str, start: date, end: date
 ) -> dict[str, dict]:
     provider_name = "NVIDIA NIM GPT-OSS 120B"
-    try:
-        generated = _request_nim_json(
+
+    def request_batch(batch: list[dict]) -> dict:
+        return _request_nim_json(
             NIM_GPT_OSS_MODEL,
             "제공된 사업 설명과 코드가 확정한 Finnhub 뉴스만 사용하십시오. JSON만 답하십시오.",
-            _fallback_stock_prompt(items, data_date, start, end),
+            _fallback_stock_prompt(batch, data_date, start, end),
         )
-        expected = {str(item["ticker"]): item for item in items}
-        received = {
-            str(item.get("ticker", "")).strip(): item
-            for item in generated.get("items", [])
-            if isinstance(item, dict)
-            and str(item.get("ticker", "")).strip() in expected
-            and str(item.get("business_ko", "")).strip()
-        }
-        if set(received) != set(expected):
-            raise ValueError("GPT-OSS 응답에 일부 종목 사업 설명이 없습니다.")
-        return _normalise_stock_batch(generated, items, provider_name)
+
+    try:
+        generated = request_batch(items)
     except Exception as exc:
         logger.warning("%s fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
         return {}
+
+    expected = {str(item["ticker"]): item for item in items}
+    merged = _valid_stock_response_items(generated, items, attempt=1)
+    unresolved = [item for item in items if str(item["ticker"]) not in merged]
+
+    if unresolved:
+        retry_tickers = [str(item["ticker"]) for item in unresolved]
+        logger.warning(
+            "%s 불완전 종목만 1회 재시도합니다: %s",
+            provider_name,
+            ", ".join(retry_tickers),
+        )
+        try:
+            retry_generated = request_batch(unresolved)
+        except Exception as exc:
+            logger.warning(
+                "%s 불완전 종목 재시도 실패: tickers=%s | %s",
+                provider_name,
+                ", ".join(retry_tickers),
+                exc,
+            )
+        else:
+            merged.update(
+                _valid_stock_response_items(retry_generated, unresolved, attempt=2)
+            )
+
+    remaining = [ticker for ticker in expected if ticker not in merged]
+    if remaining:
+        logger.warning(
+            "%s 최종 미해결 종목은 규칙 기반 제한 문구를 사용합니다: %s",
+            provider_name,
+            ", ".join(remaining),
+        )
+    if not merged:
+        return {}
+
+    valid_source_items = [
+        expected[ticker] for ticker in expected if ticker in merged
+    ]
+    return _normalise_stock_batch(
+        {"items": [merged[str(item["ticker"])] for item in valid_source_items]},
+        valid_source_items,
+        provider_name,
+    )
 
 
 def _limited_market_summary(base_market_summary: dict) -> dict:
@@ -813,8 +998,14 @@ def _build_market_summary(
     generated: dict, sources: list[dict], provider_name: str
 ) -> dict:
     fields = ("headline", "observation", "interpretation")
-    if not all(str(generated.get(field, "")).strip() for field in fields):
-        raise ValueError("시황 응답에 필수 문구가 없습니다.")
+    missing = [
+        field
+        for field in fields
+        if not isinstance(generated.get(field), str)
+        or not generated[field].strip()
+    ]
+    if missing:
+        raise ValueError(f"시황 응답 필수 필드 누락/형식 오류: {', '.join(missing)}")
     return {
         field: str(generated[field]).strip()[:600] for field in fields
     } | {
@@ -845,10 +1036,23 @@ def _fallback_market_summary(
 
 
 def _research_market_summary(
-    base_market_summary: dict, articles: list[dict], data_date: str, start: date, end: date
+    base_market_summary: dict,
+    articles: list[dict],
+    data_date: str,
+    start: date,
+    end: date,
+    gemini_disabled_reason: str | None = None,
 ) -> dict:
     if len(articles) < MARKET_MIN_NEWS_SOURCES:
         return _limited_market_summary(base_market_summary)
+    if gemini_disabled_reason:
+        logger.warning(
+            "Gemini 공통 요청 오류로 시황 호출도 생략하고 NIM fallback을 시도합니다: %s",
+            gemini_disabled_reason,
+        )
+        return _fallback_market_summary(
+            base_market_summary, articles, data_date, start, end
+        )
     try:
         generated = _request_gemini_json(
             _market_prompt(base_market_summary, articles, data_date, start, end),
@@ -876,6 +1080,7 @@ def enrich_with_ai(
     start, end = _news_window(data_date)
     records = result.set_index(result["ticker"].astype(str)).to_dict("index")
 
+    gemini_disabled_reason = None
     if missing:
         try:
             news_map, news_diagnostics = _collect_company_news(missing, start, end)
@@ -908,6 +1113,10 @@ def enrich_with_ai(
             _chunked(items, GEMINI_INSIGHTS_BATCH_SIZE), start=1
         ):
             try:
+                if gemini_disabled_reason:
+                    raise RuntimeError(
+                        f"Gemini 공통 오류로 이번 실행에서 생략: {gemini_disabled_reason}"
+                    )
                 generated = _request_gemini_json(
                     _stock_prompt(batch, data_date, start, end), STOCK_RESPONSE_SCHEMA
                 )
@@ -940,15 +1149,23 @@ def enrich_with_ai(
                     len(batch),
                 )
             except Exception as exc:
+                if gemini_disabled_reason is None and _is_non_retryable_gemini_error(exc):
+                    gemini_disabled_reason = str(exc)
+                    logger.warning(
+                        "Gemini 공통 요청 오류로 후속 종목 배치 호출을 생략합니다: %s",
+                        exc,
+                    )
                 logger.warning(
                     "Gemini 종목 해석 실패 (묶음 %d), GPT-OSS fallback을 시도합니다: %s",
                     batch_index,
                     exc,
                 )
                 entries = _fallback_stock_entries(batch, data_date, start, end)
-                if entries:
-                    for ticker, entry in entries.items():
-                        diagnostic = dict(news_diagnostics[ticker])
+                for item in batch:
+                    ticker = str(item["ticker"])
+                    diagnostic = dict(news_diagnostics[ticker])
+                    entry = entries.get(ticker)
+                    if entry:
                         diagnostic.update(
                             {
                                 "gemini_verdict": f"error:{type(exc).__name__}",
@@ -963,17 +1180,21 @@ def enrich_with_ai(
                             diagnostic["gemini_verdict"],
                             diagnostic["gpt_fallback"],
                         )
-                    _save_cache(cache)
-                else:
-                    for item in batch:
-                        ticker = str(item["ticker"])
-                        diagnostic = news_diagnostics[ticker]
+                    else:
+                        diagnostic.update(
+                            {
+                                "gemini_verdict": f"error:{type(exc).__name__}",
+                                "gpt_fallback": "failed",
+                            }
+                        )
                         _log_stock_diagnostic(
                             ticker,
                             diagnostic,
-                            f"error:{type(exc).__name__}",
-                            "failed",
+                            diagnostic["gemini_verdict"],
+                            diagnostic["gpt_fallback"],
                         )
+                if entries:
+                    _save_cache(cache)
 
     for ticker in tickers:
         if ticker in missing:
@@ -997,6 +1218,14 @@ def enrich_with_ai(
         cache.get(cache_keys[ticker], {}).get("move_reason") or LIMITED_REASON
         for ticker in tickers
     ]
+    result["source_urls"] = [
+        cache.get(cache_keys[ticker], {}).get("source_urls") or []
+        for ticker in tickers
+    ]
+    result["source_titles"] = [
+        cache.get(cache_keys[ticker], {}).get("source_titles") or []
+        for ticker in tickers
+    ]
 
     market_key = f"{AI_INSIGHTS_CACHE_VERSION}:market:{data_date}"
     market_summary = cache.get(market_key)
@@ -1008,7 +1237,12 @@ def enrich_with_ai(
             logger.warning("Finnhub 시장 뉴스 조회 실패: %s", exc)
             market_articles = []
         market_summary = _research_market_summary(
-            base_market_summary, market_articles, data_date, start, end
+            base_market_summary,
+            market_articles,
+            data_date,
+            start,
+            end,
+            gemini_disabled_reason,
         )
         if market_summary.get("source_urls"):
             cache[market_key] = market_summary
