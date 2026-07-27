@@ -38,12 +38,134 @@
     }
   ],
   "market_summary": {
-    "headline": "상승 종목이 시장 전반으로 확산된 강한 위험선호 흐름",
-    "observation": "상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate +2.4%, Materials +1.5%, 약세 섹터는 Information Technology -0.8%, Consumer Discretionary +0.0%였습니다. 개별 종목 중 IP(+11.2%)가 가장 강했고, SNDK(-10.8%)가 가장 약했습니다.",
-    "interpretation": "최근 한 달 내 시황 기사 3건 이상을 코드 기준으로 확인하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
-    "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
-    "source_urls": [],
-    "source_titles": [],
-    "provider": "규칙 기반 제한 문구"
-  }
+    "headline": "상승 종목 확산 속 변동성과 섹터 차별화 장세",
+    "observation": "상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate(+2.4%), Materials(+1.5%)였으며, 약세 섹터는 Information Technology(-0.8%), Consumer Discretionary(+0.0%)였습니다. 개별 종목 중 IP(+11.2%)가 가장 큰 폭으로 상승했고, SNDK(-10.8%)가 가장 큰 폭으로 하락했습니다.",
+    "interpretation": "정규장 뉴스에 따르면, AI 지출 우려와 유가 상승 부담이 시장에 하락 압력과 변동성을 더했습니다. 그러나 유가 상승세가 멈추면서 주가가 반등을 시도했고, '반도체 매도, 소프트웨어 매수' 트레이드가 재등장하는 등 섹터 간 차별화가 진행되었습니다. 이러한 흐름 속에서 정보기술 섹터가 약세를 나타낸 반면, 부동산 및 소재 섹터를 중심으로 시장 전반에 폭넓은 상승세가 전개되었습니다.",
+    "recent_context": "",
+    "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 3건과 최근 맥락 0건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
+    "source_urls": [
+      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
+      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+    ],
+    "source_titles": [
+      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
+      "US stocks tumble as AI spending and oil prices weigh on market",
+      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+    ],
+    "direct_source_urls": [
+      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
+      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+    ],
+    "direct_source_titles": [
+      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
+      "US stocks tumble as AI spending and oil prices weigh on market",
+      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+    ],
+    "direct_source_dates": [
+      "2026-07-24",
+      "2026-07-23",
+      "2026-07-23"
+    ],
+    "context_source_urls": [],
+    "context_source_titles": [],
+    "context_source_dates": [],
+    "direct_evidence_ids": [
+      "finnhub:8265308",
+      "finnhub:8266749",
+      "finnhub:8261779"
+    ],
+    "context_evidence_ids": [],
+    "provider": "Gemini + Finnhub RAG",
+    "rag_status": "direct_only",
+    "rag_attempted": true,
+    "fallback_stage": "none",
+    "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
+    "market_close_cutoff": "2026-07-24T20:00:00Z",
+    "news_cutoff": "2026-07-24T22:00:00Z",
+    "retrieval_as_of": "2026-07-27T08:01:07Z",
+    "corpus_status": {
+      "ok": true,
+      "status": "ok",
+      "exists": true,
+      "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
+      "quick_check": "ok",
+      "schema_version": "1",
+      "article_count": 104,
+      "snapshot_count": 1,
+      "oldest_published_at": "2026-07-23T12:28:17Z",
+      "newest_published_at": "2026-07-27T04:32:00Z",
+      "size_bytes": 241664
+    }
+  },
+  "market_snapshot": {
+    "breadth": {
+      "advances": 357,
+      "declines": 136,
+      "total": 503
+    },
+    "sector_returns": [
+      {
+        "sector": "Real Estate",
+        "return_1d": 2.4
+      },
+      {
+        "sector": "Materials",
+        "return_1d": 1.5
+      },
+      {
+        "sector": "Consumer Staples",
+        "return_1d": 1.0
+      },
+      {
+        "sector": "Financials",
+        "return_1d": 0.9
+      },
+      {
+        "sector": "Health Care",
+        "return_1d": 0.7
+      },
+      {
+        "sector": "Industrials",
+        "return_1d": 0.4
+      },
+      {
+        "sector": "Communication Services",
+        "return_1d": 0.4
+      },
+      {
+        "sector": "Energy",
+        "return_1d": 0.3
+      },
+      {
+        "sector": "Utilities",
+        "return_1d": 0.2
+      },
+      {
+        "sector": "Consumer Discretionary",
+        "return_1d": 0.0
+      },
+      {
+        "sector": "Information Technology",
+        "return_1d": -0.8
+      }
+    ]
+  },
+  "pipeline_status": {
+    "terminal_stage": "report_success",
+    "rag_attempted": true,
+    "rag_status": "direct_only",
+    "fallback_stage": "none"
+  },
+  "build": {
+    "git_sha": "c409019ef109fb9966cb3f2f4a13cb6b92e9d48b",
+    "python_version": "3.12.13",
+    "pandas_version": "3.0.5",
+    "yfinance_version": "1.5.2",
+    "calendar_version": "4.13.2",
+    "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
+  },
+  "run_started_at": "2026-07-27T08:01:07.690445+00:00",
+  "generated_at": "2026-07-27T08:12:01.299278+00:00"
 }

@@ -150,8 +150,9 @@
     }
     .market-summary-card h2 { font-size: 17px; margin-bottom: 16px; }
     .market-summary-card p { color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }
-    .market-summary-card strong { color: #fff; display: inline-block; width: 42px; }
+    .market-summary-card strong { color: #fff; display: inline-block; min-width: 68px; }
     .market-summary-sources a { color: #9bc8ff; text-decoration: underline; }
+    .market-summary-rag { color: #8bbdff !important; font-size: 10px !important; }
     .market-summary-note { color: var(--muted) !important; font-size: 11px !important; margin-top: 14px !important; }
 
     /* ── Tables ── */
@@ -208,6 +209,8 @@
       color: rgba(220,230,248,.84); font-size: 11px; line-height: 1.55;
     }
     .reason-cell { color: #9ed5ff; min-width: 270px; }
+    .stock-source-links { margin-top: 5px; color: var(--muted); font-size: 10px; }
+    .stock-source-links a { color: #79b8ff; }
 
     .pct {
       text-align: right;
@@ -365,11 +368,11 @@
           <td class="rank-cell">1</td>
           <td class="ticker-cell">IP</td>
           <td class="name-cell" title="International Paper">International Paper</td>
-          <td class="num-cell">$22.3B</td>
-          <td class="pct pos">+11.2%</td><td class="pct pos">+12.2%</td><td class="pct pos">+10.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="22.3">$22.3B</td>
+          <td class="pct pos">+11.2%</td><td class="pct pos">+12.2%</td><td class="pct pos">+10.1%</td><td class="pct pos">+27.6%</td>
           <td class="num-cell">380</td>
           <td class="sector-cell">Materials</td>
-          <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">북미, 라틴아메리카, 유럽, 남미, 북아프리카에서 재생 섬유 기반 포장재를 생산 및 판매합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -377,11 +380,11 @@
           <td class="rank-cell">2</td>
           <td class="ticker-cell">SW</td>
           <td class="name-cell" title="Smurfit Westrock">Smurfit Westrock</td>
-          <td class="num-cell">$25.5B</td>
-          <td class="pct pos">+11.1%</td><td class="pct pos">+9.6%</td><td class="pct pos">+4.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="25.5">$25.5B</td>
+          <td class="pct pos">+11.1%</td><td class="pct pos">+9.6%</td><td class="pct pos">+4.3%</td><td class="pct pos">+21.2%</td>
           <td class="num-cell">352</td>
           <td class="sector-cell">Materials</td>
-          <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">골판지 원지, 골판지 상자 및 기타 종이 기반 포장 제품을 제조, 유통, 판매합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -389,32 +392,32 @@
           <td class="rank-cell">3</td>
           <td class="ticker-cell">DLR</td>
           <td class="name-cell" title="Digital Realty">Digital Realty</td>
-          <td class="num-cell">$73.7B</td>
-          <td class="pct pos">+11.0%</td><td class="pct pos">+14.5%</td><td class="pct pos">+3.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="73.7">$73.7B</td>
+          <td class="pct pos">+11.0%</td><td class="pct pos">+14.5%</td><td class="pct pos">+3.1%</td><td class="pct pos">+0.2%</td>
           <td class="num-cell">173</td>
           <td class="sector-cell">Real Estate</td>
-          <td class="business-cell">부동산 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">데이터 센터 및 관련 시설을 소유, 개발, 운영하는 부동산 투자 신탁(REITs) 기업입니다.</td>
+          <td class="reason-cell">2분기 실적이 시장 예상치를 상회하고 데이터 센터 수요 호조에 힘입어 2026 회계연도 FFO 및 매출 가이던스를 상향 조정한 것이 호재로 작용했습니다.<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=092d2b5570d81be013ca2e9c9983e66fee6309e51a998639a14d569ab88a13ce" target="_blank" rel="noopener noreferrer">Digital Realty Trust (NYSE:DLR) Crushes Earnings Estimates, Soaring on Data Center Demand and Raised Guidance</a> · <a href="https://finnhub.io/api/news?id=81aed8f75e856bbd843d918f47cc6282553cbcc26fee970337b6b2f5b8248e8a" target="_blank" rel="noopener noreferrer">Digital Realty Trust Q2 Earnings Call Highlights</a> · <a href="https://finnhub.io/api/news?id=37ddbe48281111d9e091f1635c318d4aae0b55a73cdfb26e4f8883d445277efb" target="_blank" rel="noopener noreferrer">Digital Realty Trust Raises FY2026 FFO Guidance from $8.00-$8.10 to $8.15-$8.20 vs $8.01 Est; Raises FY2026 Sales Guidance from $6.650B-$6.750B to $6.850B-$6.950B vs $6.761B Est</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">4</td>
           <td class="ticker-cell">SLB</td>
           <td class="name-cell" title="Schlumberger">Schlumberger</td>
-          <td class="num-cell">$77.8B</td>
-          <td class="pct pos">+11.0%</td><td class="pct pos">+11.6%</td><td class="pct pos">+12.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="77.8">$77.8B</td>
+          <td class="pct pos">+11.0%</td><td class="pct pos">+11.6%</td><td class="pct pos">+12.5%</td><td class="pct neg">-3.7%</td>
           <td class="num-cell">158</td>
           <td class="sector-cell">Energy</td>
-          <td class="business-cell">에너지 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">전 세계 에너지 산업을 대상으로 유전 및 에너지 기술 서비스를 제공하는 기업입니다.</td>
+          <td class="reason-cell">2026년 2분기 주당순이익과 매출이 시장 전망치를 각각 7.84%, 2.95% 상회하는 호실적을 기록하며 주가가 상승했습니다.<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=b669d672a58cc2dd6233c5a36e16e06bd073a25d363092366d9a9cb20d89dbb4" target="_blank" rel="noopener noreferrer">SLB Awarded Seven-Year Contract Under Kuwait Oil Company&#x27;s Ahmadi Innovation Valley Initiative</a> · <a href="https://finnhub.io/api/news?id=4c916afe2b79136af1f81f3ab9e52618a38d138bf6f8f71fe9bc090d7c6ded19" target="_blank" rel="noopener noreferrer">SLB (SLB) Tops Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=86f402de05d812fa062d138ee93cb5cf6092a1fc73d6a25176e0547529c23960" target="_blank" rel="noopener noreferrer">SLB Likely To Report Lower Q2 Earnings; These Most Accurate Analysts Revise Forecasts Ahead Of Earnings Call</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">5</td>
           <td class="ticker-cell">PKG</td>
           <td class="name-cell" title="Packaging Corporation of America">Packaging Corporation of America</td>
-          <td class="num-cell">$22.7B</td>
-          <td class="pct pos">+8.8%</td><td class="pct pos">+9.1%</td><td class="pct pos">+7.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="22.7">$22.7B</td>
+          <td class="pct pos">+8.8%</td><td class="pct pos">+9.1%</td><td class="pct pos">+7.0%</td><td class="pct pos">+19.1%</td>
           <td class="num-cell">376</td>
           <td class="sector-cell">Materials</td>
           <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
@@ -425,8 +428,8 @@
           <td class="rank-cell">6</td>
           <td class="ticker-cell">NOW</td>
           <td class="name-cell" title="ServiceNow">ServiceNow</td>
-          <td class="num-cell">$102.1B</td>
-          <td class="pct pos">+7.4%</td><td class="pct neg">-4.3%</td><td class="pct pos">+5.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="102.1">$102.1B</td>
+          <td class="pct pos">+7.4%</td><td class="pct neg">-4.3%</td><td class="pct pos">+5.3%</td><td class="pct pos">+16.5%</td>
           <td class="num-cell">113</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -437,8 +440,8 @@
           <td class="rank-cell">7</td>
           <td class="ticker-cell">VRSN</td>
           <td class="name-cell" title="Verisign">Verisign</td>
-          <td class="num-cell">$25.3B</td>
-          <td class="pct pos">+7.0%</td><td class="pct pos">+0.8%</td><td class="pct pos">+11.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="25.3">$25.3B</td>
+          <td class="pct pos">+7.0%</td><td class="pct pos">+0.8%</td><td class="pct pos">+11.1%</td><td class="pct pos">+1.4%</td>
           <td class="num-cell">354</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -449,8 +452,8 @@
           <td class="rank-cell">8</td>
           <td class="ticker-cell">GDDY</td>
           <td class="name-cell" title="GoDaddy">GoDaddy</td>
-          <td class="num-cell">$12.3B</td>
-          <td class="pct pos">+6.3%</td><td class="pct neg">-1.3%</td><td class="pct pos">+14.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="12.3">$12.3B</td>
+          <td class="pct pos">+6.3%</td><td class="pct neg">-1.3%</td><td class="pct pos">+14.5%</td><td class="pct pos">+9.9%</td>
           <td class="num-cell">465</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -461,11 +464,11 @@
           <td class="rank-cell">9</td>
           <td class="ticker-cell">ADBE</td>
           <td class="name-cell" title="Adobe Inc.">Adobe Inc.</td>
-          <td class="num-cell">$89.5B</td>
-          <td class="pct pos">+6.1%</td><td class="pct neg">-5.1%</td><td class="pct pos">+14.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="89.5">$89.5B</td>
+          <td class="pct pos">+6.1%</td><td class="pct neg">-5.1%</td><td class="pct pos">+14.5%</td><td class="pct neg">-5.8%</td>
           <td class="num-cell">135</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">어도비는 소프트웨어 제품 및 솔루션을 개발 및 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -473,11 +476,11 @@
           <td class="rank-cell">10</td>
           <td class="ticker-cell">ACN</td>
           <td class="name-cell" title="Accenture">Accenture</td>
-          <td class="num-cell">$89.9B</td>
-          <td class="pct pos">+5.9%</td><td class="pct pos">+2.4%</td><td class="pct pos">+15.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="89.9">$89.9B</td>
+          <td class="pct pos">+5.9%</td><td class="pct pos">+2.4%</td><td class="pct pos">+15.2%</td><td class="pct neg">-16.6%</td>
           <td class="num-cell">133</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">액센츄어는 전 세계 고객에게 전략, 컨설팅, 기술 및 운영 서비스를 제공합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -485,23 +488,23 @@
           <td class="rank-cell">11</td>
           <td class="ticker-cell">VZ</td>
           <td class="name-cell" title="Verizon">Verizon</td>
-          <td class="num-cell">$193.7B</td>
-          <td class="pct pos">+5.8%</td><td class="pct pos">+6.4%</td><td class="pct pos">+3.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="193.7">$193.7B</td>
+          <td class="pct pos">+5.8%</td><td class="pct pos">+6.4%</td><td class="pct pos">+3.3%</td><td class="pct neg">-0.1%</td>
           <td class="num-cell">56</td>
           <td class="sector-cell">Communication Services</td>
-          <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">버라이즌은 통신, 기술, 정보 및 스트리밍 제품과 서비스를 제공하는 기업입니다.</td>
+          <td class="reason-cell">2분기 조정 주당순이익(EPS)이 시장 예상치를 상회하고 연간 실적 전망(가이던스)을 상향 조정한 영향입니다.<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=e1a0401bb694c664517085a272c1c7baef6092d4e9224d95668e399b17fc35e5" target="_blank" rel="noopener noreferrer">Verizon shares rise as earnings beat and guidance boost offset revenue miss</a> · <a href="https://finnhub.io/api/news?id=2b12096e01f795002a10b2dd0c31623a555c2aab5d9610d867f85d2d4e939453" target="_blank" rel="noopener noreferrer">Verizon shares rise on earnings beat, raised guidance</a> · <a href="https://finnhub.io/api/news?id=f0168d985301f881d05958213cdd3a5d3788f2ec73d2a4743b371a5d47891dc5" target="_blank" rel="noopener noreferrer">Crude Oil Down Over 4%; Verizon Raises Earnings Forecast</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">12</td>
           <td class="ticker-cell">WDAY</td>
           <td class="name-cell" title="Workday, Inc.">Workday, Inc.</td>
-          <td class="num-cell">$33.4B</td>
-          <td class="pct pos">+5.8%</td><td class="pct neg">-6.5%</td><td class="pct pos">+14.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="33.4">$33.4B</td>
+          <td class="pct pos">+5.8%</td><td class="pct neg">-6.5%</td><td class="pct pos">+14.6%</td><td class="pct pos">+18.0%</td>
           <td class="num-cell">293</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">워크데이는 기업용 클라우드 애플리케이션을 제공하는 소프트웨어 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -509,8 +512,8 @@
           <td class="rank-cell">13</td>
           <td class="ticker-cell">TMUS</td>
           <td class="name-cell" title="T-Mobile US">T-Mobile US</td>
-          <td class="num-cell">$193.2B</td>
-          <td class="pct pos">+5.7%</td><td class="pct neg">-6.4%</td><td class="pct neg">-0.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="193.2">$193.2B</td>
+          <td class="pct pos">+5.7%</td><td class="pct neg">-6.4%</td><td class="pct neg">-0.4%</td><td class="pct neg">-6.7%</td>
           <td class="num-cell">57</td>
           <td class="sector-cell">Communication Services</td>
           <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
@@ -521,8 +524,8 @@
           <td class="rank-cell">14</td>
           <td class="ticker-cell">CTSH</td>
           <td class="name-cell" title="Cognizant">Cognizant</td>
-          <td class="num-cell">$21.5B</td>
-          <td class="pct pos">+5.7%</td><td class="pct pos">+1.5%</td><td class="pct pos">+9.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="21.5">$21.5B</td>
+          <td class="pct pos">+5.7%</td><td class="pct pos">+1.5%</td><td class="pct pos">+9.7%</td><td class="pct neg">-16.9%</td>
           <td class="num-cell">391</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -533,8 +536,8 @@
           <td class="rank-cell">15</td>
           <td class="ticker-cell">INTU</td>
           <td class="name-cell" title="Intuit">Intuit</td>
-          <td class="num-cell">$81.1B</td>
-          <td class="pct pos">+5.3%</td><td class="pct pos">+1.8%</td><td class="pct pos">+13.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="81.1">$81.1B</td>
+          <td class="pct pos">+5.3%</td><td class="pct pos">+1.8%</td><td class="pct pos">+13.5%</td><td class="pct neg">-22.3%</td>
           <td class="num-cell">151</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -545,8 +548,8 @@
           <td class="rank-cell">16</td>
           <td class="ticker-cell">IT</td>
           <td class="name-cell" title="Gartner">Gartner</td>
-          <td class="num-cell">$9.4B</td>
-          <td class="pct pos">+5.1%</td><td class="pct pos">+0.2%</td><td class="pct pos">+7.7%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="9.4">$9.4B</td>
+          <td class="pct pos">+5.1%</td><td class="pct pos">+0.2%</td><td class="pct pos">+7.7%</td><td class="pct neg">-5.5%</td>
           <td class="num-cell">493</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -557,8 +560,8 @@
           <td class="rank-cell">17</td>
           <td class="ticker-cell">HPQ</td>
           <td class="name-cell" title="HP Inc.">HP Inc.</td>
-          <td class="num-cell">$23.5B</td>
-          <td class="pct pos">+5.1%</td><td class="pct pos">+3.7%</td><td class="pct pos">+10.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="23.5">$23.5B</td>
+          <td class="pct pos">+5.1%</td><td class="pct pos">+3.7%</td><td class="pct pos">+10.6%</td><td class="pct pos">+29.4%</td>
           <td class="num-cell">365</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -569,8 +572,8 @@
           <td class="rank-cell">18</td>
           <td class="ticker-cell">TRMB</td>
           <td class="name-cell" title="Trimble Inc.">Trimble Inc.</td>
-          <td class="num-cell">$12.3B</td>
-          <td class="pct pos">+5.1%</td><td class="pct pos">+0.4%</td><td class="pct pos">+5.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="12.3">$12.3B</td>
+          <td class="pct pos">+5.1%</td><td class="pct pos">+0.4%</td><td class="pct pos">+5.5%</td><td class="pct neg">-21.1%</td>
           <td class="num-cell">466</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
@@ -581,8 +584,8 @@
           <td class="rank-cell">19</td>
           <td class="ticker-cell">T</td>
           <td class="name-cell" title="AT&amp;T">AT&amp;T</td>
-          <td class="num-cell">$165.3B</td>
-          <td class="pct pos">+5.1%</td><td class="pct pos">+10.6%</td><td class="pct pos">+9.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="165.3">$165.3B</td>
+          <td class="pct pos">+5.1%</td><td class="pct pos">+10.6%</td><td class="pct pos">+9.3%</td><td class="pct neg">-8.1%</td>
           <td class="num-cell">74</td>
           <td class="sector-cell">Communication Services</td>
           <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
@@ -593,8 +596,8 @@
           <td class="rank-cell">20</td>
           <td class="ticker-cell">EQIX</td>
           <td class="name-cell" title="Equinix">Equinix</td>
-          <td class="num-cell">$106.9B</td>
-          <td class="pct pos">+4.9%</td><td class="pct pos">+6.3%</td><td class="pct neg">-1.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="106.9">$106.9B</td>
+          <td class="pct pos">+4.9%</td><td class="pct pos">+6.3%</td><td class="pct neg">-1.0%</td><td class="pct neg">-2.3%</td>
           <td class="num-cell">108</td>
           <td class="sector-cell">Real Estate</td>
           <td class="business-cell">부동산 분야를 영위하는 미국 상장 기업</td>
@@ -634,11 +637,11 @@
           <td class="rank-cell">503</td>
           <td class="ticker-cell">SNDK</td>
           <td class="name-cell" title="Sandisk">Sandisk</td>
-          <td class="num-cell">$212.7B</td>
-          <td class="pct neg">-10.8%</td><td class="pct pos">+6.0%</td><td class="pct neg">-25.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="212.7">$212.7B</td>
+          <td class="pct neg">-10.8%</td><td class="pct pos">+6.0%</td><td class="pct neg">-25.0%</td><td class="pct pos">+54.1%</td>
           <td class="num-cell">52</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">샌디스크는 NAND 플래시 기술 기반의 데이터 저장 장치 및 솔루션을 개발, 제조, 판매합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -646,11 +649,11 @@
           <td class="rank-cell">502</td>
           <td class="ticker-cell">COHR</td>
           <td class="name-cell" title="Coherent Corp.">Coherent Corp.</td>
-          <td class="num-cell">$55.2B</td>
-          <td class="pct neg">-9.8%</td><td class="pct pos">+1.7%</td><td class="pct neg">-28.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="55.2">$55.2B</td>
+          <td class="pct neg">-9.8%</td><td class="pct pos">+1.7%</td><td class="pct neg">-28.1%</td><td class="pct neg">-16.4%</td>
           <td class="num-cell">222</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">코히런트는 기술 제품 및 솔루션을 제공하는 글로벌 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -658,11 +661,11 @@
           <td class="rank-cell">501</td>
           <td class="ticker-cell">CHRW</td>
           <td class="name-cell" title="C.H. Robinson">C.H. Robinson</td>
-          <td class="num-cell">$22.0B</td>
-          <td class="pct neg">-9.2%</td><td class="pct neg">-10.5%</td><td class="pct pos">+5.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="22">$22.0B</td>
+          <td class="pct neg">-9.2%</td><td class="pct neg">-10.5%</td><td class="pct pos">+5.2%</td><td class="pct pos">+1.9%</td>
           <td class="num-cell">387</td>
           <td class="sector-cell">Industrials</td>
-          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">C.H. 로빈슨은 화물 운송 및 물류 솔루션을 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -670,11 +673,11 @@
           <td class="rank-cell">500</td>
           <td class="ticker-cell">LITE</td>
           <td class="name-cell" title="Lumentum">Lumentum</td>
-          <td class="num-cell">$59.4B</td>
-          <td class="pct neg">-8.5%</td><td class="pct pos">+4.1%</td><td class="pct neg">-9.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="59.4">$59.4B</td>
+          <td class="pct neg">-8.5%</td><td class="pct pos">+4.1%</td><td class="pct neg">-9.4%</td><td class="pct neg">-9.9%</td>
           <td class="num-cell">209</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">루멘텀 홀딩스는 광학 및 광전자 제품을 개발하고 제조하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -682,35 +685,35 @@
           <td class="rank-cell">499</td>
           <td class="ticker-cell">INTC</td>
           <td class="name-cell" title="Intel">Intel</td>
-          <td class="num-cell">$465.7B</td>
-          <td class="pct neg">-7.9%</td><td class="pct neg">-2.9%</td><td class="pct neg">-29.9%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="465.7">$465.7B</td>
+          <td class="pct neg">-7.9%</td><td class="pct neg">-2.9%</td><td class="pct neg">-29.9%</td><td class="pct pos">+38.2%</td>
           <td class="num-cell">20</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">인텔은 컴퓨팅 제품 및 서비스 설계·제조·판매·서비스를 제공하는 반도체 기업</td>
+          <td class="reason-cell">Q2 실적이 예상치를 크게 웃으며 EPS·매출 상승, 긍정적 Q3 전망<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=0b14daf56431afabb443fe338c88e845b4b18fb0d90fbd0f36687fae97fb88b7" target="_blank" rel="noopener noreferrer">Intel&#x27;s Q2 earnings blow past Wall Street&#x27;s estimates, with an upbeat Q3 outlook to boot</a> · <a href="https://finnhub.io/api/news?id=5daf4b29d3b1ed5ee444dda129f7b5fc547867ec6bb3d6f24fd98469fa8d879f" target="_blank" rel="noopener noreferrer">Intel (INTC) Beats Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=1f8acef9a4e717fbfcf7bd47744e442f8950fd2ab8b077e8e2ccc88063dd6e46" target="_blank" rel="noopener noreferrer">Texas Instruments (TXN) Tops Q2 Earnings and Revenue Estimates</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">498</td>
           <td class="ticker-cell">WST</td>
           <td class="name-cell" title="West Pharmaceutical Services">West Pharmaceutical Services</td>
-          <td class="num-cell">$23.1B</td>
-          <td class="pct neg">-7.7%</td><td class="pct neg">-8.4%</td><td class="pct neg">-3.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="23.1">$23.1B</td>
+          <td class="pct neg">-7.7%</td><td class="pct neg">-8.4%</td><td class="pct neg">-3.6%</td><td class="pct pos">+6.1%</td>
           <td class="num-cell">371</td>
           <td class="sector-cell">Health Care</td>
-          <td class="business-cell">헬스케어·바이오 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">웨스트 파마슈티컬은 의료용 고부가가치 제품을 포함한 약품 포장 및 전달 솔루션을 제공</td>
+          <td class="reason-cell">Q2 실적 및 매출이 예상 초과, FY2026 EPS·매출 가이던스 상향<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=8b5562ccad08c40b36749e0aaa7782b3c5636767b2c337583a15476bb8c73561" target="_blank" rel="noopener noreferrer">WST Stock Jumps on Q2 Earnings &amp; Sales Beat, EPS View Up on HVP Growth</a> · <a href="https://finnhub.io/api/news?id=a437a6a837d4598cff87e81087d1ad59fc9a505ce89c1dd31aca78b7350f3566" target="_blank" rel="noopener noreferrer">West Pharmaceutical Servs Raises FY2026 Adj EPS Guidance from $8.40-$8.75 to $8.85-$9.05 vs $8.61 Est; Raises FY2026 Sales Guidance from $3.295B-$3.350B to $3.345B-$3.380B vs $3.332B Est</a> · <a href="https://finnhub.io/api/news?id=621439d11636ccf6b1b941320580657de1764b4f53ab927405dece415eea4685" target="_blank" rel="noopener noreferrer">Artivion Secures FDA Approval for AMDS Hybrid Prosthesis Device</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">497</td>
           <td class="ticker-cell">FLEX</td>
           <td class="name-cell" title="Flex Ltd.">Flex Ltd.</td>
-          <td class="num-cell">$43.4B</td>
-          <td class="pct neg">-7.4%</td><td class="pct neg">-0.6%</td><td class="pct neg">-21.4%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="43.4">$43.4B</td>
+          <td class="pct neg">-7.4%</td><td class="pct neg">-0.6%</td><td class="pct neg">-21.4%</td><td class="pct pos">+36.4%</td>
           <td class="num-cell">250</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">플렉스는 전자 제조 서비스 및 공급망 솔루션을 제공하는 글로벌 계약 제조업체</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -718,11 +721,11 @@
           <td class="rank-cell">496</td>
           <td class="ticker-cell">MRVL</td>
           <td class="name-cell" title="Marvell Technology">Marvell Technology</td>
-          <td class="num-cell">$174.3B</td>
-          <td class="pct neg">-7.2%</td><td class="pct pos">+2.9%</td><td class="pct neg">-29.8%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="174.3">$174.3B</td>
+          <td class="pct neg">-7.2%</td><td class="pct pos">+2.9%</td><td class="pct neg">-29.8%</td><td class="pct pos">+17.3%</td>
           <td class="num-cell">71</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">마벨은 데이터 센터와 네트워크 엣지를 아우르는 데이터 인프라 반도체 솔루션을 제공</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -730,11 +733,11 @@
           <td class="rank-cell">495</td>
           <td class="ticker-cell">MU</td>
           <td class="name-cell" title="Micron Technology">Micron Technology</td>
-          <td class="num-cell">$1.04T</td>
-          <td class="pct neg">-7.0%</td><td class="pct pos">+8.5%</td><td class="pct neg">-12.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="1040.1">$1.04T</td>
+          <td class="pct neg">-7.0%</td><td class="pct pos">+8.5%</td><td class="pct neg">-12.2%</td><td class="pct pos">+91.2%</td>
           <td class="num-cell">12</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">마이크론 테크놀로지는 메모리 및 반도체 솔루션을 개발·제조하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -742,11 +745,11 @@
           <td class="rank-cell">494</td>
           <td class="ticker-cell">WDC</td>
           <td class="name-cell" title="Western Digital">Western Digital</td>
-          <td class="num-cell">$179.2B</td>
-          <td class="pct neg">-6.9%</td><td class="pct pos">+8.9%</td><td class="pct neg">-19.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="179.2">$179.2B</td>
+          <td class="pct neg">-6.9%</td><td class="pct pos">+8.9%</td><td class="pct neg">-19.3%</td><td class="pct pos">+29.0%</td>
           <td class="num-cell">67</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">웨스턴 디지털은 하드 디스크 드라이브와 데이터 저장 장치 솔루션을 개발 및 판매합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -754,11 +757,11 @@
           <td class="rank-cell">493</td>
           <td class="ticker-cell">STX</td>
           <td class="name-cell" title="Seagate Technology">Seagate Technology</td>
-          <td class="num-cell">$192.7B</td>
-          <td class="pct neg">-6.8%</td><td class="pct pos">+8.1%</td><td class="pct neg">-14.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="192.7">$192.7B</td>
+          <td class="pct neg">-6.8%</td><td class="pct pos">+8.1%</td><td class="pct neg">-14.3%</td><td class="pct pos">+45.0%</td>
           <td class="num-cell">58</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">씨게이트 테크놀로지는 데이터 저장 기술 및 인프라 솔루션을 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -766,11 +769,11 @@
           <td class="rank-cell">492</td>
           <td class="ticker-cell">HOOD</td>
           <td class="name-cell" title="Robinhood Markets">Robinhood Markets</td>
-          <td class="num-cell">$85.5B</td>
-          <td class="pct neg">-6.6%</td><td class="pct neg">-5.1%</td><td class="pct neg">-2.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="85.5">$85.5B</td>
+          <td class="pct neg">-6.6%</td><td class="pct neg">-5.1%</td><td class="pct neg">-2.3%</td><td class="pct pos">+13.6%</td>
           <td class="num-cell">141</td>
           <td class="sector-cell">Financials</td>
-          <td class="business-cell">금융 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">로빈후드 마켓츠는 온라인 금융 플랫폼 및 주식 거래 서비스를 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -778,11 +781,11 @@
           <td class="rank-cell">491</td>
           <td class="ticker-cell">TER</td>
           <td class="name-cell" title="Teradyne">Teradyne</td>
-          <td class="num-cell">$54.8B</td>
-          <td class="pct neg">-6.4%</td><td class="pct pos">+8.5%</td><td class="pct neg">-18.1%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="54.8">$54.8B</td>
+          <td class="pct neg">-6.4%</td><td class="pct pos">+8.5%</td><td class="pct neg">-18.1%</td><td class="pct neg">-12.7%</td>
           <td class="num-cell">224</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">테라다인은 반도체 및 전자 시스템 시험용 자동화 장비를 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -790,11 +793,11 @@
           <td class="rank-cell">490</td>
           <td class="ticker-cell">GLW</td>
           <td class="name-cell" title="Corning Inc.">Corning Inc.</td>
-          <td class="num-cell">$126.2B</td>
-          <td class="pct neg">-6.0%</td><td class="pct neg">-5.1%</td><td class="pct neg">-28.8%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="126.2">$126.2B</td>
+          <td class="pct neg">-6.0%</td><td class="pct neg">-5.1%</td><td class="pct neg">-28.8%</td><td class="pct neg">-13.3%</td>
           <td class="num-cell">94</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">코닝은 광통신, 디스플레이, 특수 재료, 자동차 및 생명과학 사업을 영위합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -802,23 +805,23 @@
           <td class="rank-cell">489</td>
           <td class="ticker-cell">FIX</td>
           <td class="name-cell" title="Comfort Systems USA">Comfort Systems USA</td>
-          <td class="num-cell">$61.0B</td>
-          <td class="pct neg">-5.3%</td><td class="pct pos">+3.6%</td><td class="pct neg">-11.3%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="61">$61.0B</td>
+          <td class="pct neg">-5.3%</td><td class="pct pos">+3.6%</td><td class="pct neg">-11.3%</td><td class="pct neg">-2.2%</td>
           <td class="num-cell">203</td>
           <td class="sector-cell">Industrials</td>
-          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
+          <td class="business-cell">컴포트 시스템즈 USA는 기계 및 전기 설비 설치, 유지보수 및 교체 서비스를 제공합니다.</td>
+          <td class="reason-cell">2분기 매출과 순이익이 시장 예상치를 상회하고 수주 잔고가 전년 동기 대비 증가했다고 발표했습니다.<div class="stock-source-links">근거: <a href="https://finnhub.io/api/news?id=d66088ce73c0326b995d3e70d912117f84f4227b44fac4be2c686b18d75ad4f0" target="_blank" rel="noopener noreferrer">Comfort Systems Q2 Earnings &amp; Revenues Beat Estimates, Backlog Up Y/Y</a> · <a href="https://finnhub.io/api/news?id=211f899d3c80ba8b1bdb41172439222f84a45888ec4fa5ac7e5b74ebe70dec5b" target="_blank" rel="noopener noreferrer">Comfort Systems (FIX) Q2 Earnings and Revenues Top Estimates</a> · <a href="https://finnhub.io/api/news?id=2963ccce5ebb33f15ab1f7b6fd7776c6fe4b83db5f1eb007b4024ce7c245e71f" target="_blank" rel="noopener noreferrer">Comfort Systems (FIX) To Report Earnings Tomorrow: Here Is What To Expect</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">488</td>
           <td class="ticker-cell">MRNA</td>
           <td class="name-cell" title="Moderna">Moderna</td>
-          <td class="num-cell">$21.5B</td>
-          <td class="pct neg">-5.2%</td><td class="pct neg">-12.5%</td><td class="pct neg">-10.5%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="21.5">$21.5B</td>
+          <td class="pct neg">-5.2%</td><td class="pct neg">-12.5%</td><td class="pct neg">-10.5%</td><td class="pct pos">+2.3%</td>
           <td class="num-cell">393</td>
           <td class="sector-cell">Health Care</td>
-          <td class="business-cell">헬스케어·바이오 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">모더나는 메신저 RNA 기반 의약품을 개발 및 공급하는 바이오테크 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -826,11 +829,11 @@
           <td class="rank-cell">487</td>
           <td class="ticker-cell">AMAT</td>
           <td class="name-cell" title="Applied Materials">Applied Materials</td>
-          <td class="num-cell">$425.8B</td>
-          <td class="pct neg">-4.7%</td><td class="pct pos">+1.2%</td><td class="pct neg">-9.0%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="425.8">$425.8B</td>
+          <td class="pct neg">-4.7%</td><td class="pct pos">+1.2%</td><td class="pct neg">-9.0%</td><td class="pct pos">+32.9%</td>
           <td class="num-cell">24</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">어플라이드 머티어리얼즈는 반도체 및 디스플레이 장비 제품과 서비스를 제공하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -838,11 +841,11 @@
           <td class="rank-cell">486</td>
           <td class="ticker-cell">LRCX</td>
           <td class="name-cell" title="Lam Research">Lam Research</td>
-          <td class="num-cell">$381.7B</td>
-          <td class="pct neg">-4.6%</td><td class="pct neg">-2.6%</td><td class="pct neg">-18.6%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="381.7">$381.7B</td>
+          <td class="pct neg">-4.6%</td><td class="pct neg">-2.6%</td><td class="pct neg">-18.6%</td><td class="pct pos">+18.1%</td>
           <td class="num-cell">29</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">램리서치는 집적회로 제조에 사용되는 반도체 공정 장비를 설계, 제조 및 서비스하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -850,11 +853,11 @@
           <td class="rank-cell">484</td>
           <td class="ticker-cell">VRT</td>
           <td class="name-cell" title="Vertiv">Vertiv</td>
-          <td class="num-cell">$111.5B</td>
-          <td class="pct neg">-4.5%</td><td class="pct pos">+0.3%</td><td class="pct neg">-8.2%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="111.5">$111.5B</td>
+          <td class="pct neg">-4.5%</td><td class="pct pos">+0.3%</td><td class="pct neg">-8.2%</td><td class="pct neg">-9.7%</td>
           <td class="num-cell">105</td>
           <td class="sector-cell">Industrials</td>
-          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">버티브 홀딩스는 데이터 센터 및 통신 네트워크용 핵심 디지털 인프라 기술을 제공합니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
 
@@ -862,11 +865,11 @@
           <td class="rank-cell">485</td>
           <td class="ticker-cell">MPWR</td>
           <td class="name-cell" title="Monolithic Power Systems">Monolithic Power Systems</td>
-          <td class="num-cell">$65.5B</td>
-          <td class="pct neg">-4.5%</td><td class="pct pos">+1.7%</td><td class="pct neg">-6.9%</td><td class="pct flat">—%</td>
+          <td class="num-cell" data-sort-value="65.5">$65.5B</td>
+          <td class="pct neg">-4.5%</td><td class="pct pos">+1.7%</td><td class="pct neg">-6.9%</td><td class="pct neg">-16.1%</td>
           <td class="num-cell">190</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="business-cell">모놀리식 파워 시스템즈는 전력 관리 및 반도체 솔루션을 설계하고 제조하는 기업입니다.</td>
           <td class="reason-cell">최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.</td>
         </tr>
           </tbody>
@@ -879,16 +882,19 @@
   
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
-    <h2>📈 상승 종목이 시장 전반으로 확산된 강한 위험선호 흐름</h2>
-    <p><strong>관측</strong>상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate +2.4%, Materials +1.5%, 약세 섹터는 Information Technology -0.8%, Consumer Discretionary +0.0%였습니다. 개별 종목 중 IP(+11.2%)가 가장 강했고, SNDK(-10.8%)가 가장 약했습니다.</p>
-    <p><strong>해석</strong>최근 한 달 내 시황 기사 3건 이상을 코드 기준으로 확인하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.</p>
+    <h2>📈 상승 종목 확산 속 변동성과 섹터 차별화 장세</h2>
+    <p><strong>관측</strong>상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate(+2.4%), Materials(+1.5%)였으며, 약세 섹터는 Information Technology(-0.8%), Consumer Discretionary(+0.0%)였습니다. 개별 종목 중 IP(+11.2%)가 가장 큰 폭으로 상승했고, SNDK(-10.8%)가 가장 큰 폭으로 하락했습니다.</p>
+    <p><strong>직접 해석</strong>정규장 뉴스에 따르면, AI 지출 우려와 유가 상승 부담이 시장에 하락 압력과 변동성을 더했습니다. 그러나 유가 상승세가 멈추면서 주가가 반등을 시도했고, &#x27;반도체 매도, 소프트웨어 매수&#x27; 트레이드가 재등장하는 등 섹터 간 차별화가 진행되었습니다. 이러한 흐름 속에서 정보기술 섹터가 약세를 나타낸 반면, 부동산 및 소재 섹터를 중심으로 시장 전반에 폭넓은 상승세가 전개되었습니다.</p>
     
-    <p class="market-summary-note">뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.</p>
+    <p class="market-summary-sources"><strong>직접 근거</strong><a href="https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html" target="_blank" rel="noopener noreferrer">The &#x27;sell chips, buy software&#x27; trade reappears as Wall Street caps off another volatile week</a> (2026-07-24) · <a href="https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps" target="_blank" rel="noopener noreferrer">US stocks tumble as AI spending and oil prices weigh on market</a> (2026-07-23) · <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5" target="_blank" rel="noopener noreferrer">Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters</a> (2026-07-23)</p>
+    
+    <p class="market-summary-rag">RAG direct_only · Gemini + Finnhub RAG</p>
+    <p class="market-summary-note">Gemini + Finnhub RAG가 코드가 선정한 직접 근거 3건과 최근 맥락 0건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.</p>
   </section>
 
   <footer>
     데이터 출처: Yahoo Finance (yfinance) &nbsp;|&nbsp;
-    자동 생성: 2026-07-27 00:12 UTC &nbsp;|&nbsp;
+    자동 생성: 2026-07-27 08:12 UTC &nbsp;|&nbsp;
     <a href="https://github.com" style="color:var(--muted);">GitHub Actions</a>
   </footer>
 
@@ -914,8 +920,12 @@
         const asc   = th.dataset.sorted !== 'asc';
 
         rows.sort((a, b) => {
-          const aVal = a.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
-          const bVal = b.cells[colIdx]?.innerText.trim().replace(/[%$,↑↓+]/g, '') || '';
+          const aCell = a.cells[colIdx];
+          const bCell = b.cells[colIdx];
+          const aVal = aCell?.dataset.sortValue ??
+            aCell?.innerText.trim().replace(/[%$,↑↓+]/g, '') ?? '';
+          const bVal = bCell?.dataset.sortValue ??
+            bCell?.innerText.trim().replace(/[%$,↑↓+]/g, '') ?? '';
           const aNum = parseFloat(aVal);
           const bNum = parseFloat(bVal);
           if (!isNaN(aNum) && !isNaN(bNum)) return asc ? aNum - bNum : bNum - aNum;
