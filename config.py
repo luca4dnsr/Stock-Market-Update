@@ -70,11 +70,14 @@ NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v12-time-aware-market-rag"
+AI_INSIGHTS_CACHE_VERSION = "v13-workflow-news-cutoff"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120
-# 거래일 30일 전부터 해당 거래일 장 마감까지를 확인한다.
+# 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.
+WORKFLOW_NEWS_CUTOFF_HOUR_KST = 7
+WORKFLOW_NEWS_CUTOFF_MINUTE_KST = 0
+# 거래일 30일 전부터 해당 거래일의 워크플로 뉴스 기준 시각까지 확인한다.
 NEWS_WINDOW_DAYS_BEFORE = 30
 NEWS_WINDOW_DAYS_AFTER = 0
 MARKET_MIN_NEWS_SOURCES = 3

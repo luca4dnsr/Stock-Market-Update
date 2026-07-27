@@ -25,7 +25,9 @@ from ai_insights import (
     _research_market_summary,
     _retrieve_market_evidence,
     _select_market_articles,
+    _stock_cache_key,
     _valid_stock_response_items,
+    _workflow_news_cutoff,
 )
 from config import AI_INSIGHTS_CACHE_VERSION
 
@@ -36,7 +38,7 @@ def _article(article_id: str, headline: str, source: str, published_date: str) -
         "headline": headline,
         "summary": headline,
         "source": source,
-        "published_at": f"{published_date}T16:00:00-04:00",
+        "published_at": f"{published_date}T15:00:00-04:00",
         "published_date": published_date,
         "url": f"https://example.com/{article_id}",
         "related": [],
@@ -48,6 +50,7 @@ def _market_retrieval() -> dict:
         {
             **_article(str(index), f"Direct market article {index}", "Reuters", "2026-07-24"),
             "evidence_id": f"D{index}",
+            "session_phase": "regular_session",
         }
         for index in range(1, 4)
     ]
@@ -63,6 +66,7 @@ def _market_retrieval() -> dict:
         "rag_status": "ready",
         "retriever_version": "test-v1",
         "market_close_cutoff": "2026-07-24T16:00:00-04:00",
+        "news_cutoff": "2026-07-24T22:00:00+00:00",
         "retrieval_as_of": "2026-07-27T01:00:00+00:00",
         "corpus_status": {"document_count": 4},
     }
@@ -89,6 +93,22 @@ def _nim_stock_item(ticker: str) -> dict:
 
 
 class AiInsightsTest(unittest.TestCase):
+    def test_workflow_news_cutoff_is_kst_0700_and_never_future(self):
+        self.assertEqual(
+            _workflow_news_cutoff(
+                "2026-07-24",
+                datetime(2026, 7, 24, 23, tzinfo=timezone.utc),
+            ),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+        self.assertEqual(
+            _workflow_news_cutoff(
+                "2026-07-24",
+                datetime(2026, 7, 24, 21, tzinfo=timezone.utc),
+            ),
+            datetime(2026, 7, 24, 21, tzinfo=timezone.utc),
+        )
+
     @patch("ai_insights.requests.get")
     def test_finnhub_request_error_does_not_expose_api_key(self, mock_get):
         mock_get.side_effect = requests.ConnectionError(
@@ -245,6 +265,8 @@ class AiInsightsTest(unittest.TestCase):
         self.assertIn('{"items":[', stock_prompt)
         for field in ("ticker", "business_ko", "move_reason_ko", "evidence_status"):
             self.assertIn(f'"{field}"', stock_prompt)
+        self.assertIn("post_close", stock_prompt)
+        self.assertIn("정규장 등락의 원인으로 표현하지", stock_prompt)
         for field in (
             "headline",
             "observation",
@@ -254,6 +276,8 @@ class AiInsightsTest(unittest.TestCase):
             "context_evidence_ids",
         ):
             self.assertIn(f'"{field}"', market_prompt)
+        self.assertIn("post_close", market_prompt)
+        self.assertIn("정규장 움직임의 원인으로 표현하지", market_prompt)
 
     def test_nim_market_prompt_uses_production_evidence_ids(self):
         retrieval = _market_retrieval()
@@ -307,6 +331,35 @@ class AiInsightsTest(unittest.TestCase):
         )
 
         self.assertEqual(set(entries), {"AAA"})
+
+    def test_nim_rejects_post_close_reason_without_timing_label(self):
+        source = _article(
+            "100",
+            "AAA raises guidance",
+            "Reuters",
+            "2026-07-24",
+        )
+        source["session_phase"] = "post_close"
+        expected = _stock_input("AAA")
+        expected["selected_finnhub_articles"] = [source]
+        generated = {
+            "items": [
+                {
+                    "ticker": "AAA",
+                    "business_ko": "예시 사업을 영위하는 기업",
+                    "move_reason_ko": "가이던스를 상향 발표했습니다.",
+                    "evidence_status": "verified",
+                }
+            ]
+        }
+
+        valid = _valid_stock_response_items(
+            generated,
+            [expected],
+            attempt=1,
+        )
+
+        self.assertEqual(valid, {})
 
     def test_market_response_reports_exact_missing_fields(self):
         with self.assertRaisesRegex(
@@ -408,6 +461,25 @@ class AiInsightsTest(unittest.TestCase):
                 "Gemini + Finnhub RAG",
             )
 
+    def test_market_response_requires_three_regular_session_citations(self):
+        retrieval = _market_retrieval()
+        retrieval["direct_evidence"][2]["session_phase"] = "post_close"
+        generated = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "최근 물가와 섹터 맥락",
+            "direct_evidence_ids": ["D1", "D2", "D3"],
+            "context_evidence_ids": ["C1"],
+        }
+
+        with self.assertRaisesRegex(ValueError, "정규장 직접 근거가 기준보다 적습니다"):
+            _build_market_summary(
+                generated,
+                retrieval,
+                "Gemini + Finnhub RAG",
+            )
+
     def test_limited_market_summary_marks_rag_as_attempted(self):
         retrieval = _market_retrieval()
         retrieval["direct_evidence"] = retrieval["direct_evidence"][:2]
@@ -432,10 +504,44 @@ class AiInsightsTest(unittest.TestCase):
         )
         self.assertEqual(summary["rag_status"], "corpus_corrupt")
 
+    @patch("ai_insights._fallback_market_summary")
+    @patch("ai_insights._request_gemini_json")
+    def test_post_close_only_market_evidence_skips_ai_generation(
+        self, mock_gemini, mock_fallback
+    ):
+        retrieval = _market_retrieval()
+        for source in retrieval["direct_evidence"]:
+            source["session_phase"] = "post_close"
+
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        mock_gemini.assert_not_called()
+        mock_fallback.assert_not_called()
+        self.assertEqual(summary["fallback_stage"], "rule_based")
+        self.assertEqual(summary["rag_status"], "insufficient_direct_evidence")
+
     @patch("ai_insights._collect_market_news")
     def test_legacy_market_retrieval_excludes_old_articles_from_direct_evidence(
         self, mock_collect
     ):
+        post_close = _article(
+            "post-close",
+            "S&P 500 futures react to Federal Reserve comments",
+            "CNBC",
+            "2026-07-24",
+        )
+        post_close["published_at"] = "2026-07-24T17:00:00-04:00"
+        after_cutoff = _article(
+            "after-cutoff",
+            "Wall Street outlook changes late in the evening",
+            "Bloomberg",
+            "2026-07-24",
+        )
+        after_cutoff["published_at"] = "2026-07-24T18:01:00-04:00"
         mock_collect.return_value = (
             [
                 _article(
@@ -462,6 +568,8 @@ class AiInsightsTest(unittest.TestCase):
                     "AP",
                     "2026-07-22",
                 ),
+                post_close,
+                after_cutoff,
             ],
             {"status": "ok", "error": ""},
         )
@@ -477,8 +585,21 @@ class AiInsightsTest(unittest.TestCase):
             article["article_id"]
             for article in retrieval["direct_evidence"]
         }
-        self.assertEqual(ids, {"recent-1", "recent-2", "recent-3"})
+        self.assertEqual(
+            ids,
+            {"recent-1", "recent-2", "recent-3", "post-close"},
+        )
         self.assertNotIn("old", ids)
+        self.assertNotIn("after-cutoff", ids)
+        phases = {
+            article["article_id"]: article["session_phase"]
+            for article in retrieval["direct_evidence"]
+        }
+        self.assertEqual(phases["post-close"], "post_close")
+        self.assertEqual(
+            retrieval["news_cutoff"],
+            "2026-07-24T22:00:00+00:00",
+        )
 
     @patch("ai_insights._collect_market_news")
     def test_legacy_market_retrieval_rejects_company_only_earnings(
@@ -569,6 +690,34 @@ class AiInsightsTest(unittest.TestCase):
             datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
         )
 
+        self.assertEqual(
+            [item["evidence_id"] for item in result["historical_context"]],
+            ["C1"],
+        )
+        self.assertEqual(result["rag_status"], "hybrid")
+
+    @patch("ai_insights._legacy_market_retrieval")
+    @patch("market_rag.retrieve_market_context")
+    def test_post_close_rag_evidence_does_not_skip_legacy_fallback(
+        self, mock_retrieve, mock_legacy
+    ):
+        rag = _market_retrieval()
+        rag["direct_evidence"][2]["session_phase"] = "post_close"
+        legacy = _market_retrieval()
+        legacy["historical_context"] = []
+        legacy["retriever_version"] = "legacy-keyword-v1"
+        mock_retrieve.return_value = rag
+        mock_legacy.return_value = legacy
+
+        result = _retrieve_market_evidence(
+            {"sector_returns": []},
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+
+        mock_legacy.assert_called_once()
         self.assertEqual(
             [item["evidence_id"] for item in result["historical_context"]],
             ["C1"],
@@ -814,6 +963,99 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(mock_gemini.call_count, 1)
         self.assertEqual(mock_fallback.call_count, 2)
 
+    @patch("ai_insights._fallback_stock_entries")
+    @patch("ai_insights._request_gemini_json")
+    @patch("ai_insights._collect_company_news")
+    @patch("ai_insights._retrieve_market_evidence")
+    @patch("ai_insights._save_cache")
+    @patch("ai_insights._load_cache", return_value={})
+    def test_gemini_post_close_timing_failure_uses_nim_fallback(
+        self,
+        _mock_load_cache,
+        mock_save_cache,
+        mock_retrieve_market,
+        mock_collect_news,
+        mock_gemini,
+        mock_fallback,
+    ):
+        data_date = "2026-07-24"
+        source = _article(
+            "100",
+            "AAA raises guidance",
+            "Reuters",
+            data_date,
+        )
+        source["session_phase"] = "post_close"
+        mock_collect_news.return_value = (
+            {"AAA": [source]},
+            {
+                "AAA": {
+                    "finnhub_collected": 1,
+                    "finnhub_filter_passed": 1,
+                    "finnhub_selected": 1,
+                    "finnhub_status": "ok",
+                }
+            },
+        )
+        mock_gemini.return_value = {
+            "items": [
+                {
+                    "ticker": "AAA",
+                    "business_ko": "예시 사업을 영위하는 기업",
+                    "move_reason_ko": "가이던스를 상향 발표했습니다.",
+                    "evidence_status": "verified",
+                }
+            ]
+        }
+        mock_fallback.return_value = {
+            "AAA": {
+                "business_summary": "예시 사업을 영위하는 기업",
+                "move_reason": "장 마감 후 가이던스를 상향 발표했습니다.",
+                "source_urls": ["https://example.com/100"],
+                "source_titles": ["AAA raises guidance"],
+                "provider": "NVIDIA NIM GPT-OSS 120B",
+                "model_verdict": "verified",
+            }
+        }
+        mock_retrieve_market.return_value = {
+            "direct_evidence": [],
+            "historical_context": [],
+            "rag_status": "empty",
+            "retriever_version": "test-v1",
+            "retrieval_as_of": "2026-07-24T22:00:00Z",
+        }
+        stocks = pd.DataFrame(
+            [
+                {
+                    "ticker": "AAA",
+                    "name": "AAA Inc.",
+                    "sector": "Information Technology",
+                    "return_1d": 1.0,
+                    "business_summary": "AAA business",
+                }
+            ]
+        )
+
+        enriched, _ = enrich_with_ai(
+            stocks,
+            data_date,
+            {"headline": "기본 요약"},
+            retrieval_as_of=datetime(
+                2026,
+                7,
+                24,
+                22,
+                tzinfo=timezone.utc,
+            ),
+        )
+
+        mock_fallback.assert_called_once()
+        self.assertEqual(
+            enriched.loc[0, "move_reason"],
+            "장 마감 후 가이던스를 상향 발표했습니다.",
+        )
+        self.assertTrue(mock_save_cache.called)
+
     @patch("ai_insights._retrieve_market_evidence")
     @patch("ai_insights._request_gemini_json")
     @patch("ai_insights.requests.get")
@@ -867,7 +1109,11 @@ class AiInsightsTest(unittest.TestCase):
                 {"headline": "기본 요약"},
             )
 
-        stock_key = f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:AAA"
+        stock_key = _stock_cache_key(
+            data_date,
+            "AAA",
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
         self.assertEqual(enriched.loc[0, "move_reason"], "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.")
         mock_get.assert_called_once()
         self.assertTrue(mock_save_cache.called)
@@ -877,8 +1123,9 @@ class AiInsightsTest(unittest.TestCase):
 
     def test_enrich_passes_cached_stock_sources_to_dataframe(self):
         data_date = "2026-07-23"
+        news_cutoff = datetime(2026, 7, 23, 22, tzinfo=timezone.utc)
         cache = {
-            f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:ABC": {
+            _stock_cache_key(data_date, "ABC", news_cutoff): {
                 "business_summary": "예시 사업",
                 "move_reason": "가이던스를 상향했습니다.",
                 "source_urls": ["https://example.com/100"],
@@ -918,7 +1165,12 @@ class AiInsightsTest(unittest.TestCase):
                 },
             ),
         ):
-            enriched, _ = enrich_with_ai(stocks, data_date, {"headline": "기본 요약"})
+            enriched, _ = enrich_with_ai(
+                stocks,
+                data_date,
+                {"headline": "기본 요약"},
+                retrieval_as_of=news_cutoff,
+            )
 
         self.assertEqual(enriched.loc[0, "source_urls"], ["https://example.com/100"])
         self.assertEqual(enriched.loc[0, "source_titles"], ["ABC raises guidance"])
@@ -935,6 +1187,45 @@ class AiInsightsTest(unittest.TestCase):
         selected = _select_market_articles(articles, end)
 
         self.assertCountEqual([article["article_id"] for article in selected], ["1", "2", "3"])
+
+    def test_market_selection_reserves_three_pre_close_sources(self):
+        end = date(2026, 7, 24)
+        regular = [
+            _article(
+                f"regular-{index}",
+                f"Stock market update {index}",
+                f"Regular Source {index}",
+                end.isoformat(),
+            )
+            for index in range(1, 4)
+        ]
+        post_close = [
+            _article(
+                f"post-{index}",
+                (
+                    "S&P 500 stock market reacts to Federal Reserve "
+                    f"inflation and Treasury outlook {index}"
+                ),
+                f"Post Source {index}",
+                end.isoformat(),
+            )
+            for index in range(1, 4)
+        ]
+        for article in post_close:
+            article["published_at"] = "2026-07-24T17:00:00-04:00"
+
+        selected = _select_market_articles(
+            [*regular, *post_close],
+            end,
+            datetime(2026, 7, 24, 20, tzinfo=timezone.utc),
+        )
+
+        selected_ids = {article["article_id"] for article in selected}
+        self.assertEqual(len(selected), 5)
+        self.assertTrue(
+            {article["article_id"] for article in regular}
+            <= selected_ids
+        )
 
     def test_stock_sources_do_not_depend_on_model_article_ids(self):
         items = [
@@ -963,9 +1254,58 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(entries["ABC"]["provider"], "Gemini + Finnhub")
         self.assertEqual(entries["ABC"]["model_verdict"], "verified")
 
+    def test_post_close_stock_reason_requires_explicit_timing(self):
+        source = _article(
+            "100",
+            "ABC raises revenue guidance",
+            "Reuters",
+            "2026-07-24",
+        )
+        source["session_phase"] = "post_close"
+        items = [
+            {
+                "ticker": "ABC",
+                "business_source_en": "Example business",
+                "selected_finnhub_articles": [source],
+            }
+        ]
+        generated = {
+            "items": [
+                {
+                    "ticker": "ABC",
+                    "business_ko": "예시 사업을 영위하는 기업",
+                    "move_reason_ko": "매출 가이던스를 상향 발표했습니다.",
+                    "evidence_status": "verified",
+                }
+            ]
+        }
+
+        invalid = _normalise_stock_batch(
+            generated,
+            items,
+            "Gemini + Finnhub",
+        )
+        self.assertEqual(
+            invalid["ABC"]["model_verdict"],
+            "invalid_post_close_timing",
+        )
+        self.assertEqual(invalid["ABC"]["source_urls"], [])
+
+        generated["items"][0][
+            "move_reason_ko"
+        ] = "장 마감 후 매출 가이던스를 상향 발표했습니다."
+        valid = _normalise_stock_batch(
+            generated,
+            items,
+            "Gemini + Finnhub",
+        )
+        self.assertEqual(valid["ABC"]["model_verdict"], "verified")
+        self.assertEqual(valid["ABC"]["source_urls"], ["https://example.com/100"])
+
     def test_company_news_reports_pre_cap_filter_count(self):
         start = date(2026, 6, 23)
         end = date(2026, 7, 24)
+        news_cutoff = datetime(2026, 7, 24, 22, tzinfo=timezone.utc)
         raw_items = [
             {
                 "id": index,
@@ -977,7 +1317,13 @@ class AiInsightsTest(unittest.TestCase):
             for index in range(1, 5)
         ]
 
-        selected, passed_count = _normalise_company_articles("ABC", raw_items, start, end)
+        selected, passed_count = _normalise_company_articles(
+            "ABC",
+            raw_items,
+            start,
+            end,
+            news_cutoff,
+        )
 
         self.assertEqual(passed_count, 4)
         self.assertEqual(len(selected), 3)
@@ -985,6 +1331,7 @@ class AiInsightsTest(unittest.TestCase):
     def test_company_news_prioritises_catalyst_over_newer_generic_article(self):
         start = date(2026, 6, 23)
         end = date(2026, 7, 24)
+        news_cutoff = datetime(2026, 7, 24, 22, tzinfo=timezone.utc)
         raw_items = [
             {
                 "id": "1",
@@ -1016,15 +1363,22 @@ class AiInsightsTest(unittest.TestCase):
             },
         ]
 
-        selected, passed_count = _normalise_company_articles("ABC", raw_items, start, end)
+        selected, passed_count = _normalise_company_articles(
+            "ABC",
+            raw_items,
+            start,
+            end,
+            news_cutoff,
+        )
 
         self.assertEqual(passed_count, 4)
         self.assertEqual(selected[0]["article_id"], "2")
         self.assertNotIn("4", [article["article_id"] for article in selected])
 
-    def test_company_news_excludes_after_close_and_next_day_articles(self):
+    def test_company_news_includes_post_close_until_workflow_cutoff(self):
         start = date(2026, 6, 24)
         end = date(2026, 7, 24)
+        news_cutoff = datetime(2026, 7, 24, 22, tzinfo=timezone.utc)
 
         def timestamp(day: int, hour: int) -> int:
             return int(
@@ -1059,6 +1413,13 @@ class AiInsightsTest(unittest.TestCase):
                 "datetime": timestamp(25, 9),
                 "related": "ABC",
             },
+            {
+                "id": "after-cutoff",
+                "headline": "ABC signs a contract late in the evening",
+                "url": "https://example.com/late",
+                "datetime": timestamp(24, 19),
+                "related": "ABC",
+            },
         ]
 
         selected, passed_count = _normalise_company_articles(
@@ -1066,12 +1427,23 @@ class AiInsightsTest(unittest.TestCase):
             raw_items,
             start,
             end,
+            news_cutoff,
         )
 
-        self.assertEqual(passed_count, 1)
+        self.assertEqual(passed_count, 2)
         self.assertEqual(
-            [item["article_id"] for item in selected],
-            ["before-close"],
+            {item["article_id"] for item in selected},
+            {"before-close", "after-close"},
+        )
+        self.assertEqual(
+            {
+                item["article_id"]: item["session_phase"]
+                for item in selected
+            },
+            {
+                "before-close": "regular_session",
+                "after-close": "post_close",
+            },
         )
 
     def test_json_repair_adds_missing_array_item_comma(self):

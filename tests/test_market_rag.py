@@ -139,7 +139,7 @@ class MarketRagTest(unittest.TestCase):
         self.assertEqual(selected["headline"], original["headline"])
         self.assertEqual(selected["summary"], original["summary"])
 
-    def test_retrieval_blocks_after_close_and_late_first_seen_articles(self):
+    def test_retrieval_includes_post_close_until_workflow_cutoff(self):
         before_close = article(
             "valid",
             "Federal Reserve outlook lifts stock market",
@@ -149,6 +149,11 @@ class MarketRagTest(unittest.TestCase):
             "future-published",
             "Fed comments after the closing bell",
             "2026-07-24T20:30:00Z",
+        )
+        after_cutoff = article(
+            "after-cutoff",
+            "Wall Street outlook changes late in the evening",
+            "2026-07-24T22:01:00Z",
         )
         late_seen = article(
             "future-seen",
@@ -161,9 +166,14 @@ class MarketRagTest(unittest.TestCase):
             "2026-07-24T18:00:00Z",
         )
         upsert_articles(
-            [before_close, after_close, company_only],
+            [before_close, after_cutoff, company_only],
             self.db_path,
             seen_at="2026-07-24T19:30:00Z",
+        )
+        upsert_articles(
+            [after_close],
+            self.db_path,
+            seen_at="2026-07-24T22:05:00Z",
         )
         upsert_articles(
             [late_seen],
@@ -173,16 +183,66 @@ class MarketRagTest(unittest.TestCase):
 
         result = retrieve_market_context(
             "2026-07-24",
-            retrieval_as_of="2026-07-24T22:00:00Z",
+            retrieval_as_of="2026-07-24T22:10:00Z",
             db_path=self.db_path,
         )
         ids = {item["article_id"] for item in result["direct_evidence"]}
 
         self.assertIn("valid", ids)
-        self.assertNotIn("future-published", ids)
+        self.assertIn("future-published", ids)
+        self.assertNotIn("after-cutoff", ids)
         self.assertNotIn("future-seen", ids)
         self.assertNotIn("company-only", ids)
         self.assertEqual(result["market_close_cutoff"], "2026-07-24T20:00:00Z")
+        self.assertEqual(result["news_cutoff"], "2026-07-24T22:00:00Z")
+        phases = {
+            item["article_id"]: item["session_phase"]
+            for item in result["direct_evidence"]
+        }
+        self.assertEqual(phases["valid"], "regular_session")
+        self.assertEqual(phases["future-published"], "post_close")
+
+    def test_direct_retrieval_reserves_three_pre_close_sources(self):
+        regular = [
+            article(
+                f"regular-{index}",
+                f"Stock market update {index}",
+                f"2026-07-24T18:0{index}:00Z",
+                source=f"Regular Source {index}",
+            )
+            for index in range(1, 4)
+        ]
+        post_close = [
+            article(
+                f"post-{index}",
+                (
+                    "S&P 500 stock market reacts to Federal Reserve "
+                    f"inflation and Treasury outlook {index}"
+                ),
+                f"2026-07-24T20:3{index}:00Z",
+                source=f"Post Source {index}",
+            )
+            for index in range(1, 4)
+        ]
+        upsert_articles(
+            [*regular, *post_close],
+            self.db_path,
+            seen_at="2026-07-24T21:30:00Z",
+        )
+
+        result = retrieve_market_context(
+            "2026-07-24",
+            retrieval_as_of="2026-07-24T22:00:00Z",
+            db_path=self.db_path,
+        )
+
+        phases = [
+            item["session_phase"]
+            for item in result["direct_evidence"]
+        ]
+        self.assertEqual(len(phases), 5)
+        self.assertEqual(phases.count("regular_session"), 3)
+        self.assertEqual(phases.count("post_close"), 2)
 
     def test_retrieval_does_not_use_articles_published_after_retrieval_time(self):
         upsert_articles(
@@ -208,7 +268,7 @@ class MarketRagTest(unittest.TestCase):
             {item["article_id"] for item in result["direct_evidence"]},
         )
 
-    def test_monday_window_includes_friday_and_dst_close_is_time_safe(self):
+    def test_monday_window_uses_kst_workflow_cutoff_across_dst(self):
         upsert_articles(
             [
                 article(
@@ -220,6 +280,11 @@ class MarketRagTest(unittest.TestCase):
                     "after-monday-close",
                     "Stocks move after Monday close",
                     "2026-07-27T20:01:00Z",
+                ),
+                article(
+                    "after-workflow-cutoff",
+                    "Stocks move late in the evening",
+                    "2026-07-27T22:01:00Z",
                 ),
             ],
             self.db_path,
@@ -239,9 +304,12 @@ class MarketRagTest(unittest.TestCase):
         ids = {item["article_id"] for item in summer["direct_evidence"]}
 
         self.assertIn("friday", ids)
-        self.assertNotIn("after-monday-close", ids)
+        self.assertIn("after-monday-close", ids)
+        self.assertNotIn("after-workflow-cutoff", ids)
         self.assertEqual(summer["market_close_cutoff"], "2026-07-27T20:00:00Z")
         self.assertEqual(winter["market_close_cutoff"], "2026-01-05T21:00:00Z")
+        self.assertEqual(summer["news_cutoff"], "2026-07-27T22:00:00Z")
+        self.assertEqual(winter["news_cutoff"], "2026-01-05T22:00:00Z")
 
     def test_retrieval_splits_direct_and_matching_historical_context(self):
         items = [
@@ -293,7 +361,23 @@ class MarketRagTest(unittest.TestCase):
         self.assertIn("direct-fed", direct_ids)
         self.assertEqual(historical_ids, {"old-fed", "old-tech"})
         self.assertTrue(direct_ids.isdisjoint(historical_ids))
-        for item in result["direct_evidence"] + result["historical_context"]:
+        for item in result["direct_evidence"]:
+            self.assertEqual(
+                {
+                    "evidence_id",
+                    "article_id",
+                    "published_at",
+                    "published_date",
+                    "headline",
+                    "summary",
+                    "source",
+                    "url",
+                    "tags",
+                    "session_phase",
+                },
+                set(item),
+            )
+        for item in result["historical_context"]:
             self.assertEqual(
                 {
                     "evidence_id",

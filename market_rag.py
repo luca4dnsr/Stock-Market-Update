@@ -24,11 +24,17 @@ from config import (
     MARKET_RAG_DB_FILE,
     MARKET_RAG_DIRECT_MAX_SOURCES,
     MARKET_RAG_RETENTION_DAYS,
+    MARKET_MIN_NEWS_SOURCES,
+)
+from market_clock import (
+    market_close_utc,
+    report_session_phase,
+    workflow_news_cutoff,
 )
 
 DEFAULT_DB_PATH = MARKET_RAG_DB_FILE
 SCHEMA_VERSION = "1"
-RETRIEVER_VERSION = "v1-sqlite-fts5-time-aware"
+RETRIEVER_VERSION = "v2-sqlite-fts5-workflow-cutoff"
 RETENTION_DAYS = MARKET_RAG_RETENTION_DAYS
 DIRECT_MAX_SOURCES = MARKET_RAG_DIRECT_MAX_SOURCES
 CONTEXT_MAX_SOURCES = MARKET_RAG_CONTEXT_MAX_SOURCES
@@ -173,7 +179,14 @@ def _session_date(value: str | date) -> date:
 
 
 def _market_close(value: str | date) -> datetime:
-    return datetime.combine(_session_date(value), time(16), NEW_YORK).astimezone(UTC)
+    return market_close_utc(value)
+
+
+def _workflow_news_cutoff(
+    value: str | date,
+    as_of: datetime | None = None,
+) -> datetime:
+    return workflow_news_cutoff(value, as_of)
 
 
 def _direct_start(value: str | date) -> datetime:
@@ -663,10 +676,48 @@ def _diverse(rows: list[dict[str, Any]], limit: int, per_source: int) -> list[di
     return selected
 
 
-def _public(row: Mapping[str, Any]) -> dict[str, Any]:
+def _diverse_direct(
+    rows: list[dict[str, Any]],
+    market_close: datetime,
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    selected_ids: set[int] = set()
+    source_counts: dict[str, int] = {}
+
+    def add_row(row: dict[str, Any]) -> bool:
+        row_id = int(row["id"])
+        if row_id in selected_ids:
+            return False
+        source = _clean(row["source"]).casefold() or "unknown"
+        if source_counts.get(source, 0) >= 2:
+            return False
+        selected.append(row)
+        selected_ids.add(row_id)
+        source_counts[source] = source_counts.get(source, 0) + 1
+        return True
+
+    for row in rows:
+        if _as_utc(row["published_at"], "published_at") >= market_close:
+            continue
+        add_row(row)
+        if len(selected) == MARKET_MIN_NEWS_SOURCES:
+            break
+
+    for row in rows:
+        add_row(row)
+        if len(selected) == DIRECT_MAX_SOURCES:
+            break
+    return selected
+
+
+def _public(
+    row: Mapping[str, Any],
+    *,
+    report_data_date: date | None = None,
+) -> dict[str, Any]:
     provider_id = str(row["provider_article_id"] or row["id"])
     published = _as_utc(row["published_at"], "published_at")
-    return {
+    result = {
         "evidence_id": f"{row['provider']}:{provider_id}",
         "article_id": provider_id,
         "published_at": _iso(published),
@@ -677,6 +728,12 @@ def _public(row: Mapping[str, Any]) -> dict[str, Any]:
         "url": row["url"],
         "tags": {kind: list(row["tags"][kind]) for kind in ("macro", "sector", "event")},
     }
+    if report_data_date is not None:
+        result["session_phase"] = report_session_phase(
+            published,
+            report_data_date,
+        )
+    return result
 
 
 def _empty(data_date: str, as_of: datetime, corpus: Mapping[str, Any]) -> dict[str, Any]:
@@ -684,6 +741,7 @@ def _empty(data_date: str, as_of: datetime, corpus: Mapping[str, Any]) -> dict[s
         "direct_evidence": [], "historical_context": [], "rag_status": "unavailable",
         "retriever_version": RETRIEVER_VERSION,
         "market_close_cutoff": _iso(_market_close(data_date)),
+        "news_cutoff": _iso(_workflow_news_cutoff(data_date, as_of)),
         "retrieval_as_of": _iso(as_of), "corpus_status": dict(corpus),
     }
 
@@ -699,7 +757,8 @@ def retrieve_market_context(
     if not corpus["ok"]:
         return _empty(session.isoformat(), as_of, corpus)
     close, direct_start = _market_close(session), _direct_start(session)
-    evidence_end = min(close, as_of)
+    news_cutoff = _workflow_news_cutoff(session, as_of)
+    evidence_end = news_cutoff
     db = _connect(path)
     try:
         sectors = [_sector_name(value) for value in (sector_names or ()) if _sector_name(value)]
@@ -726,7 +785,7 @@ def retrieve_market_context(
                 -_as_utc(row["published_at"], "published_at").timestamp(), row["id"],
             )
         )
-        direct = _diverse(direct_rows, DIRECT_MAX_SOURCES, 2)
+        direct = _diverse_direct(direct_rows, close)
         direct_ids = {row["id"] for row in direct}
         themes = sorted({tag for row in direct for tag in row["tags"]["macro"]})
         context_rows = _candidates(
@@ -756,10 +815,14 @@ def retrieve_market_context(
         db.close()
     rag_status = "ok" if direct and historical else "limited" if direct or historical else "empty"
     return {
-        "direct_evidence": [_public(row) for row in direct],
+        "direct_evidence": [
+            _public(row, report_data_date=session) for row in direct
+        ],
         "historical_context": [_public(row) for row in historical],
         "rag_status": rag_status, "retriever_version": RETRIEVER_VERSION,
-        "market_close_cutoff": _iso(close), "retrieval_as_of": _iso(as_of),
+        "market_close_cutoff": _iso(close),
+        "news_cutoff": _iso(news_cutoff),
+        "retrieval_as_of": _iso(as_of),
         "corpus_status": corpus,
     }
 

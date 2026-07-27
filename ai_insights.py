@@ -44,12 +44,17 @@ from config import (
     NIM_INSIGHTS_MAX_TOKENS,
     NIM_READ_TIMEOUT_SEC,
 )
+from market_clock import (
+    market_close_utc,
+    report_session_phase,
+    workflow_news_cutoff as _workflow_news_cutoff,
+)
 
 logger = logging.getLogger(__name__)
 
 LIMITED_REASON = "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다."
 LIMITED_MARKET_INTERPRETATION = (
-    "장 마감 시각 이전의 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. "
+    "해당 거래일 장 마감 전 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. "
     "아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다."
 )
 
@@ -294,6 +299,15 @@ def _news_window(data_date: str) -> tuple[date, date]:
     )
 
 
+def _stock_cache_key(
+    data_date: str,
+    ticker: str,
+    news_cutoff: datetime,
+) -> str:
+    cutoff_token = news_cutoff.astimezone(timezone.utc).strftime("%Y%m%dT%H%M")
+    return f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:{cutoff_token}:{ticker}"
+
+
 def _canonical_ticker(value: str) -> str:
     return str(value or "").strip().upper().replace(".", "-")
 
@@ -346,16 +360,16 @@ def _company_catalyst_score(article: dict) -> int:
 
 
 def _normalise_company_articles(
-    ticker: str, raw_items: list[dict], start: date, end: date
+    ticker: str,
+    raw_items: list[dict],
+    start: date,
+    end: date,
+    news_cutoff: datetime,
 ) -> tuple[list[dict], int]:
-    """날짜·장 마감·URL·관련 티커를 통과한 기사와 총건수를 반환한다."""
+    """날짜·워크플로 시각·URL·관련 티커를 통과한 기사와 총건수를 반환한다."""
     expected_ticker = _canonical_ticker(ticker)
-    market_close = datetime(
-        end.year,
-        end.month,
-        end.day,
-        16,
-        tzinfo=ZoneInfo("America/New_York"),
+    cutoff_in_new_york = news_cutoff.astimezone(
+        ZoneInfo("America/New_York")
     )
     articles: list[dict] = []
     seen_ids: set[str] = set()
@@ -381,7 +395,10 @@ def _normalise_company_articles(
         ):
             continue
         published_at, published_date = published
-        if not start <= published_date <= end or published_at > market_close:
+        if (
+            not start <= published_date <= end
+            or published_at > cutoff_in_new_york
+        ):
             continue
         seen_ids.add(article_id)
         articles.append(
@@ -395,6 +412,10 @@ def _normalise_company_articles(
                 "source": str(raw.get("source") or "").strip()[:100],
                 "url": url,
                 "related": related,
+                "session_phase": report_session_phase(
+                    published_at,
+                    end,
+                ),
             }
         )
     # 점수가 같으면 최신 기사를 우선한다. 촉매 신호가 없을 때만 기존 최신순과 같다.
@@ -405,7 +426,10 @@ def _normalise_company_articles(
 
 
 def _collect_company_news(
-    tickers: list[str], start: date, end: date
+    tickers: list[str],
+    start: date,
+    end: date,
+    news_cutoff: datetime,
 ) -> tuple[dict[str, list[dict]], dict[str, dict]]:
     """무료 API의 예측 가능한 요청량을 위해 종목 뉴스를 순차 수집한다."""
     result: dict[str, list[dict]] = {}
@@ -424,7 +448,11 @@ def _collect_company_news(
             )
             raw_articles = raw_items if isinstance(raw_items, list) else []
             selected_articles, passed_count = _normalise_company_articles(
-                ticker, raw_articles, start, end
+                ticker,
+                raw_articles,
+                start,
+                end,
+                news_cutoff,
             )
             result[ticker] = selected_articles
             diagnostics[ticker] = {
@@ -577,7 +605,11 @@ def _is_market_article_scope(article: dict) -> bool:
     )
 
 
-def _select_market_articles(articles: list[dict], end: date) -> list[dict]:
+def _select_market_articles(
+    articles: list[dict],
+    end: date,
+    market_close: datetime | None = None,
+) -> list[dict]:
     """코드 기준으로 미국 증시 관련성과 최신성을 반영해 3~5건을 확정한다."""
     ranked = sorted(
         (
@@ -590,13 +622,36 @@ def _select_market_articles(articles: list[dict], end: date) -> list[dict]:
         reverse=True,
     )
     selected: list[dict] = []
+    selected_ids: set[str] = set()
     source_counts: dict[str, int] = {}
-    for _, article in ranked:
+
+    def add_article(article: dict) -> bool:
+        article_id = str(article.get("article_id", ""))
+        if article_id in selected_ids:
+            return False
         source = str(article.get("source") or "unknown").strip().lower()
         if source_counts.get(source, 0) >= 2:
-            continue
+            return False
         source_counts[source] = source_counts.get(source, 0) + 1
         selected.append(article)
+        selected_ids.add(article_id)
+        return True
+
+    if market_close is not None:
+        close_utc = market_close.astimezone(timezone.utc)
+        for _, article in ranked:
+            published_at = _article_timestamp(article)
+            if (
+                published_at is None
+                or published_at.astimezone(timezone.utc) >= close_utc
+            ):
+                continue
+            add_article(article)
+            if len(selected) == MARKET_MIN_NEWS_SOURCES:
+                break
+
+    for _, article in ranked:
+        add_article(article)
         if len(selected) == MARKET_MAX_NEWS_SOURCES:
             break
     if len(selected) < MARKET_MIN_NEWS_SOURCES:
@@ -775,9 +830,11 @@ def _stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> 
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 기업 정보와 Finnhub 기사만 사용하십시오. 웹 검색은 하지 마십시오.
 
-허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}이며 {data_date} 뉴욕 장 마감 시각
-이전 기사만 포함됩니다. 각 종목의 selected_finnhub_articles는 코드가 이미 이 날짜·시각 범위,
-원문 URL·관련 티커 조건을 확인하고 선정한 기사입니다. 기사 ID를 고르거나 반환하지 마십시오.
+허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}이며 워크플로 뉴스 기준 시각 이전
+기사만 포함됩니다. 각 종목의 selected_finnhub_articles는 코드가 이미 이 날짜·시각 범위,
+원문 URL·관련 티커 조건을 확인하고 선정한 기사입니다. session_phase가 post_close인 기사는
+반드시 '장 마감 후 발표'로 명시하고 그날 정규장 등락의 원인으로 표현하지 마십시오.
+기사 ID를 고르거나 반환하지 마십시오.
 
 business_ko는 business_source_en을 바탕으로 70자 이내 한국어 한 문장으로 작성하십시오.
 move_reason_ko는 기사 제목 또는 요약에 해당 종목의 직접 촉매(실적, 전망, 계약, 규제, M&A,
@@ -795,6 +852,7 @@ def _market_prompt(
     payload = {
         "market_data": base_market_summary,
         "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
+        "news_cutoff": retrieval.get("news_cutoff", ""),
         "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
         "direct_evidence": retrieval.get("direct_evidence", []),
         "historical_context": retrieval.get("historical_context", []),
@@ -802,14 +860,16 @@ def _market_prompt(
     return f"""미국 거래일은 {data_date}입니다.
 아래 시장 수치와 Finnhub 일반 시장 기사만 사용하십시오. 웹 검색이나 외부 지식은 사용하지 마십시오.
 
-direct_evidence는 장 마감 시각 이전에 발행된 당일 시황의 직접 근거입니다. interpretation의 인과
-해석은 direct_evidence에서 명시적으로 확인되는 내용으로만 작성하십시오. historical_context는 이전
-2~45일의 거시·섹터 배경이며 recent_context에서만 설명하십시오. historical_context를 당일 움직임의
-원인으로 표현하지 마십시오. 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은 금지합니다.
+direct_evidence는 워크플로 뉴스 기준 시각 이전에 발행된 당일 시황 근거입니다. interpretation의
+인과 해석은 session_phase가 regular_session인 직접 근거에서 명시적으로 확인되는 내용으로만
+작성하십시오. post_close 근거는 장 마감 후 후속 동향으로만 설명하고 그날 정규장 움직임의 원인으로
+표현하지 마십시오. historical_context는 이전 2~45일의 거시·섹터 배경이며 recent_context에서만
+설명하십시오. 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은 금지합니다.
 
-사용한 직접 근거의 evidence_id를 direct_evidence_ids에 최소 3개 넣고, 최근 맥락 근거의
-evidence_id를 context_evidence_ids에 넣으십시오. historical_context가 비어 있으면 recent_context는
-빈 문자열, context_evidence_ids는 빈 배열로 반환하십시오. 입력에 없는 ID는 절대 반환하지 마십시오.
+사용한 직접 근거의 evidence_id를 direct_evidence_ids에 넣되, session_phase가 regular_session인
+근거 ID를 최소 3개 포함하십시오. 최근 맥락 근거의 evidence_id는 context_evidence_ids에 넣으십시오.
+historical_context가 비어 있으면 recent_context는 빈 문자열, context_evidence_ids는 빈 배열로
+반환하십시오. 입력에 없는 ID는 절대 반환하지 마십시오.
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
@@ -820,7 +880,9 @@ def _fallback_stock_prompt(items: list[dict], data_date: str, start: date, end: 
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 영문 사업 설명과 코드가 선정한 Finnhub 종목 기사만 사용하십시오. 외부 지식이나
 웹 검색을 사용하지 마십시오. selected_finnhub_articles는 {start.isoformat()}~{end.isoformat()} 중
-{data_date} 뉴욕 장 마감 이전의 직접 관련 기사이며, 기사 ID를 선택하거나 반환하지 마십시오.
+워크플로 뉴스 기준 시각 이전의 직접 관련 기사입니다. session_phase가 post_close인 기사는 반드시
+'장 마감 후 발표'로 명시하고 그날 정규장 등락의 원인으로 표현하지 마십시오. 기사 ID를 선택하거나
+반환하지 마십시오.
 
 각 종목에 ticker, business_ko, move_reason_ko, evidence_status를 반환하십시오. business_ko는 70자 이내
 한국어 사업 요약입니다. 기사에 직접 촉매가 명시된 경우에만 evidence_status를 verified와 140자 이내
@@ -843,6 +905,7 @@ def _fallback_market_prompt(
         str(article.get("evidence_id", ""))
         for article in retrieval.get("direct_evidence", [])
         if str(article.get("evidence_id", "")).strip()
+        and article.get("session_phase") == "regular_session"
     ][:MARKET_MIN_NEWS_SOURCES]
     context_example_ids = [
         str(article.get("evidence_id", ""))
@@ -860,6 +923,7 @@ def _fallback_market_prompt(
     payload = {
         "market_data": base_market_summary,
         "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
+        "news_cutoff": retrieval.get("news_cutoff", ""),
         "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
         "direct_evidence": retrieval.get("direct_evidence", []),
         "historical_context": retrieval.get("historical_context", []),
@@ -867,19 +931,31 @@ def _fallback_market_prompt(
     return f"""미국 거래일은 {data_date}입니다.
 아래 시장 수치와 코드가 확정한 Finnhub 기사만 사용하십시오. direct_evidence만 당일 움직임의 직접
 원인 해석에 사용할 수 있습니다. historical_context는 이전 2~45일의 배경으로 recent_context에서만
-설명하고 당일 원인으로 표현하지 마십시오.
+설명하고 당일 원인으로 표현하지 마십시오. direct_evidence 중 session_phase가 post_close인 기사는
+장 마감 후 후속 동향으로만 설명하고 그날 정규장 움직임의 원인으로 표현하지 마십시오.
 
 headline, observation, interpretation, recent_context를 한국어로 작성하십시오. 사용한 근거 ID를
-direct_evidence_ids에 최소 3개, context_evidence_ids에 사용한 만큼 넣으십시오. 입력에 없는 ID, 기사에 없는
-인과관계, 투자 조언, 가격 변동 원인 추정은 금지합니다. historical_context가 비어 있으면
-recent_context는 빈 문자열, context_evidence_ids는 빈 배열로 반환하십시오. JSON 외 텍스트를
-반환하지 마십시오.
+direct_evidence_ids에 넣되 regular_session 근거 ID를 최소 3개 포함하고, context_evidence_ids에는
+사용한 맥락 근거를 넣으십시오. 입력에 없는 ID, 기사에 없는 인과관계, 투자 조언, 가격 변동 원인
+추정은 금지합니다. historical_context가 비어 있으면 recent_context는 빈 문자열,
+context_evidence_ids는 빈 배열로 반환하십시오. JSON 외 텍스트를 반환하지 마십시오.
 
 반환 형식은 반드시 아래 여섯 필드를 모두 가진 최상위 JSON 객체여야 합니다.
 {json.dumps(response_example, ensure_ascii=False)}
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
+
+
+def _post_close_timing_valid(move_reason: str, sources: list[dict]) -> bool:
+    return (
+        not any(
+            source.get("session_phase") == "post_close"
+            for source in sources
+            if isinstance(source, dict)
+        )
+        or "장 마감 후" in move_reason
+    )
 
 
 def _normalise_stock_batch(
@@ -898,15 +974,22 @@ def _normalise_stock_batch(
         sources = source_item.get("selected_finnhub_articles", [])
         raw_evidence_status = str(raw.get("evidence_status", "")).strip()
         raw_move_reason = str(raw.get("move_reason_ko", "")).strip()
+        post_close_timing_valid = _post_close_timing_valid(
+            raw_move_reason,
+            sources,
+        )
         is_verified = (
             raw_evidence_status == "verified"
             and bool(sources)
             and bool(raw_move_reason)
+            and post_close_timing_valid
         )
         if not raw:
             model_verdict = "missing_item"
         elif is_verified:
             model_verdict = "verified"
+        elif raw_evidence_status == "verified" and not post_close_timing_valid:
+            model_verdict = "invalid_post_close_timing"
         elif raw_evidence_status == "verified":
             model_verdict = "invalid_verified_response"
         elif raw_evidence_status == "limited":
@@ -951,7 +1034,10 @@ def _stock_item_field_issues(item: dict) -> list[str]:
 
 def _require_complete_stock_response(generated: dict, expected_items: list[dict]) -> None:
     """문법만 복구된 부분 응답이 결과를 덮어쓰지 못하게 막는다."""
-    expected_tickers = {str(item["ticker"]) for item in expected_items}
+    expected_by_ticker = {
+        str(item["ticker"]): item for item in expected_items
+    }
+    expected_tickers = set(expected_by_ticker)
     received = {
         str(item.get("ticker", "")).strip(): item
         for item in generated.get("items", [])
@@ -962,6 +1048,18 @@ def _require_complete_stock_response(generated: dict, expected_items: list[dict]
         raise ValueError(f"AI 응답에 종목이 누락됐습니다: {missing}")
     for ticker, item in received.items():
         issues = _stock_item_field_issues(item)
+        if (
+            not issues
+            and str(item.get("evidence_status", "")).strip() == "verified"
+            and not _post_close_timing_valid(
+                str(item.get("move_reason_ko", "")).strip(),
+                expected_by_ticker[ticker].get(
+                    "selected_finnhub_articles",
+                    [],
+                ),
+            )
+        ):
+            issues.append("post_close_timing")
         if issues:
             raise ValueError(
                 f"AI 응답 필드 누락/형식 오류: {ticker}: {', '.join(issues)}"
@@ -974,6 +1072,9 @@ def _valid_stock_response_items(
     """NIM 응답에서 필수 필드가 완전한 종목만 추려 구조 진단을 남긴다."""
     expected_tickers = [str(item["ticker"]) for item in expected_items]
     expected_set = set(expected_tickers)
+    expected_by_ticker = {
+        str(item["ticker"]): item for item in expected_items
+    }
     raw_items = generated.get("items")
     items = raw_items if isinstance(raw_items, list) else []
     received: dict[str, list[dict]] = {}
@@ -1004,6 +1105,18 @@ def _valid_stock_response_items(
 
         item = candidates[0]
         field_issues = _stock_item_field_issues(item)
+        if (
+            not field_issues
+            and str(item.get("evidence_status", "")).strip() == "verified"
+            and not _post_close_timing_valid(
+                str(item.get("move_reason_ko", "")).strip(),
+                expected_by_ticker[ticker].get(
+                    "selected_finnhub_articles",
+                    [],
+                ),
+            )
+        ):
+            field_issues.append("post_close_timing")
 
         if field_issues:
             issues[ticker] = field_issues
@@ -1118,13 +1231,8 @@ def _fallback_stock_entries(
 
 
 def _market_close_cutoff(data_date: str) -> datetime:
-    session_date = datetime.strptime(data_date, "%Y-%m-%d").date()
-    return datetime(
-        session_date.year,
-        session_date.month,
-        session_date.day,
-        16,
-        tzinfo=ZoneInfo("America/New_York"),
+    return market_close_utc(data_date).astimezone(
+        ZoneInfo("America/New_York")
     )
 
 
@@ -1168,6 +1276,11 @@ def _normalise_market_retrieval(retrieval: dict | list[dict], data_date: str) ->
         item.setdefault(
             "evidence_id", f"D{index}:{item.get('article_id') or index}"
         )
+        if data_date and (published_at := _article_timestamp(item)) is not None:
+            item.setdefault(
+                "session_phase",
+                report_session_phase(published_at, data_date),
+            )
         direct.append(item)
 
     context = []
@@ -1188,7 +1301,19 @@ def _normalise_market_retrieval(retrieval: dict | list[dict], data_date: str) ->
         "market_close_cutoff",
         _market_close_cutoff(data_date).isoformat() if data_date else "",
     )
-    result.setdefault("retrieval_as_of", datetime.now(timezone.utc).isoformat())
+    if not result.get("retrieval_as_of"):
+        result["retrieval_as_of"] = datetime.now(timezone.utc).isoformat()
+    if not result.get("news_cutoff"):
+        result["news_cutoff"] = (
+            _workflow_news_cutoff(
+                data_date,
+                datetime.fromisoformat(
+                    str(result["retrieval_as_of"]).replace("Z", "+00:00")
+                ),
+            ).isoformat()
+            if data_date
+            else ""
+        )
     result.setdefault("corpus_status", {})
     return result
 
@@ -1198,6 +1323,8 @@ def _market_retrieval_fingerprint(
 ) -> str:
     payload = {
         "market_data": market_data or {},
+        "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
+        "news_cutoff": retrieval.get("news_cutoff", ""),
         "evidence": [
             [
                 str(article.get("evidence_id", "")),
@@ -1236,7 +1363,8 @@ def _market_sector_names(base_market_summary: dict) -> list[str]:
 def _legacy_market_retrieval(
     data_date: str, start: date, end: date, retrieval_as_of: datetime
 ) -> dict:
-    cutoff = _market_close_cutoff(data_date)
+    market_close = _market_close_cutoff(data_date)
+    news_cutoff = _workflow_news_cutoff(data_date, retrieval_as_of)
     direct_start = _market_direct_start(data_date)
     candidates, collection_status = _collect_market_news(start, end)
     eligible = [
@@ -1245,18 +1373,22 @@ def _legacy_market_retrieval(
         if (published_at := _article_timestamp(article)) is not None
         and direct_start
         <= published_at.astimezone(ZoneInfo("America/New_York"))
-        <= cutoff
         and published_at.astimezone(timezone.utc)
-        <= retrieval_as_of.astimezone(timezone.utc)
+        <= news_cutoff
     ]
-    selected = _select_market_articles(eligible, datetime.strptime(data_date, "%Y-%m-%d").date())
+    selected = _select_market_articles(
+        eligible,
+        datetime.strptime(data_date, "%Y-%m-%d").date(),
+        market_close,
+    )
     return _normalise_market_retrieval(
         {
             "direct_evidence": selected,
             "historical_context": [],
             "rag_status": "direct_only" if selected else "corpus_empty",
             "retriever_version": "legacy-keyword-v1",
-            "market_close_cutoff": cutoff.isoformat(),
+            "market_close_cutoff": market_close.isoformat(),
+            "news_cutoff": news_cutoff.isoformat(),
             "retrieval_as_of": retrieval_as_of.isoformat(),
             "corpus_status": {
                 "fallback": "legacy_market_news_pool",
@@ -1285,10 +1417,16 @@ def _retrieve_market_evidence(
             db_path=MARKET_RAG_DB_FILE,
         )
         rag_result = _normalise_market_retrieval(retrieval, data_date)
-        if len(rag_result["direct_evidence"]) >= MARKET_MIN_NEWS_SOURCES:
+        regular_direct_count = sum(
+            source.get("session_phase") == "regular_session"
+            for source in rag_result["direct_evidence"]
+        )
+        if regular_direct_count >= MARKET_MIN_NEWS_SOURCES:
             return rag_result
         logger.info(
-            "RAG 직접 근거가 부족해 기존 시장 뉴스 경로를 확인합니다: %d건",
+            "RAG 정규장 직접 근거가 부족해 기존 시장 뉴스 경로를 확인합니다: "
+            "regular=%d | total=%d",
+            regular_direct_count,
             len(rag_result["direct_evidence"]),
         )
     except Exception as exc:
@@ -1300,6 +1438,10 @@ def _retrieve_market_evidence(
                 "rag_status": "retrieval_failure",
                 "retriever_version": "unavailable",
                 "market_close_cutoff": _market_close_cutoff(data_date).isoformat(),
+                "news_cutoff": _workflow_news_cutoff(
+                    data_date,
+                    retrieval_as_of,
+                ).isoformat(),
                 "retrieval_as_of": retrieval_as_of.isoformat(),
                 "corpus_status": {
                     "ok": False,
@@ -1345,6 +1487,10 @@ def _retrieve_market_evidence(
                 "rag_status": "retrieval_failure",
                 "retriever_version": "unavailable",
                 "market_close_cutoff": _market_close_cutoff(data_date).isoformat(),
+                "news_cutoff": _workflow_news_cutoff(
+                    data_date,
+                    retrieval_as_of,
+                ).isoformat(),
                 "retrieval_as_of": retrieval_as_of.isoformat(),
                 "corpus_status": {"error": type(exc).__name__},
             },
@@ -1408,6 +1554,7 @@ def _limited_market_summary(
         "fallback_stage": "rule_based",
         "retriever_version": str(retrieval.get("retriever_version", "unavailable")),
         "market_close_cutoff": str(retrieval.get("market_close_cutoff", "")),
+        "news_cutoff": str(retrieval.get("news_cutoff", "")),
         "retrieval_as_of": str(retrieval.get("retrieval_as_of", "")),
         "corpus_status": retrieval.get("corpus_status", {}),
     }
@@ -1471,6 +1618,21 @@ def _build_market_summary(
             "시황 응답의 직접 근거가 기준보다 적습니다: "
             f"{len(direct_ids)}/{MARKET_MIN_NEWS_SOURCES}"
         )
+    regular_direct_ids = {
+        evidence_id
+        for evidence_id, source in direct_map.items()
+        if source.get("session_phase") == "regular_session"
+    }
+    regular_used = [
+        evidence_id
+        for evidence_id in direct_ids
+        if evidence_id in regular_direct_ids
+    ]
+    if len(regular_used) < MARKET_MIN_NEWS_SOURCES:
+        raise ValueError(
+            "시황 응답의 정규장 직접 근거가 기준보다 적습니다: "
+            f"{len(regular_used)}/{MARKET_MIN_NEWS_SOURCES}"
+        )
     if context_map and not context_ids:
         raise ValueError("시황 응답이 최근 맥락 근거 ID를 반환하지 않았습니다.")
     if context_map and not recent_context.strip():
@@ -1515,6 +1677,7 @@ def _build_market_summary(
         "fallback_stage": fallback_stage,
         "retriever_version": retriever_version,
         "market_close_cutoff": str(retrieval.get("market_close_cutoff", "")),
+        "news_cutoff": str(retrieval.get("news_cutoff", "")),
         "retrieval_as_of": str(retrieval.get("retrieval_as_of", "")),
         "corpus_status": retrieval.get("corpus_status", {}),
     }
@@ -1554,7 +1717,12 @@ def _research_market_summary(
 ) -> dict:
     retrieval = _normalise_market_retrieval(retrieval, data_date)
     direct = retrieval["direct_evidence"]
-    if len(direct) < MARKET_MIN_NEWS_SOURCES:
+    regular_direct = [
+        source
+        for source in direct
+        if source.get("session_phase") == "regular_session"
+    ]
+    if len(regular_direct) < MARKET_MIN_NEWS_SOURCES:
         return _limited_market_summary(
             base_market_summary,
             retrieval,
@@ -1595,9 +1763,17 @@ def enrich_with_ai(
     retrieval_clock = retrieval_as_of or datetime.now(timezone.utc)
     if retrieval_clock.tzinfo is None:
         retrieval_clock = retrieval_clock.replace(tzinfo=timezone.utc)
+    news_cutoff = _workflow_news_cutoff(data_date, retrieval_clock)
+    logger.info(
+        "Finnhub 뉴스 기준 시각: data_date=%s | cutoff=%s | retrieval_as_of=%s",
+        data_date,
+        news_cutoff.isoformat(),
+        retrieval_clock.astimezone(timezone.utc).isoformat(),
+    )
     tickers = result["ticker"].astype(str).tolist()
     cache_keys = {
-        ticker: f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:{ticker}" for ticker in tickers
+        ticker: _stock_cache_key(data_date, ticker, news_cutoff)
+        for ticker in tickers
     }
     session_entries: dict[str, dict] = {}
     missing = [ticker for ticker in tickers if cache_keys[ticker] not in cache]
@@ -1607,7 +1783,12 @@ def enrich_with_ai(
     gemini_disabled_reason = None
     if missing:
         try:
-            news_map, news_diagnostics = _collect_company_news(missing, start, end)
+            news_map, news_diagnostics = _collect_company_news(
+                missing,
+                start,
+                end,
+                news_cutoff,
+            )
         except Exception as exc:
             logger.warning("Finnhub 종목 뉴스 수집을 시작하지 못했습니다: %s", exc)
             news_map = {ticker: [] for ticker in missing}

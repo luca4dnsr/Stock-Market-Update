@@ -272,7 +272,7 @@ def run(
             combined_df,
             data_date,
             base_market_summary,
-            retrieval_as_of=datetime.now(timezone.utc),
+            retrieval_as_of=run_started_at,
         )
         top_df = combined_df.iloc[:len(top_df)].copy()
         bottom_df = combined_df.iloc[len(top_df):].copy()
