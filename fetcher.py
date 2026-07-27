@@ -6,10 +6,11 @@ import logging
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from io import StringIO
 
 import certifi
+import exchange_calendars as xcals
 import pandas as pd
 import requests
 import yfinance as yf
@@ -21,6 +22,7 @@ from config import (
     DAYS_3M,
     MC_FETCH_WORKERS,
     MC_TIMEOUT_SEC,
+    MARKET_CLOSE_GRACE_MINUTES,
     MIN_LATEST_DATE_COVERAGE,
     MIN_MARKET_CAP_COVERAGE,
     MIN_PRICE_COVERAGE,
@@ -37,6 +39,88 @@ logger = logging.getLogger(__name__)
 BENCHMARK_TICKER = "^GSPC"
 BENCHMARK_HISTORY_PERIOD = "1mo"
 LATEST_DATE_SAMPLE_SIZE = 10
+MAX_TARGETED_RETRY_RATIO = 0.05
+
+
+class UpstreamNotReady(RuntimeError):
+    """Yahoo의 정상 응답에 예상 거래일 가격이 아직 준비되지 않은 상태."""
+
+    def __init__(
+        self,
+        reason: str,
+        expected_date: date,
+        *,
+        raw_latest_date: date | None = None,
+        observed_date: date | None = None,
+        coverage: float | None = None,
+        aligned: int | None = None,
+        total: int | None = None,
+        stale_count: int = 0,
+        missing_count: int = 0,
+        future_count: int = 0,
+    ):
+        self.reason = reason
+        self.expected_date = expected_date
+        self.raw_latest_date = raw_latest_date
+        self.observed_date = observed_date
+        self.coverage = coverage
+        self.aligned = aligned
+        self.total = total
+        self.stale_count = stale_count
+        self.missing_count = missing_count
+        self.future_count = future_count
+        super().__init__(
+            "Yahoo 데이터가 예상 거래일에 아직 준비되지 않았습니다: "
+            f"reason={reason}, expected={expected_date}, "
+            f"observed={observed_date}, coverage={coverage}"
+        )
+
+    def status_details(self) -> dict:
+        return {
+            "reason": self.reason,
+            "expected_date": self.expected_date.isoformat(),
+            "raw_latest_date": (
+                self.raw_latest_date.isoformat()
+                if self.raw_latest_date is not None
+                else None
+            ),
+            "observed_date": (
+                self.observed_date.isoformat()
+                if self.observed_date is not None
+                else None
+            ),
+            "coverage": self.coverage,
+            "aligned": self.aligned,
+            "total": self.total,
+            "stale_count": self.stale_count,
+            "missing_count": self.missing_count,
+            "future_count": self.future_count,
+        }
+
+
+def get_expected_market_date(as_of: datetime | None = None) -> date:
+    """XNYS 일정에서 데이터 준비 유예시간이 지난 마지막 완료 세션을 구한다."""
+    observed_at = pd.Timestamp(as_of or datetime.now(timezone.utc))
+    if observed_at.tz is None:
+        raise ValueError("as_of는 timezone-aware datetime이어야 합니다.")
+    observed_at = observed_at.tz_convert("UTC")
+    ready_cutoff = observed_at - pd.Timedelta(
+        minutes=MARKET_CLOSE_GRACE_MINUTES
+    )
+    calendar = xcals.get_calendar("XNYS")
+    eligible_closes = calendar.closes[calendar.closes <= ready_cutoff]
+    if eligible_closes.empty:
+        raise RuntimeError("완료된 XNYS 거래일을 확인할 수 없습니다.")
+
+    expected_date = eligible_closes.index[-1].date()
+    logger.info(
+        "예상 완료 거래일: %s | XNYS close=%s | as_of=%s | grace=%d분",
+        expected_date,
+        eligible_closes.iloc[-1],
+        observed_at,
+        MARKET_CLOSE_GRACE_MINUTES,
+    )
+    return expected_date
 
 
 # ──────────────────────────────────────────────────────────
@@ -215,7 +299,7 @@ def _extract_batch_prices(
     )
     if price_field == "Adj Close" and latest_gap_tickers:
         logger.warning(
-            "%s Adj Close 최신값 결측 %d건: 비조정 Close로 대체하지 않고 표적 재시도합니다.",
+            "%s Adj Close 최신값 결측 %d건: 비조정 Close로 대체하지 않고 기준일 검증 대상으로 기록합니다.",
             diagnostic_label,
             len(latest_gap_tickers),
         )
@@ -264,8 +348,19 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
     return all_prices
 
 
-def fetch_benchmark_latest_date() -> date:
-    """Yahoo Finance S&P 500 지수의 최신 거래일을 기준일로 조회한다."""
+def _latest_raw_index_date(raw: pd.DataFrame) -> date | None:
+    index = pd.DatetimeIndex(pd.to_datetime(raw.index, errors="coerce"))
+    index = index[~index.isna()]
+    return index.max().date() if not index.empty else None
+
+
+def _series_has_date(series: pd.Series, expected_date: date) -> bool:
+    index = pd.DatetimeIndex(pd.to_datetime(series.index, errors="coerce"))
+    return bool((index.date == expected_date).any())
+
+
+def fetch_benchmark_latest_date(expected_date: date) -> date:
+    """예상 거래일의 Yahoo S&P 500 지수 Close 존재 여부를 검증한다."""
     raw = yf.download(
         BENCHMARK_TICKER,
         period=BENCHMARK_HISTORY_PERIOD,
@@ -275,21 +370,49 @@ def fetch_benchmark_latest_date() -> date:
         threads=False,
     )
     if raw.empty:
-        raise RuntimeError("Yahoo 기준지수(^GSPC) 가격이 비어 있습니다.")
-    # 기준일 판정에는 조정 여부가 필요 없고, Adj Close 결측 때문에 기준일이
-    # 이전 거래일로 후퇴하면 안 되므로 지수의 Close 날짜를 사용한다.
-    prices = _extract_batch_prices(
-        raw,
-        [BENCHMARK_TICKER],
-        "Yahoo 기준지수 ^GSPC",
-        price_field="Close",
+        raise UpstreamNotReady(
+            "benchmark_empty",
+            expected_date,
+            coverage=0.0,
+            aligned=0,
+            total=1,
+            missing_count=1,
+        )
+    close_frame = _price_field_frame(raw, "Close", [BENCHMARK_TICKER])
+    if close_frame is None or BENCHMARK_TICKER not in close_frame.columns:
+        raise RuntimeError("Yahoo 기준지수(^GSPC) 응답에 Close 필드가 없습니다.")
+
+    raw_close = close_frame[BENCHMARK_TICKER]
+    if isinstance(raw_close, pd.DataFrame):
+        raw_close = raw_close.iloc[:, -1]
+    series, _, _ = _normalise_price_series(raw_close)
+    observed_date = _latest_price_date(series)
+    raw_latest_date = _latest_raw_index_date(raw)
+    if not _series_has_date(series, expected_date):
+        raise UpstreamNotReady(
+            "benchmark_close_missing",
+            expected_date,
+            raw_latest_date=raw_latest_date,
+            observed_date=observed_date,
+            coverage=0.0,
+            aligned=0,
+            total=1,
+            stale_count=int(
+                observed_date is not None and observed_date < expected_date
+            ),
+            missing_count=int(observed_date is None),
+            future_count=int(
+                observed_date is not None and observed_date > expected_date
+            ),
+        )
+
+    logger.info(
+        "Yahoo 기준지수 검증 통과: expected=%s | raw_latest=%s | observed=%s",
+        expected_date,
+        raw_latest_date,
+        observed_date,
     )
-    series = prices.get(BENCHMARK_TICKER)
-    latest_date = _latest_price_date(series) if series is not None else None
-    if latest_date is None:
-        raise RuntimeError("Yahoo 기준지수(^GSPC) 최신 거래일을 확인할 수 없습니다.")
-    logger.info("Yahoo 기준지수 거래일: %s", latest_date)
-    return latest_date
+    return expected_date
 
 
 def _validate_return_history_coverage(
@@ -330,40 +453,73 @@ def _validate_return_history_coverage(
 def _classify_price_dates(
     price_data: dict[str, pd.Series],
     tickers: list[str],
-    benchmark_date: date,
+    expected_date: date,
 ) -> tuple[list[str], list[str], list[str]]:
-    """기준지수 거래일 대비 누락·stale·future 티커를 분류한다."""
+    """예상 거래일 대비 누락·stale·future-only 티커를 분류한다."""
     missing: list[str] = []
     stale: list[str] = []
     future: list[str] = []
     for ticker in tickers:
         series = price_data.get(ticker)
-        latest_date = _latest_price_date(series) if series is not None else None
-        if latest_date is None:
+        if series is None:
             missing.append(ticker)
-        elif latest_date < benchmark_date:
+            continue
+
+        original_latest = _latest_price_date(series)
+        trimmed = _trim_price_series_to_date(series, expected_date)
+        latest_date = _latest_price_date(trimmed)
+        if latest_date is None:
+            if original_latest is not None and original_latest > expected_date:
+                future.append(ticker)
+            else:
+                missing.append(ticker)
+        elif latest_date < expected_date:
             stale.append(ticker)
-        elif latest_date > benchmark_date:
+        elif latest_date > expected_date:
+            # _trim_price_series_to_date 계약상 도달할 수 없는 방어 분기다.
             future.append(ticker)
     return missing, stale, future
+
+
+def _trim_price_series_to_date(
+    series: pd.Series,
+    expected_date: date,
+) -> pd.Series:
+    """장중 partial row를 배제하도록 예상 거래일 이후 가격을 자른다."""
+    index = pd.DatetimeIndex(pd.to_datetime(series.index, errors="coerce"))
+    boundary = pd.Timestamp(expected_date)
+    if index.tz is not None:
+        boundary = boundary.tz_localize(index.tz)
+    mask = ~index.isna() & (index.normalize() <= boundary)
+    return series[mask].copy()
 
 
 def _retry_inconsistent_prices(
     price_data: dict[str, pd.Series],
     tickers: list[str],
-    benchmark_date: date,
+    expected_date: date,
 ) -> dict[str, pd.Series]:
-    """기준일과 맞지 않는 구성종목만 한 번 다시 내려받는다."""
+    """예상일 커버리지가 이미 기준 이상일 때 소수 불일치만 재조회한다."""
     missing, stale, future = _classify_price_dates(
-        price_data, tickers, benchmark_date
+        price_data, tickers, expected_date
     )
     retry_set = set([*missing, *stale, *future])
     retry_tickers = [ticker for ticker in tickers if ticker in retry_set]
     if not retry_tickers:
         return price_data
 
+    retry_limit = int(len(tickers) * MAX_TARGETED_RETRY_RATIO)
+    if len(retry_tickers) > retry_limit:
+        logger.warning(
+            "예상일 불일치 %d/%d (%.1f%%)로 대규모 표적 재시도를 생략합니다.",
+            len(retry_tickers),
+            len(tickers),
+            len(retry_tickers) / max(len(tickers), 1) * 100,
+        )
+        return price_data
+
     logger.warning(
-        "주가 표적 재시도 1회: 누락=%d | stale=%d | future=%d | sample=%s",
+        "주가 표적 재시도 1회: 누락=%d | stale=%d | future-only=%d | sample=%s",
         len(missing),
         len(stale),
         len(future),
@@ -379,10 +535,22 @@ def _retry_inconsistent_prices(
 def _validate_latest_date_coverage(
     price_data: dict[str, pd.Series],
     tickers: list[str],
-    benchmark_date: date,
+    expected_date: date,
 ) -> tuple[dict[str, pd.Series], float]:
-    """기준지수 거래일 커버리지를 검증하고 그 날짜의 종목만 반환한다."""
+    """예상 거래일 커버리지를 검증하고 그 날짜까지 자른 가격만 반환한다."""
+    trimmed_prices = {
+        ticker: _trim_price_series_to_date(series, expected_date)
+        for ticker, series in price_data.items()
+    }
     date_by_ticker = {
+        ticker: (
+            _latest_price_date(trimmed_prices[ticker])
+            if ticker in trimmed_prices
+            else None
+        )
+        for ticker in tickers
+    }
+    observed_by_ticker = {
         ticker: (
             _latest_price_date(price_data[ticker])
             if ticker in price_data
@@ -392,7 +560,7 @@ def _validate_latest_date_coverage(
     }
     histogram = Counter(
         str(latest_date) if latest_date is not None else "missing/invalid"
-        for latest_date in date_by_ticker.values()
+        for latest_date in observed_by_ticker.values()
     )
     histogram_text = " | ".join(
         f"{key}={count}" for key, count in sorted(histogram.items())
@@ -404,27 +572,34 @@ def _validate_latest_date_coverage(
     stale = [
         (ticker, latest_date)
         for ticker, latest_date in date_by_ticker.items()
-        if latest_date is not None and latest_date < benchmark_date
+        if latest_date is not None and latest_date < expected_date
     ]
     future = [
-        (ticker, latest_date)
+        (ticker, observed_by_ticker[ticker])
         for ticker, latest_date in date_by_ticker.items()
-        if latest_date is not None and latest_date > benchmark_date
+        if observed_by_ticker[ticker] is not None
+        and observed_by_ticker[ticker] > expected_date
+        and latest_date is None
     ]
     missing = [
-        ticker for ticker, latest_date in date_by_ticker.items()
+        ticker
+        for ticker, latest_date in date_by_ticker.items()
         if latest_date is None
+        and not (
+            observed_by_ticker[ticker] is not None
+            and observed_by_ticker[ticker] > expected_date
+        )
     ]
     latest_tickers = [
         ticker for ticker, latest_date in date_by_ticker.items()
-        if latest_date == benchmark_date
+        if latest_date == expected_date
     ]
     coverage = len(latest_tickers) / max(len(tickers), 1)
 
     logger.info(
-        "최신 거래일 분포: 기준지수=%s | %s | NaT=%d | "
-        "stale=%d [%s] | future=%d [%s] | missing=%d [%s]",
-        benchmark_date,
+        "가격 거래일 분포: expected=%s | observed=%s | NaT=%d | "
+        "stale=%d [%s] | future-only=%d [%s] | missing=%d [%s]",
+        expected_date,
         histogram_text,
         nat_count,
         len(stale),
@@ -434,27 +609,55 @@ def _validate_latest_date_coverage(
         len(missing),
         ", ".join(missing[:LATEST_DATE_SAMPLE_SIZE]),
     )
-    if future:
-        raise RuntimeError(
-            "기준지수 거래일 이후의 구성종목 가격이 남아 있습니다: "
-            f"기준 {benchmark_date}, "
-            f"{', '.join(f'{ticker}:{latest}' for ticker, latest in future[:LATEST_DATE_SAMPLE_SIZE])}"
-        )
     if coverage < MIN_LATEST_DATE_COVERAGE:
+        mismatch_count = len(tickers) - len(latest_tickers)
+        observed_counts = Counter(
+            latest_date
+            for latest_date in date_by_ticker.values()
+            if latest_date is not None
+        )
+        observed_date = (
+            observed_counts.most_common(1)[0][0]
+            if observed_counts
+            else None
+        )
+        raw_dates = [
+            latest_date
+            for latest_date in observed_by_ticker.values()
+            if latest_date is not None
+        ]
+        raw_latest_date = max(raw_dates) if raw_dates else None
+        stale_dominant = (
+            len(stale) > 0
+            and len(stale) * 5 >= mismatch_count * 4
+        )
+        if stale_dominant:
+            raise UpstreamNotReady(
+                "constituent_adj_close_lag",
+                expected_date,
+                raw_latest_date=raw_latest_date,
+                observed_date=observed_date,
+                coverage=coverage,
+                aligned=len(latest_tickers),
+                total=len(tickers),
+                stale_count=len(stale),
+                missing_count=len(missing),
+                future_count=len(future),
+            )
         raise RuntimeError(
-            "최신 거래일 정합성 기준 미달입니다: "
-            f"Yahoo ^GSPC {benchmark_date} 기준 "
+            "예상 거래일 정합성 기준 미달입니다: "
+            f"XNYS {expected_date} 기준 "
             f"{len(latest_tickers)}/{len(tickers)} ({coverage:.1%}), "
             f"최소 {MIN_LATEST_DATE_COVERAGE:.0%} 필요"
         )
 
     canonical_prices = {
-        ticker: price_data[ticker]
+        ticker: trimmed_prices[ticker]
         for ticker in latest_tickers
     }
-    if len(canonical_prices) != len(price_data):
+    if len(canonical_prices) != len(tickers):
         logger.warning(
-            "기준일 불일치 종목 %d개를 downstream 계산에서 제외합니다.",
+            "예상일 불일치 종목 %d개를 downstream 계산에서 제외합니다.",
             len(tickers) - len(canonical_prices),
         )
     return canonical_prices, coverage
@@ -503,7 +706,9 @@ def fetch_market_caps(tickers: list[str]) -> dict[str, float]:
 # 통합 수집 함수
 # ──────────────────────────────────────────────────────────
 
-def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
+def fetch_all_data(
+    expected_date: date | None = None,
+) -> tuple[pd.DataFrame, dict, dict]:
     """
     S&P 500 구성종목 + 주가 + 시가총액을 모두 수집한다.
 
@@ -511,25 +716,28 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
     -------
     (components_df, price_data_dict, market_cap_dict)
     """
+    expected_date = expected_date or get_expected_market_date()
+    fetch_benchmark_latest_date(expected_date)
+
     components = get_sp500_components()
     tickers = components["ticker"].tolist()
 
     price_data = fetch_price_data(tickers)
-    benchmark_date = fetch_benchmark_latest_date()
-    price_data = _retry_inconsistent_prices(price_data, tickers, benchmark_date)
-
     collected_price_count = len(price_data)
     price_coverage = collected_price_count / max(len(tickers), 1)
-    # 누락이 심한 경우에도 날짜 histogram과 stale/future 표본을 먼저 남긴다.
-    price_data, latest_coverage = _validate_latest_date_coverage(
-        price_data, tickers, benchmark_date
-    )
     if price_coverage < MIN_PRICE_COVERAGE:
         raise RuntimeError(
             "주가 수집 커버리지가 기준 미달입니다: "
             f"{collected_price_count}/{len(tickers)} ({price_coverage:.1%}), "
             f"최소 {MIN_PRICE_COVERAGE:.0%} 필요"
         )
+
+    price_data = _retry_inconsistent_prices(
+        price_data, tickers, expected_date
+    )
+    price_data, latest_coverage = _validate_latest_date_coverage(
+        price_data, tickers, expected_date
+    )
     _validate_return_history_coverage(price_data, len(tickers))
 
     valid_tickers = list(price_data.keys())
@@ -546,7 +754,7 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
     logger.info(
         "데이터 품질 검증 통과 — 주가 %.1f%% | 최신일 %s %.1f%% | 시가총액 %.1f%%",
         price_coverage * 100,
-        benchmark_date,
+        expected_date,
         latest_coverage * 100,
         market_cap_coverage * 100,
     )

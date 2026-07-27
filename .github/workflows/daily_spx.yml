@@ -22,6 +22,12 @@ on:
         default: 'false'
         type: choice
         options: ['false', 'true']
+      force_same_date:
+        description: '이미 게시된 거래일도 강제로 다시 생성'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 permissions:
   contents: write   # output/ 및 docs/ 커밋·푸시를 위해 필요
@@ -264,6 +270,7 @@ jobs:
       - name: Run SPX update
         id: run_spx
         if: github.event.inputs.nim_probe != 'true'
+        timeout-minutes: 45
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
@@ -272,19 +279,116 @@ jobs:
           RUN_MARKER="$RUNNER_TEMP/spx-run-start"
           touch "$RUN_MARKER"
           echo "report_generated=false" >> "$GITHUB_OUTPUT"
+          echo "report_status=not_run" >> "$GITHUB_OUTPUT"
+          echo "report_noop=false" >> "$GITHUB_OUTPUT"
+          echo "noop_reason=" >> "$GITHUB_OUTPUT"
+          echo "expected_date=" >> "$GITHUB_OUTPUT"
+          echo "published_date=" >> "$GITHUB_OUTPUT"
+          echo "raw_latest_date=" >> "$GITHUB_OUTPUT"
+          echo "observed_date=" >> "$GITHUB_OUTPUT"
+          echo "coverage=" >> "$GITHUB_OUTPUT"
+          echo "attempts_used=0" >> "$GITHUB_OUTPUT"
+          echo "retry_exhausted=false" >> "$GITHUB_OUTPUT"
+
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          FIXED_EXPECTED_DATE=""
+          MAIN_ARGS=()
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            MAX_ATTEMPTS=1
+            MAIN_ARGS+=(--dry-run --verbose)
+          fi
+          if [ "${{ github.event.inputs.force_same_date }}" = "true" ]; then
+            MAIN_ARGS+=(--force-same-date)
+          fi
+
+          while true; do
+            RUN_STATUS_FILE="$RUNNER_TEMP/spx-run-status-$ATTEMPT.json"
+            set +e
+            python main.py "${MAIN_ARGS[@]}" --status-file "$RUN_STATUS_FILE"
+            RUN_EXIT=$?
+            set -e
+
+            if [ ! -s "$RUN_STATUS_FILE" ]; then
+              echo "Run status file was not produced (exit=$RUN_EXIT)." >&2
+              if [ "$RUN_EXIT" -eq 0 ]; then
+                RUN_EXIT=1
+              fi
+              exit "$RUN_EXIT"
+            fi
+
+            json_value() {
+              python3 -c 'import json,sys; v=json.load(open(sys.argv[1])).get(sys.argv[2]); print("" if v is None else v)' "$RUN_STATUS_FILE" "$1"
+            }
+            REPORT_STATUS=$(json_value status)
+            NOOP_REASON=$(json_value reason)
+            EXPECTED_DATE=$(json_value expected_date)
+            PUBLISHED_DATE=$(json_value published_date)
+            RAW_LATEST_DATE=$(json_value raw_latest_date)
+            OBSERVED_DATE=$(json_value observed_date)
+            COVERAGE=$(json_value coverage)
+
+            if [ "$REPORT_STATUS" = "source_not_ready" ] && [ "$RUN_EXIT" -eq 75 ]; then
+              if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
+                if [ -z "$FIXED_EXPECTED_DATE" ]; then
+                  FIXED_EXPECTED_DATE="$EXPECTED_DATE"
+                  MAIN_ARGS+=(--expected-date "$FIXED_EXPECTED_DATE")
+                fi
+                if [ "$ATTEMPT" -eq 1 ]; then
+                  RETRY_DELAY=300
+                else
+                  RETRY_DELAY=600
+                fi
+                echo "::warning title=Yahoo 데이터 미준비::expected=$EXPECTED_DATE observed=$OBSERVED_DATE coverage=$COVERAGE, ${RETRY_DELAY}초 후 재시도합니다."
+                sleep "$RETRY_DELAY"
+                ATTEMPT=$((ATTEMPT + 1))
+                continue
+              fi
+              echo "retry_exhausted=true" >> "$GITHUB_OUTPUT"
+            fi
+
+            echo "report_status=$REPORT_STATUS" >> "$GITHUB_OUTPUT"
+            echo "noop_reason=$NOOP_REASON" >> "$GITHUB_OUTPUT"
+            echo "expected_date=$EXPECTED_DATE" >> "$GITHUB_OUTPUT"
+            echo "published_date=$PUBLISHED_DATE" >> "$GITHUB_OUTPUT"
+            echo "raw_latest_date=$RAW_LATEST_DATE" >> "$GITHUB_OUTPUT"
+            echo "observed_date=$OBSERVED_DATE" >> "$GITHUB_OUTPUT"
+            echo "coverage=$COVERAGE" >> "$GITHUB_OUTPUT"
+            echo "attempts_used=$ATTEMPT" >> "$GITHUB_OUTPUT"
+            break
+          done
+
+          if [ "$RUN_EXIT" -ne 0 ]; then
+            echo "::error title=SPX 보고서 생성 실패::status=$REPORT_STATUS reason=$NOOP_REASON expected=$EXPECTED_DATE observed=$OBSERVED_DATE attempts=$ATTEMPT"
+            exit "$RUN_EXIT"
+          fi
+
+          if [ "$REPORT_STATUS" = "already_current" ]; then
+            echo "report_noop=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=기존 보고서 최신::게시일과 XNYS 예상 완료 거래일이 모두 $EXPECTED_DATE 이므로 재생성을 생략했습니다."
+            exit 0
+          fi
 
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            python main.py --dry-run --verbose
-          else
-            python main.py
-            LATEST=$(find output -maxdepth 1 -type f -name 'SPX_daily_*.html' -newer "$RUN_MARKER" -print | sort | tail -1)
-            if [ -z "$LATEST" ] || [ ! -s output/summary.json ] || [ ! output/summary.json -nt "$RUN_MARKER" ]; then
-              echo "Current run did not produce a fresh dashboard and summary.json." >&2
+            if [ "$REPORT_STATUS" != "dry_run" ]; then
+              echo "Unexpected dry-run status: $REPORT_STATUS" >&2
               exit 1
             fi
-            echo "report_generated=true" >> "$GITHUB_OUTPUT"
-            echo "html_path=$LATEST" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          if [ "$REPORT_STATUS" != "generated" ]; then
+            echo "Unexpected report status: $REPORT_STATUS" >&2
+            exit 1
+          fi
+
+          LATEST=$(find output -maxdepth 1 -type f -name 'SPX_daily_*.html' -newer "$RUN_MARKER" -print | sort | tail -1)
+          if [ -z "$LATEST" ] || [ ! -s output/summary.json ] || [ ! output/summary.json -nt "$RUN_MARKER" ]; then
+            echo "Current run did not produce a fresh dashboard and summary.json." >&2
+            exit 1
+          fi
+          echo "report_generated=true" >> "$GITHUB_OUTPUT"
+          echo "html_path=$LATEST" >> "$GITHUB_OUTPUT"
 
       - name: Check market RAG database after report
         id: rag_db_post_check
@@ -501,6 +605,16 @@ jobs:
           RAG_REPORT_CACHE_SAVE="${{ steps.save_rag_cache.outcome }}"
           REPORT_OUTCOME="${{ steps.run_spx.outcome }}"
           REPORT_GENERATED="${{ steps.run_spx.outputs.report_generated }}"
+          REPORT_STATUS="${{ steps.run_spx.outputs.report_status }}"
+          REPORT_NOOP="${{ steps.run_spx.outputs.report_noop }}"
+          NOOP_REASON="${{ steps.run_spx.outputs.noop_reason }}"
+          EXPECTED_DATE="${{ steps.run_spx.outputs.expected_date }}"
+          PUBLISHED_DATE="${{ steps.run_spx.outputs.published_date }}"
+          RAW_LATEST_DATE="${{ steps.run_spx.outputs.raw_latest_date }}"
+          OBSERVED_DATE="${{ steps.run_spx.outputs.observed_date }}"
+          PRICE_COVERAGE="${{ steps.run_spx.outputs.coverage }}"
+          ATTEMPTS_USED="${{ steps.run_spx.outputs.attempts_used }}"
+          RETRY_EXHAUSTED="${{ steps.run_spx.outputs.retry_exhausted }}"
           PAGES_OUTCOME="${{ steps.prepare_pages.outcome }}"
 
           [ -n "$RAG_INGEST_OUTCOME" ] || RAG_INGEST_OUTCOME="skipped"
@@ -516,6 +630,16 @@ jobs:
           [ -n "$RAG_REPORT_CACHE_SAVE" ] || RAG_REPORT_CACHE_SAVE="skipped"
           [ -n "$REPORT_OUTCOME" ] || REPORT_OUTCOME="skipped"
           [ -n "$REPORT_GENERATED" ] || REPORT_GENERATED="false"
+          [ -n "$REPORT_STATUS" ] || REPORT_STATUS="not_run"
+          [ -n "$REPORT_NOOP" ] || REPORT_NOOP="false"
+          [ -n "$NOOP_REASON" ] || NOOP_REASON="none"
+          [ -n "$EXPECTED_DATE" ] || EXPECTED_DATE="unknown"
+          [ -n "$PUBLISHED_DATE" ] || PUBLISHED_DATE="none"
+          [ -n "$RAW_LATEST_DATE" ] || RAW_LATEST_DATE="unknown"
+          [ -n "$OBSERVED_DATE" ] || OBSERVED_DATE="unknown"
+          [ -n "$PRICE_COVERAGE" ] || PRICE_COVERAGE="unknown"
+          [ -n "$ATTEMPTS_USED" ] || ATTEMPTS_USED="0"
+          [ -n "$RETRY_EXHAUSTED" ] || RETRY_EXHAUSTED="false"
           [ -n "$PAGES_OUTCOME" ] || PAGES_OUTCOME="skipped"
 
           echo "### 📈 SPX Daily Automation Result" >> "$GITHUB_STEP_SUMMARY"
@@ -536,4 +660,10 @@ jobs:
           echo "| RAG post-report check / save | $RAG_POST_CHECK / $RAG_REPORT_CACHE_SAVE |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Run SPX step | $REPORT_OUTCOME |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Current-run output | $REPORT_GENERATED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Report status / no-op | $REPORT_STATUS / $REPORT_NOOP |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| No-op reason | $NOOP_REASON |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Expected / published date | $EXPECTED_DATE / $PUBLISHED_DATE |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Yahoo raw / observed date | $RAW_LATEST_DATE / $OBSERVED_DATE |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Expected-date coverage | $PRICE_COVERAGE |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Price attempts / exhausted | $ATTEMPTS_USED / $RETRY_EXHAUSTED |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Pages preparation | $PAGES_OUTCOME |" >> "$GITHUB_STEP_SUMMARY"
