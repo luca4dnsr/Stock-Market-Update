@@ -26,10 +26,16 @@ on:
 permissions:
   contents: write   # output/ 및 docs/ 커밋·푸시를 위해 필요
 
+concurrency:
+  group: spx-daily-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   generate:
     name: Generate SPX Daily Report
     runs-on: ubuntu-latest
+    env:
+      MARKET_RAG_DB_PATH: cache/market_rag.sqlite3
 
     steps:
       # ── 1. 코드 체크아웃 ──────────────────────────────────
@@ -47,13 +53,42 @@ jobs:
 
       # 캐시는 7일 유효한 구성종목 CSV를 다음 실행에 복원한다.
       # 매 실행마다 고유 키를 저장하고, 최신 캐시를 prefix로 복원한다.
-      - name: Restore S&P 500 components cache
+      - name: Restore non-RAG runtime caches
         uses: actions/cache@v5
+        continue-on-error: true
         with:
-          path: cache/
+          path: |
+            cache/sp500_components.csv
+            cache/business_profiles.json
+            cache/ai_daily_insights.json
+            cache/finnhub_market_news.json
           key: spx-components-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             spx-components-${{ runner.os }}-
+
+      - name: Restore market RAG database
+        id: restore_rag_cache
+        if: github.event.inputs.nim_probe != 'true'
+        uses: actions/cache/restore@v5
+        continue-on-error: true
+        with:
+          path: ${{ env.MARKET_RAG_DB_PATH }}
+          key: market-rag-schema-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-report
+          restore-keys: |
+            market-rag-schema-v1-${{ runner.os }}-
+
+      - name: Inspect restored market RAG cache
+        id: restored_rag_state
+        if: github.event.inputs.nim_probe != 'true'
+        shell: bash
+        run: |
+          if [ -s "$MARKET_RAG_DB_PATH" ]; then
+            echo "restored=true" >> "$GITHUB_OUTPUT"
+            echo "Restored market RAG DB: $MARKET_RAG_DB_PATH ($(stat -c%s "$MARKET_RAG_DB_PATH") bytes)"
+          else
+            echo "restored=false" >> "$GITHUB_OUTPUT"
+            echo "No prior market RAG DB was restored; ingestion will initialize it."
+          fi
 
       # ── 3. 의존성 설치 ────────────────────────────────────
       - name: Install dependencies
@@ -65,6 +100,115 @@ jobs:
         run: |
           python -m py_compile *.py
           python -m unittest discover -s tests -v
+
+      - name: Log runtime provenance
+        run: |
+          echo "Git SHA: $(git rev-parse HEAD)"
+          python --version
+          python - <<'PYEOF'
+          import pandas
+          import yfinance
+
+          print(f"pandas: {pandas.__version__}")
+          print(f"yfinance: {yfinance.__version__}")
+          PYEOF
+
+      - name: Ingest Finnhub market news for RAG
+        id: rag_ingest
+        if: github.event.inputs.nim_probe != 'true'
+        continue-on-error: true
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        shell: bash
+        run: |
+          RESULT_FILE="$RUNNER_TEMP/market-rag-ingest.json"
+          set +e
+          python -m market_rag ingest --db "$MARKET_RAG_DB_PATH" > "$RESULT_FILE"
+          COMMAND_STATUS=$?
+          set -e
+          cat "$RESULT_FILE"
+
+          RAG_RESULT_FILE="$RESULT_FILE" RAG_COMMAND_STATUS="$COMMAND_STATUS" python - <<'PYEOF'
+          import json
+          import os
+
+          try:
+              with open(os.environ["RAG_RESULT_FILE"], encoding="utf-8") as source:
+                  payload = json.load(source)
+          except (OSError, json.JSONDecodeError) as exc:
+              payload = {
+                  "ok": False,
+                  "error_code": f"invalid_result:{type(exc).__name__}",
+              }
+
+          command_status = int(os.environ["RAG_COMMAND_STATUS"])
+          status = "ok" if command_status == 0 and payload.get("ok") is True else "degraded"
+          error_code = str(payload.get("error_code") or "none")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"status={status}\n")
+              output.write(f"error_code={error_code}\n")
+              for field in ("fetched", "inserted", "updated", "deduplicated", "pruned", "article_count"):
+                  output.write(f"{field}={payload.get(field, 'unknown')}\n")
+          if status != "ok":
+              raise SystemExit(1)
+          PYEOF
+
+          exit "$COMMAND_STATUS"
+
+      - name: Check market RAG database
+        id: rag_db_check
+        if: always() && github.event.inputs.nim_probe != 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          RESULT_FILE="$RUNNER_TEMP/market-rag-quick-check.json"
+          set +e
+          python -m market_rag quick-check --db "$MARKET_RAG_DB_PATH" > "$RESULT_FILE"
+          COMMAND_STATUS=$?
+          set -e
+          cat "$RESULT_FILE"
+
+          RAG_RESULT_FILE="$RESULT_FILE" RAG_COMMAND_STATUS="$COMMAND_STATUS" python - <<'PYEOF'
+          import json
+          import os
+
+          try:
+              with open(os.environ["RAG_RESULT_FILE"], encoding="utf-8") as source:
+                  payload = json.load(source)
+          except (OSError, json.JSONDecodeError) as exc:
+              payload = {
+                  "ok": False,
+                  "result": f"invalid_result:{type(exc).__name__}",
+              }
+
+          command_status = int(os.environ["RAG_COMMAND_STATUS"])
+          quick_check = str(payload.get("result") or "not_run")
+          status = (
+              "ok"
+              if command_status == 0
+              and payload.get("ok") is True
+              and quick_check.lower() == "ok"
+              else "degraded"
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"status={status}\n")
+              output.write(f"quick_check={quick_check}\n")
+              output.write(f"article_count={payload.get('article_count', 'unknown')}\n")
+          if status != "ok":
+              raise SystemExit(1)
+          PYEOF
+
+      - name: Save ingested market RAG database
+        id: save_rag_ingest_cache
+        if: >-
+          always() &&
+          github.event.inputs.nim_probe != 'true' &&
+          steps.rag_db_check.outputs.status == 'ok'
+        uses: actions/cache/save@v5
+        continue-on-error: true
+        with:
+          path: ${{ env.MARKET_RAG_DB_PATH }}
+          key: market-rag-schema-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-ingest
 
       # ── 4. NVIDIA NIM 최소 응답 진단 (수동 실행 전용) ─────
       - name: Probe NVIDIA NIM
@@ -118,33 +262,68 @@ jobs:
 
       # ── 5. SPX 업데이트 실행 ─────────────────────────────
       - name: Run SPX update
+        id: run_spx
         if: github.event.inputs.nim_probe != 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
+          RUN_MARKER="$RUNNER_TEMP/spx-run-start"
+          touch "$RUN_MARKER"
+          echo "report_generated=false" >> "$GITHUB_OUTPUT"
+
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             python main.py --dry-run --verbose
           else
-            python main.py --verbose
+            python main.py
+            LATEST=$(find output -maxdepth 1 -type f -name 'SPX_daily_*.html' -newer "$RUN_MARKER" -print | sort | tail -1)
+            if [ -z "$LATEST" ] || [ ! -s output/summary.json ] || [ ! output/summary.json -nt "$RUN_MARKER" ]; then
+              echo "Current run did not produce a fresh dashboard and summary.json." >&2
+              exit 1
+            fi
+            echo "report_generated=true" >> "$GITHUB_OUTPUT"
+            echo "html_path=$LATEST" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Check market RAG database after report
+        id: rag_db_post_check
+        if: >-
+          steps.run_spx.outcome == 'success' &&
+          steps.run_spx.outputs.report_generated == 'true'
+        continue-on-error: true
+        run: python -m market_rag quick-check --db "$MARKET_RAG_DB_PATH"
+
+      - name: Save report-updated market RAG database
+        id: save_rag_cache
+        if: >-
+          steps.rag_db_post_check.outcome == 'success'
+        uses: actions/cache/save@v5
+        continue-on-error: true
+        with:
+          path: ${{ env.MARKET_RAG_DB_PATH }}
+          key: market-rag-schema-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-report
 
       # ── 5. GitHub Pages용 HTML 복사 ─────────────────────
       - name: Prepare GitHub Pages (docs/)
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        id: prepare_pages
+        if: >-
+          steps.run_spx.outcome == 'success' &&
+          steps.run_spx.outputs.report_generated == 'true' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         run: |
           mkdir -p docs
-          # 가장 최신 HTML을 index.html로 복사
-          LATEST=$(ls -t output/SPX_daily_*.html 2>/dev/null | head -1)
-          if [ -n "$LATEST" ]; then
-            cp "$LATEST" docs/index.html
-            echo "GitHub Pages: $LATEST → docs/index.html"
-          fi
+          cp "${{ steps.run_spx.outputs.html_path }}" docs/index.html
+          echo "GitHub Pages: ${{ steps.run_spx.outputs.html_path }} -> docs/index.html"
 
       # ── 6. 최신 웹 대시보드를 Actions Artifact로 업로드 ───
       - name: Upload dashboard as artifact
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        if: >-
+          steps.run_spx.outputs.report_generated == 'true' &&
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         uses: actions/upload-artifact@v6
         with:
           name: spx-dashboard-${{ github.run_number }}
@@ -155,7 +334,11 @@ jobs:
 
       # ── 7. output/ + docs/ 를 저장소에 커밋 ──────────────
       - name: Commit and push output
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        if: >-
+          steps.run_spx.outputs.report_generated == 'true' &&
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -174,7 +357,11 @@ jobs:
 
       # ── 8. 이메일 본문(HTML) 생성 ────────────────────────
       - name: Generate email body
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        if: >-
+          steps.run_spx.outputs.report_generated == 'true' &&
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         run: |
           python3 - << 'PYEOF'
           import json, pathlib
@@ -266,7 +453,11 @@ jobs:
           PYEOF
 
       - name: Set report date for email
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        if: >-
+          steps.run_spx.outputs.report_generated == 'true' &&
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         run: |
           REPORT_DATE=$(python3 -c "import json; print(json.load(open('output/summary.json'))['data_date'])")
           echo "REPORT_DATE=${REPORT_DATE}" >> "$GITHUB_ENV"
@@ -275,7 +466,11 @@ jobs:
       # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO 등록
       # 설정 안 되어 있으면 이 스텝은 조용히 건너뜀 (continue-on-error: true)
       - name: Send email report
-        if: github.event.inputs.dry_run != 'true' && github.event.inputs.nim_probe != 'true'
+        if: >-
+          steps.run_spx.outputs.report_generated == 'true' &&
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
         continue-on-error: true   # 이메일 미설정 시에도 워크플로우 실패 X
         uses: dawidd6/action-send-mail@v18
         with:
@@ -293,14 +488,52 @@ jobs:
       - name: Summary
         if: always()
         run: |
-          echo "### 📈 SPX Daily Automation Result" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| 항목 | 내용 |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 실행 시각 (UTC) | $(date -u +'%Y-%m-%d %H:%M') |" >> $GITHUB_STEP_SUMMARY
-          echo "| 실행 번호 | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dry Run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| NIM Probe | ${{ github.event.inputs.nim_probe || 'false' }} |" >> $GITHUB_STEP_SUMMARY
-          if [ -f docs/index.html ]; then
-            echo "| 웹 대시보드 생성 | ✅ |" >> $GITHUB_STEP_SUMMARY
-          fi
+          RAG_INGEST_OUTCOME="${{ steps.rag_ingest.outcome }}"
+          RAG_INGEST_STATUS="${{ steps.rag_ingest.outputs.status }}"
+          RAG_INGEST_ERROR="${{ steps.rag_ingest.outputs.error_code }}"
+          RAG_FETCHED="${{ steps.rag_ingest.outputs.fetched }}"
+          RAG_INSERTED="${{ steps.rag_ingest.outputs.inserted }}"
+          RAG_DB_STATUS="${{ steps.rag_db_check.outputs.status }}"
+          RAG_QUICK_CHECK="${{ steps.rag_db_check.outputs.quick_check }}"
+          RAG_ARTICLES="${{ steps.rag_db_check.outputs.article_count }}"
+          RAG_INGEST_CACHE_SAVE="${{ steps.save_rag_ingest_cache.outcome }}"
+          RAG_POST_CHECK="${{ steps.rag_db_post_check.outcome }}"
+          RAG_REPORT_CACHE_SAVE="${{ steps.save_rag_cache.outcome }}"
+          REPORT_OUTCOME="${{ steps.run_spx.outcome }}"
+          REPORT_GENERATED="${{ steps.run_spx.outputs.report_generated }}"
+          PAGES_OUTCOME="${{ steps.prepare_pages.outcome }}"
+
+          [ -n "$RAG_INGEST_OUTCOME" ] || RAG_INGEST_OUTCOME="skipped"
+          [ -n "$RAG_INGEST_STATUS" ] || RAG_INGEST_STATUS="not_run"
+          [ -n "$RAG_INGEST_ERROR" ] || RAG_INGEST_ERROR="none"
+          [ -n "$RAG_FETCHED" ] || RAG_FETCHED="unknown"
+          [ -n "$RAG_INSERTED" ] || RAG_INSERTED="unknown"
+          [ -n "$RAG_DB_STATUS" ] || RAG_DB_STATUS="not_checked"
+          [ -n "$RAG_QUICK_CHECK" ] || RAG_QUICK_CHECK="not_run"
+          [ -n "$RAG_ARTICLES" ] || RAG_ARTICLES="unknown"
+          [ -n "$RAG_INGEST_CACHE_SAVE" ] || RAG_INGEST_CACHE_SAVE="skipped"
+          [ -n "$RAG_POST_CHECK" ] || RAG_POST_CHECK="skipped"
+          [ -n "$RAG_REPORT_CACHE_SAVE" ] || RAG_REPORT_CACHE_SAVE="skipped"
+          [ -n "$REPORT_OUTCOME" ] || REPORT_OUTCOME="skipped"
+          [ -n "$REPORT_GENERATED" ] || REPORT_GENERATED="false"
+          [ -n "$PAGES_OUTCOME" ] || PAGES_OUTCOME="skipped"
+
+          echo "### 📈 SPX Daily Automation Result" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Item | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| UTC time | $(date -u +'%Y-%m-%d %H:%M') |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Run | #${{ github.run_number }} attempt ${{ github.run_attempt }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Git SHA | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dry run | ${{ github.event.inputs.dry_run || 'false' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| NIM probe | ${{ github.event.inputs.nim_probe || 'false' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG cache restored | ${{ steps.restored_rag_state.outputs.restored || 'false' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG ingest | $RAG_INGEST_STATUS ($RAG_INGEST_OUTCOME, error=$RAG_INGEST_ERROR) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG fetched / inserted | $RAG_FETCHED / $RAG_INSERTED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG DB quick_check | $RAG_DB_STATUS ($RAG_QUICK_CHECK) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG article count | $RAG_ARTICLES |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG ingest cache save | $RAG_INGEST_CACHE_SAVE |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| RAG post-report check / save | $RAG_POST_CHECK / $RAG_REPORT_CACHE_SAVE |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Run SPX step | $REPORT_OUTCOME |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Current-run output | $REPORT_GENERATED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pages preparation | $PAGES_OUTCOME |" >> "$GITHUB_STEP_SUMMARY"

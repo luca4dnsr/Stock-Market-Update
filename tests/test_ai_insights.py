@@ -1,8 +1,11 @@
-from datetime import date
+import copy
+from datetime import date, datetime, timezone
 import unittest
 from unittest.mock import Mock, patch
+from zoneinfo import ZoneInfo
 
 import pandas as pd
+import requests
 
 from ai_insights import (
     enrich_with_ai,
@@ -10,13 +13,17 @@ from ai_insights import (
     _fallback_market_prompt,
     _fallback_stock_entries,
     _fallback_stock_prompt,
+    _finnhub_get,
     _is_non_retryable_gemini_error,
+    _legacy_market_retrieval,
+    _market_retrieval_fingerprint,
     _normalise_company_articles,
     _normalise_stock_batch,
     _parse_json,
     _request_gemini_json,
     _request_nim_json,
     _research_market_summary,
+    _retrieve_market_evidence,
     _select_market_articles,
     _valid_stock_response_items,
 )
@@ -33,6 +40,31 @@ def _article(article_id: str, headline: str, source: str, published_date: str) -
         "published_date": published_date,
         "url": f"https://example.com/{article_id}",
         "related": [],
+    }
+
+
+def _market_retrieval() -> dict:
+    direct = [
+        {
+            **_article(str(index), f"Direct market article {index}", "Reuters", "2026-07-24"),
+            "evidence_id": f"D{index}",
+        }
+        for index in range(1, 4)
+    ]
+    context = [
+        {
+            **_article("10", "Recent inflation and sector context", "AP", "2026-07-20"),
+            "evidence_id": "C1",
+        }
+    ]
+    return {
+        "direct_evidence": direct,
+        "historical_context": context,
+        "rag_status": "ready",
+        "retriever_version": "test-v1",
+        "market_close_cutoff": "2026-07-24T16:00:00-04:00",
+        "retrieval_as_of": "2026-07-27T01:00:00+00:00",
+        "corpus_status": {"document_count": 4},
     }
 
 
@@ -57,6 +89,22 @@ def _nim_stock_item(ticker: str) -> dict:
 
 
 class AiInsightsTest(unittest.TestCase):
+    @patch("ai_insights.requests.get")
+    def test_finnhub_request_error_does_not_expose_api_key(self, mock_get):
+        mock_get.side_effect = requests.ConnectionError(
+            "failed https://finnhub.io/api/v1/news?token=secret-key"
+        )
+
+        with (
+            patch.dict("os.environ", {"FINNHUB_API_KEY": "secret-key"}),
+            self.assertRaises(RuntimeError) as captured,
+        ):
+            _finnhub_get("news", {"category": "general"})
+
+        message = str(captured.exception)
+        self.assertNotIn("secret-key", message)
+        self.assertNotIn("token=", message)
+
     @patch("ai_insights.requests.post")
     def test_gemini_uses_api_enum_for_json_mime_type(self, mock_post):
         response = Mock(ok=True)
@@ -114,6 +162,45 @@ class AiInsightsTest(unittest.TestCase):
         self.assertNotIn("private reasoning", logs)
         self.assertNotIn("LEAK KEY", logs)
 
+    @patch("ai_insights.requests.post")
+    def test_nim_recognises_market_response_keys(self, mock_post):
+        response = Mock(ok=True)
+        response.json.return_value = {
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {
+                        "content": (
+                            '{"headline":"Market close","observation":"Breadth improved",'
+                            '"interpretation":"Rates helped","recent_context":"",'
+                            '"direct_evidence_ids":["D1","D2","D3"],'
+                            '"context_evidence_ids":[]}'
+                        ),
+                    },
+                }
+            ]
+        }
+        mock_post.return_value = response
+
+        with (
+            patch.dict("os.environ", {"NVIDIA_API_KEY": "test-key"}),
+            self.assertLogs("ai_insights", level="INFO") as captured,
+        ):
+            generated = _request_nim_json("model", "system", "prompt")
+
+        self.assertEqual(generated["headline"], "Market close")
+        logs = "\n".join(captured.output)
+        self.assertIn("unknown_key_count=0", logs)
+        for field in (
+            "headline",
+            "observation",
+            "interpretation",
+            "recent_context",
+            "direct_evidence_ids",
+            "context_evidence_ids",
+        ):
+            self.assertIn(field, logs)
+
     def test_nim_rejects_null_and_non_string_stock_fields(self):
         items = [_stock_input("AAA"), _stock_input("BBB"), _stock_input("CCC")]
         generated = {
@@ -152,14 +239,43 @@ class AiInsightsTest(unittest.TestCase):
             [_stock_input("AAA")], "2026-07-24", start, end
         )
         market_prompt = _fallback_market_prompt(
-            {}, [], "2026-07-24", start, end
+            {}, _market_retrieval(), "2026-07-24"
         )
 
         self.assertIn('{"items":[', stock_prompt)
         for field in ("ticker", "business_ko", "move_reason_ko", "evidence_status"):
             self.assertIn(f'"{field}"', stock_prompt)
-        for field in ("headline", "observation", "interpretation"):
+        for field in (
+            "headline",
+            "observation",
+            "interpretation",
+            "recent_context",
+            "direct_evidence_ids",
+            "context_evidence_ids",
+        ):
             self.assertIn(f'"{field}"', market_prompt)
+
+    def test_nim_market_prompt_uses_production_evidence_ids(self):
+        retrieval = _market_retrieval()
+        for index, article in enumerate(retrieval["direct_evidence"], start=101):
+            article["evidence_id"] = f"finnhub:{index}"
+        retrieval["historical_context"][0]["evidence_id"] = "finnhub:201"
+
+        prompt = _fallback_market_prompt(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        for evidence_id in (
+            "finnhub:101",
+            "finnhub:102",
+            "finnhub:103",
+            "finnhub:201",
+        ):
+            self.assertIn(f'"{evidence_id}"', prompt)
+        self.assertNotIn('"D1"', prompt)
+        self.assertNotIn('"C1"', prompt)
 
     @patch("ai_insights._request_nim_json")
     def test_nim_retries_only_incomplete_ticker_and_merges_result(self, mock_request):
@@ -194,7 +310,7 @@ class AiInsightsTest(unittest.TestCase):
 
     def test_market_response_reports_exact_missing_fields(self):
         with self.assertRaisesRegex(
-            ValueError, "observation, interpretation"
+            ValueError, "observation, interpretation, recent_context"
         ):
             _build_market_summary(
                 {"headline": "시장 요약"}, [], "NVIDIA NIM GPT-OSS 120B"
@@ -202,7 +318,7 @@ class AiInsightsTest(unittest.TestCase):
 
     def test_market_response_rejects_null_and_non_string_fields(self):
         with self.assertRaisesRegex(
-            ValueError, "headline, observation, interpretation"
+            ValueError, "headline, observation, interpretation, recent_context"
         ):
             _build_market_summary(
                 {
@@ -213,6 +329,371 @@ class AiInsightsTest(unittest.TestCase):
                 [],
                 "NVIDIA NIM GPT-OSS 120B",
             )
+
+    def test_market_response_keeps_direct_and_context_sources_separate(self):
+        generated = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "최근 물가와 섹터 맥락",
+            "direct_evidence_ids": ["D1", "D2", "D3"],
+            "context_evidence_ids": ["C1"],
+        }
+
+        summary = _build_market_summary(
+            generated, _market_retrieval(), "Gemini + Finnhub RAG"
+        )
+
+        self.assertEqual(summary["direct_evidence_ids"], ["D1", "D2", "D3"])
+        self.assertEqual(summary["context_evidence_ids"], ["C1"])
+        self.assertEqual(len(summary["direct_source_urls"]), 3)
+        self.assertEqual(len(summary["context_source_urls"]), 1)
+        self.assertEqual(summary["rag_status"], "rag_success")
+
+    def test_market_response_rejects_context_id_as_direct_evidence(self):
+        generated = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "최근 물가와 섹터 맥락",
+            "direct_evidence_ids": ["C1", "D2", "D3"],
+            "context_evidence_ids": ["C1"],
+        }
+
+        with self.assertRaisesRegex(ValueError, "입력에 없는 근거 ID"):
+            _build_market_summary(
+                generated, _market_retrieval(), "Gemini + Finnhub RAG"
+            )
+
+    def test_direct_only_market_response_requires_empty_recent_context(self):
+        retrieval = _market_retrieval()
+        retrieval["historical_context"] = []
+        generated = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "",
+            "direct_evidence_ids": ["D1", "D2", "D3"],
+            "context_evidence_ids": [],
+        }
+
+        summary = _build_market_summary(
+            generated, retrieval, "Gemini + Finnhub RAG"
+        )
+
+        self.assertEqual(summary["recent_context"], "")
+        self.assertEqual(summary["context_evidence_ids"], [])
+        self.assertEqual(summary["rag_status"], "direct_only")
+
+        generated["recent_context"] = "출처 없는 최근 맥락"
+        with self.assertRaisesRegex(ValueError, "근거 없는 최근 맥락"):
+            _build_market_summary(
+                generated, retrieval, "Gemini + Finnhub RAG"
+            )
+
+    def test_market_response_rejects_fewer_than_three_direct_citations(self):
+        generated = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "최근 물가와 섹터 맥락",
+            "direct_evidence_ids": ["D1", "D2"],
+            "context_evidence_ids": ["C1"],
+        }
+
+        with self.assertRaisesRegex(ValueError, "직접 근거가 기준보다 적습니다"):
+            _build_market_summary(
+                generated,
+                _market_retrieval(),
+                "Gemini + Finnhub RAG",
+            )
+
+    def test_limited_market_summary_marks_rag_as_attempted(self):
+        retrieval = _market_retrieval()
+        retrieval["direct_evidence"] = retrieval["direct_evidence"][:2]
+
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        self.assertTrue(summary["rag_attempted"])
+        self.assertEqual(summary["fallback_stage"], "rule_based")
+        self.assertEqual(summary["rag_status"], "insufficient_direct_evidence")
+
+        retrieval["direct_evidence"] = []
+        retrieval["rag_status"] = "unavailable"
+        retrieval["corpus_status"] = {"status": "corrupt"}
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+        self.assertEqual(summary["rag_status"], "corpus_corrupt")
+
+    @patch("ai_insights._collect_market_news")
+    def test_legacy_market_retrieval_excludes_old_articles_from_direct_evidence(
+        self, mock_collect
+    ):
+        mock_collect.return_value = (
+            [
+                _article(
+                    "old",
+                    "S&P 500 Federal Reserve inflation market update",
+                    "Reuters",
+                    "2026-07-01",
+                ),
+                _article(
+                    "recent-1",
+                    "S&P 500 moves after Federal Reserve comments",
+                    "Reuters",
+                    "2026-07-24",
+                ),
+                _article(
+                    "recent-2",
+                    "Nasdaq stocks react to interest rate outlook",
+                    "Reuters",
+                    "2026-07-23",
+                ),
+                _article(
+                    "recent-3",
+                    "Treasury yields influence stock market sectors",
+                    "AP",
+                    "2026-07-22",
+                ),
+            ],
+            {"status": "ok", "error": ""},
+        )
+
+        retrieval = _legacy_market_retrieval(
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+
+        ids = {
+            article["article_id"]
+            for article in retrieval["direct_evidence"]
+        }
+        self.assertEqual(ids, {"recent-1", "recent-2", "recent-3"})
+        self.assertNotIn("old", ids)
+
+    @patch("ai_insights._collect_market_news")
+    def test_legacy_market_retrieval_rejects_company_only_earnings(
+        self, mock_collect
+    ):
+        mock_collect.return_value = (
+            [
+                _article(
+                    f"company-{index}",
+                    f"Acme {index} earnings guidance beats estimates",
+                    source,
+                    "2026-07-24",
+                )
+                for index, source in enumerate(("Reuters", "AP", "CNBC"), start=1)
+            ],
+            {"status": "ok", "error": ""},
+        )
+
+        retrieval = _legacy_market_retrieval(
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(retrieval["direct_evidence"], [])
+
+    @patch("ai_insights._save_market_news_pool")
+    @patch("ai_insights._load_market_news_pool")
+    @patch("ai_insights._finnhub_get")
+    def test_legacy_market_retrieval_uses_pool_when_live_fetch_fails(
+        self, mock_finnhub, mock_load_pool, mock_save_pool
+    ):
+        mock_finnhub.return_value = {"error": "temporary outage"}
+        mock_load_pool.return_value = [
+            _article(
+                "cached-1",
+                "S&P 500 moves after Federal Reserve comments",
+                "Reuters",
+                "2026-07-24",
+            ),
+            _article(
+                "cached-2",
+                "Nasdaq stocks react to interest rate outlook",
+                "AP",
+                "2026-07-23",
+            ),
+            _article(
+                "cached-3",
+                "Treasury yields influence stock market sectors",
+                "CNBC",
+                "2026-07-22",
+            ),
+        ]
+
+        with self.assertLogs("ai_insights", level="WARNING") as captured:
+            retrieval = _legacy_market_retrieval(
+                "2026-07-24",
+                date(2026, 6, 24),
+                date(2026, 7, 24),
+                datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+            )
+
+        self.assertEqual(len(retrieval["direct_evidence"]), 3)
+        self.assertEqual(retrieval["corpus_status"]["status"], "degraded")
+        self.assertEqual(retrieval["corpus_status"]["error"], "ValueError")
+        self.assertIn("rolling pool만 사용", "\n".join(captured.output))
+        mock_save_pool.assert_called_once()
+
+    @patch("ai_insights._legacy_market_retrieval")
+    @patch("market_rag.retrieve_market_context")
+    def test_legacy_direct_fallback_preserves_rag_historical_context(
+        self, mock_retrieve, mock_legacy
+    ):
+        rag = _market_retrieval()
+        rag["direct_evidence"] = rag["direct_evidence"][:2]
+        legacy = _market_retrieval()
+        legacy["historical_context"] = []
+        legacy["retriever_version"] = "legacy-keyword-v1"
+        mock_retrieve.return_value = rag
+        mock_legacy.return_value = legacy
+
+        result = _retrieve_market_evidence(
+            {"sector_returns": []},
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(
+            [item["evidence_id"] for item in result["historical_context"]],
+            ["C1"],
+        )
+        self.assertEqual(result["rag_status"], "hybrid")
+
+    @patch("ai_insights._legacy_market_retrieval")
+    @patch("market_rag.retrieve_market_context")
+    def test_legacy_fallback_preserves_rag_corpus_failure_status(
+        self, mock_retrieve, mock_legacy
+    ):
+        rag = _market_retrieval()
+        rag["direct_evidence"] = []
+        rag["historical_context"] = []
+        rag["rag_status"] = "unavailable"
+        rag["corpus_status"] = {"ok": False, "status": "corrupt"}
+        legacy = _market_retrieval()
+        legacy["direct_evidence"] = []
+        legacy["historical_context"] = []
+        legacy["rag_status"] = "corpus_empty"
+        legacy["retriever_version"] = "legacy-keyword-v1"
+        legacy["corpus_status"] = {"fallback": "legacy_market_news_pool"}
+        mock_retrieve.return_value = rag
+        mock_legacy.return_value = legacy
+
+        retrieval = _retrieve_market_evidence(
+            {"sector_returns": []},
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        self.assertEqual(
+            retrieval["corpus_status"]["rag"]["status"],
+            "corrupt",
+        )
+        self.assertEqual(summary["rag_status"], "corpus_corrupt")
+
+    @patch("ai_insights._legacy_market_retrieval")
+    @patch("market_rag.retrieve_market_context")
+    def test_legacy_fallback_preserves_unexpected_rag_retrieval_failure(
+        self, mock_retrieve, mock_legacy
+    ):
+        mock_retrieve.side_effect = RuntimeError("unexpected retrieval failure")
+        legacy = _market_retrieval()
+        legacy["direct_evidence"] = []
+        legacy["historical_context"] = []
+        legacy["rag_status"] = "corpus_empty"
+        legacy["retriever_version"] = "legacy-keyword-v1"
+        legacy["corpus_status"] = {"fallback": "legacy_market_news_pool"}
+        mock_legacy.return_value = legacy
+
+        retrieval = _retrieve_market_evidence(
+            {"sector_returns": []},
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        )
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        self.assertEqual(
+            retrieval["corpus_status"]["rag"]["status"],
+            "retrieval_failure",
+        )
+        self.assertEqual(summary["rag_status"], "corpus_retrieval_failure")
+
+    def test_market_cache_fingerprint_tracks_prompt_data_and_article_content(self):
+        retrieval = _market_retrieval()
+        original = _market_retrieval_fingerprint(
+            retrieval,
+            {"breadth": {"advances": 300, "declines": 200}},
+        )
+        changed_article = copy.deepcopy(retrieval)
+        changed_article["direct_evidence"][0]["summary"] = "updated summary"
+
+        self.assertNotEqual(
+            original,
+            _market_retrieval_fingerprint(
+                changed_article,
+                {"breadth": {"advances": 300, "declines": 200}},
+            ),
+        )
+        self.assertNotEqual(
+            original,
+            _market_retrieval_fingerprint(
+                retrieval,
+                {"breadth": {"advances": 250, "declines": 250}},
+            ),
+        )
+
+    @patch("ai_insights._request_gemini_json")
+    def test_research_labels_pure_legacy_retrieval_without_rag(
+        self, mock_gemini
+    ):
+        retrieval = _market_retrieval()
+        retrieval["historical_context"] = []
+        retrieval["retriever_version"] = "legacy-keyword-v1"
+        mock_gemini.return_value = {
+            "headline": "시장 요약",
+            "observation": "시장 폭 관측",
+            "interpretation": "직접 기사에 근거한 해석",
+            "recent_context": "",
+            "direct_evidence_ids": ["D1", "D2", "D3"],
+            "context_evidence_ids": [],
+        }
+
+        summary = _research_market_summary(
+            {"headline": "기본 요약"},
+            retrieval,
+            "2026-07-24",
+        )
+
+        self.assertEqual(summary["provider"], "Gemini + Finnhub")
+        self.assertEqual(summary["rag_status"], "legacy_direct")
 
     def test_gemini_only_disables_global_request_errors(self):
         self.assertTrue(
@@ -257,12 +738,14 @@ class AiInsightsTest(unittest.TestCase):
     @patch("ai_insights._fallback_stock_entries")
     @patch("ai_insights._request_gemini_json")
     @patch("ai_insights._collect_company_news")
+    @patch("ai_insights._retrieve_market_evidence")
     @patch("ai_insights._save_cache")
     @patch("ai_insights._load_cache")
     def test_gemini_http_400_disables_only_later_gemini_batches(
         self,
         mock_load_cache,
         _mock_save_cache,
+        mock_retrieve_market,
         mock_collect_news,
         mock_gemini,
         mock_fallback,
@@ -291,6 +774,13 @@ class AiInsightsTest(unittest.TestCase):
                 for ticker in tickers
             },
         )
+        mock_retrieve_market.return_value = {
+            "direct_evidence": [],
+            "historical_context": [],
+            "rag_status": "empty",
+            "retriever_version": "test-v1",
+            "retrieval_as_of": "2026-07-24T22:00:00Z",
+        }
         mock_gemini.side_effect = RuntimeError(
             "Gemini HTTP 400: Invalid value at "
             "'generation_config.response_format.text.mime_type'"
@@ -324,6 +814,67 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(mock_gemini.call_count, 1)
         self.assertEqual(mock_fallback.call_count, 2)
 
+    @patch("ai_insights._retrieve_market_evidence")
+    @patch("ai_insights._request_gemini_json")
+    @patch("ai_insights.requests.get")
+    @patch("ai_insights._save_cache")
+    @patch("ai_insights._load_cache", return_value={})
+    def test_finnhub_dict_error_result_is_used_but_not_cached(
+        self,
+        _mock_load_cache,
+        mock_save_cache,
+        mock_get,
+        mock_gemini,
+        mock_retrieve_market,
+    ):
+        data_date = "2026-07-24"
+        response = Mock(ok=True)
+        response.json.return_value = {"error": "rate limit"}
+        mock_get.return_value = response
+        mock_gemini.return_value = {
+            "items": [
+                {
+                    "ticker": "AAA",
+                    "business_ko": "예시 사업을 영위하는 기업",
+                    "move_reason_ko": "",
+                    "evidence_status": "limited",
+                }
+            ]
+        }
+        mock_retrieve_market.return_value = {
+            "direct_evidence": [],
+            "historical_context": [],
+            "rag_status": "empty",
+            "retriever_version": "test-v1",
+            "retrieval_as_of": "2026-07-24T22:00:00Z",
+        }
+        stocks = pd.DataFrame(
+            [
+                {
+                    "ticker": "AAA",
+                    "name": "AAA Inc.",
+                    "sector": "Information Technology",
+                    "return_1d": 1.0,
+                    "business_summary": "AAA business",
+                }
+            ]
+        )
+
+        with patch.dict("os.environ", {"FINNHUB_API_KEY": "test-key"}):
+            enriched, _ = enrich_with_ai(
+                stocks,
+                data_date,
+                {"headline": "기본 요약"},
+            )
+
+        stock_key = f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:AAA"
+        self.assertEqual(enriched.loc[0, "move_reason"], "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.")
+        mock_get.assert_called_once()
+        self.assertTrue(mock_save_cache.called)
+        self.assertTrue(
+            all(stock_key not in call.args[0] for call in mock_save_cache.call_args_list)
+        )
+
     def test_enrich_passes_cached_stock_sources_to_dataframe(self):
         data_date = "2026-07-23"
         cache = {
@@ -354,7 +905,19 @@ class AiInsightsTest(unittest.TestCase):
             ]
         )
 
-        with patch("ai_insights._load_cache", return_value=cache):
+        with (
+            patch("ai_insights._load_cache", return_value=cache),
+            patch(
+                "ai_insights._retrieve_market_evidence",
+                return_value={
+                    "direct_evidence": [],
+                    "historical_context": [],
+                    "rag_status": "empty",
+                    "retriever_version": "test-v1",
+                    "retrieval_as_of": "2026-07-23T22:00:00Z",
+                },
+            ),
+        ):
             enriched, _ = enrich_with_ai(stocks, data_date, {"headline": "기본 요약"})
 
         self.assertEqual(enriched.loc[0, "source_urls"], ["https://example.com/100"])
@@ -458,6 +1021,58 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(passed_count, 4)
         self.assertEqual(selected[0]["article_id"], "2")
         self.assertNotIn("4", [article["article_id"] for article in selected])
+
+    def test_company_news_excludes_after_close_and_next_day_articles(self):
+        start = date(2026, 6, 24)
+        end = date(2026, 7, 24)
+
+        def timestamp(day: int, hour: int) -> int:
+            return int(
+                datetime(
+                    2026,
+                    7,
+                    day,
+                    hour,
+                    tzinfo=ZoneInfo("America/New_York"),
+                ).timestamp()
+            )
+
+        raw_items = [
+            {
+                "id": "before-close",
+                "headline": "ABC raises guidance",
+                "url": "https://example.com/before",
+                "datetime": timestamp(24, 15),
+                "related": "ABC",
+            },
+            {
+                "id": "after-close",
+                "headline": "ABC announces acquisition",
+                "url": "https://example.com/after",
+                "datetime": timestamp(24, 17),
+                "related": "ABC",
+            },
+            {
+                "id": "next-day",
+                "headline": "ABC reports earnings",
+                "url": "https://example.com/next",
+                "datetime": timestamp(25, 9),
+                "related": "ABC",
+            },
+        ]
+
+        selected, passed_count = _normalise_company_articles(
+            "ABC",
+            raw_items,
+            start,
+            end,
+        )
+
+        self.assertEqual(passed_count, 1)
+        self.assertEqual(
+            [item["article_id"] for item in selected],
+            ["before-close"],
+        )
 
     def test_json_repair_adds_missing_array_item_comma(self):
         malformed = '{"items":[{"ticker":"AAA"}\n{"ticker":"BBB"}]}'

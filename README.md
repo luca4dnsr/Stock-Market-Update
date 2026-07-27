@@ -11,6 +11,7 @@ S&P 500 일간 등락률 **자동 대시보드** — 매일 아침 최신 HTML �
 | 🔗 **GitHub Pages** | 최신 HTML이 자동으로 웹에 게시됨 |
 | ✅ **데이터 품질 검증** | 주가·시가총액 커버리지와 최신 거래일 정합성 기준 미달 시 실패 처리 |
 | 🤖 **한글 AI 인사이트** | Yahoo Finance + Finnhub 뉴스 → Gemini 3.6 Flash → GPT-OSS → 규칙 기반 문구 |
+| 🗂️ **시장 맥락 RAG** | 장 마감 이전 직접 근거와 최근 거시·섹터 맥락을 SQLite FTS5로 분리 검색 |
 
 ---
 
@@ -70,11 +71,11 @@ git push -u origin main
 - `FINNHUB_API_KEY` — Finnhub의 종목별·시장 전체 뉴스에 사용
 - `NVIDIA_API_KEY` — NVIDIA NIM의 `openai/gpt-oss-120b`에 사용
 
-주가·시가총액·섹터·기업 기본 설명과 상승·하락 Top 20 선정은 **Yahoo Finance**를 유지합니다. 뉴스는 **Finnhub**만 사용합니다. 상승 20개·하락 20개 종목마다 거래일 30일 전~다음 날의 `company-news`를 받고, 시장 전체는 최신 `general news`를 매일 캐시에 누적해 같은 한 달 창으로 관리합니다. Gemini는 웹 검색 없이 코드가 날짜·URL·관련 티커·미국 증시 관련성 기준으로 먼저 확정한 기사 제목·요약·발행 시각·URL만 한국어로 해석합니다. 모델은 기사 ID를 고르지 않으며, 근거 기사는 코드가 최종 선택합니다. 근거가 부족하면 `최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
+주가·시가총액·섹터·기업 기본 설명과 상승·하락 Top 20 선정은 **Yahoo Finance**를 유지합니다. 뉴스는 **Finnhub**만 사용합니다. 상승 20개·하락 20개 종목마다 거래일 30일 전부터 해당 거래일 장 마감까지의 `company-news`를 받습니다. 시장 전체 `general news`는 보고서 실행과 분리해 SQLite FTS5 코퍼스에 수집하며 90일간 보존합니다. Gemini는 웹 검색 없이 코드가 날짜·URL·관련 티커·미국 증시 관련성 기준으로 먼저 확정한 기사 제목·요약·발행 시각·URL만 한국어로 해석합니다. 모델은 기사 ID를 고르지 않으며, 근거 기사는 코드가 최종 선택합니다. 근거가 부족하면 `최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
 
 실행 순서는 **Gemini 3.6 Flash → NVIDIA NIM GPT-OSS 120B → 규칙 기반 제한 문구**입니다. Gemini가 JSON 형식 오류 등으로 실패하면 GPT-OSS도 동일하게 코드가 확정한 Finnhub 기사와 시장 수치를 받아 사업·등락 이유·시황 해석을 작성합니다. GPT-OSS는 JSON mode를 요청하며, 둘 다 실패할 때만 규칙 기반 문구를 표시합니다. 어느 경우에도 검증되지 않은 뉴스성 등락 이유나 시황 인과관계를 만들지 않습니다.
 
-시황 요약은 Finnhub 일반 시장 기사 중 코드가 관련성·최신성·출처 분산 기준으로 확정한 서로 다른 기사 3~5건이 있어야 해석을 채택하며, 대시보드에 근거 기사 링크를 함께 남깁니다. 기사 근거가 부족하면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다.
+시황 요약은 뉴욕 장 마감 이전 최근 3개 평일 세션의 직접 근거를 최대 5건, 이전 45일의 거시·주도/부진 섹터 맥락을 최대 3건 검색합니다. 당일 원인 해석에는 직접 근거만 사용할 수 있고 과거 기사는 `최근 맥락`에만 사용됩니다. 직접 근거가 3건보다 적으면 가격·시장 폭·섹터 수익률에 한정된 관측과 제한 문구를 표시합니다. 대시보드와 `summary.json`은 직접 근거와 맥락 근거의 링크·날짜를 별도 필드로 남깁니다.
 
 #### ③ 자동 실행 확인
 
@@ -94,9 +95,10 @@ git push -u origin main
 ├── ranker.py          # 상위/하위 종목 정렬
 ├── dashboard.py       # HTML 대시보드 생성
 ├── ai_insights.py     # Yahoo Finance + Finnhub → Gemini → GPT-OSS → 규칙 기반 검증
+├── market_rag.py      # Finnhub 시장 뉴스 SQLite 수집·FTS5 검색·상태 진단
 ├── requirements.txt   # Python 의존성
 ├── .gitignore
-├── cache/             # S&P 500 구성종목 캐시 (자동 생성, Actions cache로 복원)
+├── cache/             # 구성종목·AI 캐시 + 시장 RAG DB (자동 생성, Actions cache로 복원)
 ├── output/            # 생성된 HTML + 요약 JSON (Actions이 커밋)
 ├── docs/              # GitHub Pages용 HTML (Actions이 관리)
 ├── logs/              # 실행 로그 (gitignored)

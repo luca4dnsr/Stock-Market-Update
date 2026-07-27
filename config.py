@@ -58,17 +58,24 @@ FINNHUB_MARKET_NEWS_CATEGORY = "general"
 FINNHUB_MARKET_NEWS_POOL_FILE = CACHE_DIR / "finnhub_market_news.json"
 FINNHUB_MARKET_NEWS_POOL_MAX_ITEMS = 300
 
+# 시장 전체 시황 RAG는 Git에 포함하지 않는 SQLite FTS5 코퍼스를 사용한다.
+MARKET_RAG_DB_FILE = CACHE_DIR / "market_rag.sqlite3"
+MARKET_RAG_RETENTION_DAYS = 90
+MARKET_RAG_DIRECT_MAX_SOURCES = 5
+MARKET_RAG_CONTEXT_MAX_SOURCES = 3
+MARKET_RAG_CONTEXT_MAX_AGE_DAYS = 45
+
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v11-catalyst-ranked-finnhub-sources"
+AI_INSIGHTS_CACHE_VERSION = "v12-time-aware-market-rag"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120
-# 거래일 30일 전부터 다음 날까지를 확인한다. 시장 전체 뉴스는 롤링 캐시로 누적한다.
+# 거래일 30일 전부터 해당 거래일 장 마감까지를 확인한다.
 NEWS_WINDOW_DAYS_BEFORE = 30
-NEWS_WINDOW_DAYS_AFTER = 1
+NEWS_WINDOW_DAYS_AFTER = 0
 MARKET_MIN_NEWS_SOURCES = 3
 MARKET_MAX_NEWS_SOURCES = 5
 # 사업 설명·뉴스 해석을 함께 생성할 수 있도록 여유를 둔다.

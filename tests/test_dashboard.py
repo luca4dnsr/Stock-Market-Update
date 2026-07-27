@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from dashboard import HTML_TEMPLATE, _build_stock_rows
+from dashboard import HTML_TEMPLATE, _build_market_summary_html, _build_stock_rows
 
 
 class DashboardTest(unittest.TestCase):
@@ -66,6 +66,31 @@ class DashboardTest(unittest.TestCase):
         self.assertIn('data-sort-value="2500">$2.50T', html)
         self.assertIn('data-sort-value="900">$900.0B', html)
         self.assertIn("aCell?.dataset.sortValue", HTML_TEMPLATE)
+
+    def test_market_summary_separates_direct_and_context_sources(self):
+        html = _build_market_summary_html(
+            {
+                "headline": "시장 요약",
+                "observation": "시장 폭 관측",
+                "interpretation": "직접 근거 해석",
+                "recent_context": "최근 거시·섹터 맥락",
+                "direct_source_titles": ["직접 기사"],
+                "direct_source_urls": ["https://example.com/direct"],
+                "direct_source_dates": ["2026-07-24"],
+                "context_source_titles": ["맥락 기사"],
+                "context_source_urls": ["https://example.com/context"],
+                "context_source_dates": ["2026-07-20"],
+                "rag_status": "rag_success",
+                "provider": "Gemini + Finnhub RAG",
+                "disclaimer": "투자 조언이 아닙니다.",
+            }
+        )
+
+        self.assertIn("<strong>직접 근거</strong>", html)
+        self.assertIn("<strong>맥락 근거</strong>", html)
+        self.assertIn("<strong>최근 맥락</strong>", html)
+        self.assertIn("2026-07-24", html)
+        self.assertIn("RAG rag_success", html)
 
 
 if __name__ == "__main__":

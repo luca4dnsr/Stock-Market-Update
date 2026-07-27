@@ -154,31 +154,73 @@ def _build_sector_tiles(sector_df: pd.DataFrame) -> str:
     return "\n".join(tiles)
 
 
-def _build_market_summary_html(market_summary: dict) -> str:
-    """검증된 시황 요약과 Finnhub 기사 근거를 안전한 HTML로 만든다."""
+def _build_market_source_group(label: str, titles, urls, dates) -> str:
     links = []
-    for title, url in zip(
-        market_summary.get("source_titles", []), market_summary.get("source_urls", [])
-    ):
+    safe_titles = titles if isinstance(titles, (list, tuple)) else []
+    safe_dates = dates if isinstance(dates, (list, tuple)) else []
+    if not isinstance(urls, (list, tuple)):
+        return ""
+    for index, url in enumerate(urls):
         safe_url = str(url).strip()
-        if safe_url.startswith(("https://", "http://")):
-            links.append(
-                f'<a href="{escape(safe_url, quote=True)}" target="_blank" rel="noopener noreferrer">'
-                f"{escape(str(title) or '기사')}</a>"
-            )
-    sources_html = (
-        f'<p class="market-summary-sources"><strong>근거</strong>{" · ".join(links)}</p>'
-        if links
+        try:
+            parsed = urlsplit(safe_url)
+        except ValueError:
+            continue
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+            continue
+        title = safe_titles[index] if index < len(safe_titles) else "기사"
+        published_date = safe_dates[index] if index < len(safe_dates) else ""
+        suffix = f" ({escape(str(published_date))})" if published_date else ""
+        links.append(
+            f'<a href="{escape(safe_url, quote=True)}" target="_blank" '
+            f'rel="noopener noreferrer">{escape(str(title) or "기사")}</a>{suffix}'
+        )
+    if not links:
+        return ""
+    return (
+        f'<p class="market-summary-sources"><strong>{escape(label)}</strong>'
+        f'{" · ".join(links)}</p>'
+    )
+
+
+def _build_market_summary_html(market_summary: dict) -> str:
+    """직접 근거와 최근 맥락을 구분해 안전한 HTML로 만든다."""
+    direct_urls = market_summary.get("direct_source_urls")
+    direct_titles = market_summary.get("direct_source_titles")
+    direct_dates = market_summary.get("direct_source_dates")
+    if not isinstance(direct_urls, (list, tuple)):
+        direct_urls = market_summary.get("source_urls", [])
+        direct_titles = market_summary.get("source_titles", [])
+        direct_dates = []
+
+    direct_sources_html = _build_market_source_group(
+        "직접 근거", direct_titles, direct_urls, direct_dates
+    )
+    context_sources_html = _build_market_source_group(
+        "맥락 근거",
+        market_summary.get("context_source_titles", []),
+        market_summary.get("context_source_urls", []),
+        market_summary.get("context_source_dates", []),
+    )
+    recent_context = str(market_summary.get("recent_context") or "").strip()
+    recent_context_html = (
+        f"<p><strong>최근 맥락</strong>{escape(recent_context)}</p>"
+        if recent_context
         else ""
     )
+    rag_status = str(market_summary.get("rag_status") or "legacy")
+    provider = str(market_summary.get("provider") or "")
     return f"""
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
-    <h2>📈 {escape(market_summary['headline'])}</h2>
-    <p><strong>관측</strong>{escape(market_summary['observation'])}</p>
-    <p><strong>해석</strong>{escape(market_summary['interpretation'])}</p>
-    {sources_html}
-    <p class="market-summary-note">{escape(market_summary['disclaimer'])}</p>
+    <h2>📈 {escape(str(market_summary.get('headline', '당일 시장 흐름')))}</h2>
+    <p><strong>관측</strong>{escape(str(market_summary.get('observation', '')))}</p>
+    <p><strong>직접 해석</strong>{escape(str(market_summary.get('interpretation', '')))}</p>
+    {recent_context_html}
+    {direct_sources_html}
+    {context_sources_html}
+    <p class="market-summary-rag">RAG {escape(rag_status)} · {escape(provider)}</p>
+    <p class="market-summary-note">{escape(str(market_summary.get('disclaimer', '')))}</p>
   </section>"""
 
 
@@ -338,8 +380,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }}
     .market-summary-card h2 {{ font-size: 17px; margin-bottom: 16px; }}
     .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }}
-    .market-summary-card strong {{ color: #fff; display: inline-block; width: 42px; }}
+    .market-summary-card strong {{ color: #fff; display: inline-block; min-width: 68px; }}
     .market-summary-sources a {{ color: #9bc8ff; text-decoration: underline; }}
+    .market-summary-rag {{ color: #8bbdff !important; font-size: 10px !important; }}
     .market-summary-note {{ color: var(--muted) !important; font-size: 11px !important; margin-top: 14px !important; }}
 
     /* ── Tables ── */

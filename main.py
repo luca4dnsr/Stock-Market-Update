@@ -3,14 +3,16 @@ main.py — SPX 일간 등락률 자동화 파이프라인 진입점
 """
 
 import argparse
+import importlib.metadata
 import logging
+import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
-from config import LOGS_DIR, OUTPUT_DIR
+from config import LOGS_DIR, MARKET_RAG_DB_FILE, OUTPUT_DIR
 from fetcher import fetch_all_data
 from calculator import (
     build_master_df,
@@ -42,6 +44,31 @@ def setup_logging(verbose: bool = False):
             logging.StreamHandler(sys.stdout),
         ],
     )
+    # yfinance는 DEBUG 로거가 켜지면 내부 멀티스레딩을 끈다. 가격 진단은
+    # fetcher의 구조 로그로 남기고 외부 라이브러리의 대용량 DEBUG는 억제한다.
+    logging.getLogger("yfinance").setLevel(logging.WARNING)
+    logging.getLogger("peewee").setLevel(logging.WARNING)
+
+
+def _runtime_provenance() -> dict:
+    def package_version(name: str) -> str:
+        try:
+            return importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            return "not-installed"
+
+    try:
+        from market_rag import RETRIEVER_VERSION
+    except Exception:
+        RETRIEVER_VERSION = "unavailable"
+
+    return {
+        "git_sha": os.getenv("GITHUB_SHA", "local"),
+        "python_version": sys.version.split()[0],
+        "pandas_version": package_version("pandas"),
+        "yfinance_version": package_version("yfinance"),
+        "retriever_version": RETRIEVER_VERSION,
+    }
 
 
 # ──────────────────────────────────────────────────────────
@@ -51,9 +78,19 @@ def setup_logging(verbose: bool = False):
 def run(dry_run: bool = False, verbose: bool = False):
     setup_logging(verbose)
     logger = logging.getLogger(__name__)
+    run_started_at = datetime.now(timezone.utc)
+    provenance = _runtime_provenance()
 
     logger.info("=" * 55)
     logger.info("  SPX Daily Automation — 시작")
+    logger.info(
+        "  실행 provenance — SHA=%s | Python=%s | pandas=%s | yfinance=%s | retriever=%s",
+        provenance["git_sha"],
+        provenance["python_version"],
+        provenance["pandas_version"],
+        provenance["yfinance_version"],
+        provenance["retriever_version"],
+    )
     logger.info("=" * 55)
     t0 = datetime.now()
 
@@ -95,16 +132,39 @@ def run(dry_run: bool = False, verbose: bool = False):
         base_market_summary = build_market_summary(
             sector_df, advances, declines, top_df, bottom_df
         )
+        sector_returns = sector_df[["sector", "return_1d"]].to_dict("records")
+        base_market_summary["breadth"] = {
+            "advances": advances,
+            "declines": declines,
+            "total": len(master_df),
+        }
+        base_market_summary["sector_returns"] = sector_returns
+        try:
+            from market_rag import record_market_snapshot
+
+            record_market_snapshot(
+                data_date=data_date,
+                advances=advances,
+                declines=declines,
+                sector_returns=sector_returns,
+                db_path=MARKET_RAG_DB_FILE,
+            )
+        except Exception as exc:
+            logger.warning("시장 RAG 스냅샷 저장 실패, 보고서는 계속 진행합니다: %s", exc)
+
         combined_df = pd.concat([top_df, bottom_df], ignore_index=True)
         combined_df, market_summary = enrich_with_ai(
-            combined_df, data_date, base_market_summary
+            combined_df,
+            data_date,
+            base_market_summary,
+            retrieval_as_of=datetime.now(timezone.utc),
         )
         top_df = combined_df.iloc[:len(top_df)].copy()
         bottom_df = combined_df.iloc[len(top_df):].copy()
 
         # ── 파일 출력 ──
         date_tag = data_date.replace("-", "") if data_date else datetime.now().strftime("%Y%m%d")
-        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M UTC")
+        generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         html_path = OUTPUT_DIR / f"SPX_daily_{date_tag}.html"
         generate_html(
@@ -126,6 +186,19 @@ def run(dry_run: bool = False, verbose: bool = False):
             "top3":  top_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
             "bot3":  bottom_df.head(3)[["ticker", "name", "return_1d"]].to_dict("records"),
             "market_summary": market_summary,
+            "market_snapshot": {
+                "breadth": base_market_summary["breadth"],
+                "sector_returns": sector_returns,
+            },
+            "pipeline_status": {
+                "terminal_stage": "report_success",
+                "rag_attempted": bool(market_summary.get("rag_attempted", False)),
+                "rag_status": str(market_summary.get("rag_status", "legacy")),
+                "fallback_stage": str(market_summary.get("fallback_stage", "unknown")),
+            },
+            "build": provenance,
+            "run_started_at": run_started_at.isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
         (OUTPUT_DIR / "summary.json").write_text(
             json.dumps(summary, ensure_ascii=False, indent=2),

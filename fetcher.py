@@ -4,8 +4,9 @@ fetcher.py — S&P 500 구성종목 + 주가 + 시가총액 수집
 
 import logging
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import date, datetime
 from io import StringIO
 
 import certifi
@@ -32,6 +33,10 @@ from config import (
 )
 
 logger = logging.getLogger(__name__)
+
+BENCHMARK_TICKER = "^GSPC"
+BENCHMARK_HISTORY_PERIOD = "1mo"
+LATEST_DATE_SAMPLE_SIZE = 10
 
 
 # ──────────────────────────────────────────────────────────
@@ -85,13 +90,145 @@ def get_sp500_components() -> pd.DataFrame:
 # 주가 데이터 (배치 다운로드)
 # ──────────────────────────────────────────────────────────
 
+def _normalise_price_series(series: pd.Series) -> tuple[pd.Series, int, int]:
+    """가격 Series의 인덱스를 정렬하고 NaT·중복을 결정론적으로 제거한다."""
+    converted_index = pd.to_datetime(series.index, errors="coerce")
+    normalised = pd.Series(
+        pd.to_numeric(series, errors="coerce").to_numpy(),
+        index=pd.DatetimeIndex(converted_index),
+        name=series.name,
+    )
+    nat_count = int(normalised.index.isna().sum())
+    normalised = normalised[~normalised.index.isna()].dropna()
+    normalised = normalised.sort_index(kind="mergesort")
+    duplicate_count = int(normalised.index.duplicated(keep="last").sum())
+    normalised = normalised[~normalised.index.duplicated(keep="last")]
+    return normalised, nat_count, duplicate_count
+
+
+def _latest_price_date(series: pd.Series) -> date | None:
+    """선택 가격의 결측치를 제외한 실제 최대 거래일을 반환한다."""
+    values = series.dropna()
+    if values.empty:
+        return None
+    index = pd.DatetimeIndex(pd.to_datetime(values.index, errors="coerce"))
+    index = index[~index.isna()]
+    if index.empty:
+        return None
+    return index.max().date()
+
+
+def _price_field_frame(raw: pd.DataFrame, field: str, batch: list[str]) -> pd.DataFrame | None:
+    """yfinance 단일·다중 티커 컬럼 구조에서 가격 필드 DataFrame을 꺼낸다."""
+    if isinstance(raw.columns, pd.MultiIndex):
+        for level in range(raw.columns.nlevels):
+            if field not in raw.columns.get_level_values(level):
+                continue
+            frame = raw.xs(field, axis=1, level=level, drop_level=True)
+            if isinstance(frame, pd.Series):
+                frame = frame.to_frame()
+            if isinstance(frame.columns, pd.MultiIndex):
+                frame.columns = [
+                    str(column[-1] if isinstance(column, tuple) else column)
+                    for column in frame.columns
+                ]
+            else:
+                frame.columns = [str(column) for column in frame.columns]
+            return frame
+        return None
+
+    if field not in raw.columns:
+        return None
+    frame = raw[[field]].copy()
+    if len(batch) == 1:
+        frame.columns = batch
+    return frame
+
+
+def _extract_batch_prices(
+    raw: pd.DataFrame,
+    batch: list[str],
+    diagnostic_label: str,
+    *,
+    price_field: str = "Adj Close",
+) -> dict[str, pd.Series]:
+    """지정 가격 필드만 선택하고 배치 가격 형식을 진단한다."""
+    adjusted = _price_field_frame(raw, "Adj Close", batch)
+    close = _price_field_frame(raw, "Close", batch)
+    selected = {"Adj Close": adjusted, "Close": close}.get(price_field)
+    available = [
+        field
+        for field, frame in (("Adj Close", adjusted), ("Close", close))
+        if frame is not None
+    ]
+
+    if selected is None:
+        logger.warning(
+            "%s 필수 가격 필드 없음: required=%s | available=%s",
+            diagnostic_label,
+            price_field,
+            ",".join(available) or "none",
+        )
+        return {}
+
+    raw_index = pd.DatetimeIndex(pd.to_datetime(raw.index, errors="coerce"))
+    nat_count = int(raw_index.isna().sum())
+    valid_raw_index = raw_index[~raw_index.isna()]
+    raw_latest = valid_raw_index.max() if not valid_raw_index.empty else None
+    duplicate_count = int(valid_raw_index.duplicated(keep="last").sum())
+    latest_gap_tickers: list[str] = []
+    prices: dict[str, pd.Series] = {}
+
+    for ticker in batch:
+        if ticker not in selected.columns:
+            continue
+        raw_series = selected[ticker]
+        if isinstance(raw_series, pd.DataFrame):
+            raw_series = raw_series.iloc[:, -1]
+        if raw_latest is not None:
+            latest_values = raw_series[
+                pd.DatetimeIndex(pd.to_datetime(raw_series.index, errors="coerce"))
+                == raw_latest
+            ]
+            if latest_values.dropna().empty:
+                latest_gap_tickers.append(ticker)
+
+        series, _, _ = _normalise_price_series(raw_series)
+        if len(series) >= 2:
+            prices[ticker] = series
+
+    logger.info(
+        "%s 가격 진단: available=%s | selected=%s | rows=%d | NaT=%d | "
+        "duplicate_index=%d | latest_gap=%d%s",
+        diagnostic_label,
+        ",".join(available) or "none",
+        price_field,
+        len(raw),
+        nat_count,
+        duplicate_count,
+        len(latest_gap_tickers),
+        (
+            f" [{', '.join(latest_gap_tickers[:LATEST_DATE_SAMPLE_SIZE])}]"
+            if latest_gap_tickers
+            else ""
+        ),
+    )
+    if price_field == "Adj Close" and latest_gap_tickers:
+        logger.warning(
+            "%s Adj Close 최신값 결측 %d건: 비조정 Close로 대체하지 않고 표적 재시도합니다.",
+            diagnostic_label,
+            len(latest_gap_tickers),
+        )
+    return prices
+
+
 def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
     """
-    yfinance.download으로 6개월치 일봉 종가를 배치 수집한다.
+    yfinance.download으로 6개월치 일봉 조정 종가를 배치 수집한다.
 
     Returns
     -------
-    dict: {ticker: pd.Series(Close, index=DatetimeIndex)}
+    dict: {ticker: pd.Series(adjusted Close, index=DatetimeIndex)}
     """
     all_prices: dict[str, pd.Series] = {}
     n_batches = (len(tickers) - 1) // BATCH_SIZE + 1
@@ -106,7 +243,7 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
                 batch,
                 period=PRICE_HISTORY_PERIOD,
                 interval="1d",
-                auto_adjust=True,
+                auto_adjust=False,
                 progress=False,
                 threads=True,
             )
@@ -114,18 +251,9 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
                 logger.warning("배치 %d: 빈 데이터 반환", batch_no)
                 continue
 
-            # 단일 티커 vs 다중 티커 컬럼 구조 통일
-            if isinstance(raw.columns, pd.MultiIndex):
-                close = raw["Close"]
-            else:
-                close = raw[["Close"]]
-                close.columns = batch
-
-            for ticker in batch:
-                if ticker in close.columns:
-                    series = close[ticker].dropna()
-                    if len(series) >= 2:
-                        all_prices[ticker] = series
+            all_prices.update(
+                _extract_batch_prices(raw, batch, f"주가 배치 {batch_no}/{n_batches}")
+            )
 
         except Exception as exc:
             logger.warning("배치 %d 실패: %s", batch_no, exc)
@@ -134,6 +262,34 @@ def fetch_price_data(tickers: list[str]) -> dict[str, pd.Series]:
 
     logger.info("주가 수집 완료: %d/%d 종목", len(all_prices), len(tickers))
     return all_prices
+
+
+def fetch_benchmark_latest_date() -> date:
+    """Yahoo Finance S&P 500 지수의 최신 거래일을 기준일로 조회한다."""
+    raw = yf.download(
+        BENCHMARK_TICKER,
+        period=BENCHMARK_HISTORY_PERIOD,
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+        threads=False,
+    )
+    if raw.empty:
+        raise RuntimeError("Yahoo 기준지수(^GSPC) 가격이 비어 있습니다.")
+    # 기준일 판정에는 조정 여부가 필요 없고, Adj Close 결측 때문에 기준일이
+    # 이전 거래일로 후퇴하면 안 되므로 지수의 Close 날짜를 사용한다.
+    prices = _extract_batch_prices(
+        raw,
+        [BENCHMARK_TICKER],
+        "Yahoo 기준지수 ^GSPC",
+        price_field="Close",
+    )
+    series = prices.get(BENCHMARK_TICKER)
+    latest_date = _latest_price_date(series) if series is not None else None
+    if latest_date is None:
+        raise RuntimeError("Yahoo 기준지수(^GSPC) 최신 거래일을 확인할 수 없습니다.")
+    logger.info("Yahoo 기준지수 거래일: %s", latest_date)
+    return latest_date
 
 
 def _validate_return_history_coverage(
@@ -169,6 +325,139 @@ def _validate_return_history_coverage(
             "수익률 이력 커버리지가 기준 미달입니다: "
             f"{' | '.join(failures)}, 최소 {MIN_RETURN_HISTORY_COVERAGE:.0%} 필요"
         )
+
+
+def _classify_price_dates(
+    price_data: dict[str, pd.Series],
+    tickers: list[str],
+    benchmark_date: date,
+) -> tuple[list[str], list[str], list[str]]:
+    """기준지수 거래일 대비 누락·stale·future 티커를 분류한다."""
+    missing: list[str] = []
+    stale: list[str] = []
+    future: list[str] = []
+    for ticker in tickers:
+        series = price_data.get(ticker)
+        latest_date = _latest_price_date(series) if series is not None else None
+        if latest_date is None:
+            missing.append(ticker)
+        elif latest_date < benchmark_date:
+            stale.append(ticker)
+        elif latest_date > benchmark_date:
+            future.append(ticker)
+    return missing, stale, future
+
+
+def _retry_inconsistent_prices(
+    price_data: dict[str, pd.Series],
+    tickers: list[str],
+    benchmark_date: date,
+) -> dict[str, pd.Series]:
+    """기준일과 맞지 않는 구성종목만 한 번 다시 내려받는다."""
+    missing, stale, future = _classify_price_dates(
+        price_data, tickers, benchmark_date
+    )
+    retry_set = set([*missing, *stale, *future])
+    retry_tickers = [ticker for ticker in tickers if ticker in retry_set]
+    if not retry_tickers:
+        return price_data
+
+    logger.warning(
+        "주가 표적 재시도 1회: 누락=%d | stale=%d | future=%d | sample=%s",
+        len(missing),
+        len(stale),
+        len(future),
+        ", ".join(retry_tickers[:LATEST_DATE_SAMPLE_SIZE]),
+    )
+    retried = fetch_price_data(retry_tickers)
+    merged = dict(price_data)
+    for ticker, series in retried.items():
+        merged[ticker] = series
+    return merged
+
+
+def _validate_latest_date_coverage(
+    price_data: dict[str, pd.Series],
+    tickers: list[str],
+    benchmark_date: date,
+) -> tuple[dict[str, pd.Series], float]:
+    """기준지수 거래일 커버리지를 검증하고 그 날짜의 종목만 반환한다."""
+    date_by_ticker = {
+        ticker: (
+            _latest_price_date(price_data[ticker])
+            if ticker in price_data
+            else None
+        )
+        for ticker in tickers
+    }
+    histogram = Counter(
+        str(latest_date) if latest_date is not None else "missing/invalid"
+        for latest_date in date_by_ticker.values()
+    )
+    histogram_text = " | ".join(
+        f"{key}={count}" for key, count in sorted(histogram.items())
+    )
+    nat_count = sum(
+        int(pd.DatetimeIndex(pd.to_datetime(series.index, errors="coerce")).isna().sum())
+        for series in price_data.values()
+    )
+    stale = [
+        (ticker, latest_date)
+        for ticker, latest_date in date_by_ticker.items()
+        if latest_date is not None and latest_date < benchmark_date
+    ]
+    future = [
+        (ticker, latest_date)
+        for ticker, latest_date in date_by_ticker.items()
+        if latest_date is not None and latest_date > benchmark_date
+    ]
+    missing = [
+        ticker for ticker, latest_date in date_by_ticker.items()
+        if latest_date is None
+    ]
+    latest_tickers = [
+        ticker for ticker, latest_date in date_by_ticker.items()
+        if latest_date == benchmark_date
+    ]
+    coverage = len(latest_tickers) / max(len(tickers), 1)
+
+    logger.info(
+        "최신 거래일 분포: 기준지수=%s | %s | NaT=%d | "
+        "stale=%d [%s] | future=%d [%s] | missing=%d [%s]",
+        benchmark_date,
+        histogram_text,
+        nat_count,
+        len(stale),
+        ", ".join(f"{ticker}:{latest}" for ticker, latest in stale[:LATEST_DATE_SAMPLE_SIZE]),
+        len(future),
+        ", ".join(f"{ticker}:{latest}" for ticker, latest in future[:LATEST_DATE_SAMPLE_SIZE]),
+        len(missing),
+        ", ".join(missing[:LATEST_DATE_SAMPLE_SIZE]),
+    )
+    if future:
+        raise RuntimeError(
+            "기준지수 거래일 이후의 구성종목 가격이 남아 있습니다: "
+            f"기준 {benchmark_date}, "
+            f"{', '.join(f'{ticker}:{latest}' for ticker, latest in future[:LATEST_DATE_SAMPLE_SIZE])}"
+        )
+    if coverage < MIN_LATEST_DATE_COVERAGE:
+        raise RuntimeError(
+            "최신 거래일 정합성 기준 미달입니다: "
+            f"Yahoo ^GSPC {benchmark_date} 기준 "
+            f"{len(latest_tickers)}/{len(tickers)} ({coverage:.1%}), "
+            f"최소 {MIN_LATEST_DATE_COVERAGE:.0%} 필요"
+        )
+
+    canonical_prices = {
+        ticker: price_data[ticker]
+        for ticker in latest_tickers
+    }
+    if len(canonical_prices) != len(price_data):
+        logger.warning(
+            "기준일 불일치 종목 %d개를 downstream 계산에서 제외합니다.",
+            len(tickers) - len(canonical_prices),
+        )
+    return canonical_prices, coverage
 
 
 # ──────────────────────────────────────────────────────────
@@ -226,27 +515,22 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
     tickers = components["ticker"].tolist()
 
     price_data = fetch_price_data(tickers)
-    price_coverage = len(price_data) / max(len(tickers), 1)
+    benchmark_date = fetch_benchmark_latest_date()
+    price_data = _retry_inconsistent_prices(price_data, tickers, benchmark_date)
+
+    collected_price_count = len(price_data)
+    price_coverage = collected_price_count / max(len(tickers), 1)
+    # 누락이 심한 경우에도 날짜 histogram과 stale/future 표본을 먼저 남긴다.
+    price_data, latest_coverage = _validate_latest_date_coverage(
+        price_data, tickers, benchmark_date
+    )
     if price_coverage < MIN_PRICE_COVERAGE:
         raise RuntimeError(
             "주가 수집 커버리지가 기준 미달입니다: "
-            f"{len(price_data)}/{len(tickers)} ({price_coverage:.1%}), "
+            f"{collected_price_count}/{len(tickers)} ({price_coverage:.1%}), "
             f"최소 {MIN_PRICE_COVERAGE:.0%} 필요"
         )
     _validate_return_history_coverage(price_data, len(tickers))
-
-    # 모든 종목의 최신 거래일이 거의 같은지 확인한다. 일부 종목의 stale price가
-    # 당일 등락률·시장 폭 계산에 섞이는 것을 방지한다.
-    latest_dates = [series.index[-1].date() for series in price_data.values() if not series.empty]
-    latest_date = max(latest_dates)
-    latest_count = sum(date == latest_date for date in latest_dates)
-    latest_coverage = latest_count / max(len(price_data), 1)
-    if latest_coverage < MIN_LATEST_DATE_COVERAGE:
-        raise RuntimeError(
-            "최신 거래일 정합성 기준 미달입니다: "
-            f"{latest_date} 기준 {latest_count}/{len(price_data)} ({latest_coverage:.1%}), "
-            f"최소 {MIN_LATEST_DATE_COVERAGE:.0%} 필요"
-        )
 
     valid_tickers = list(price_data.keys())
     market_caps = fetch_market_caps(valid_tickers)
@@ -262,7 +546,7 @@ def fetch_all_data() -> tuple[pd.DataFrame, dict, dict]:
     logger.info(
         "데이터 품질 검증 통과 — 주가 %.1f%% | 최신일 %s %.1f%% | 시가총액 %.1f%%",
         price_coverage * 100,
-        latest_date,
+        benchmark_date,
         latest_coverage * 100,
         market_cap_coverage * 100,
     )

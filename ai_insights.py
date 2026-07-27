@@ -6,12 +6,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import re
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -34,6 +35,7 @@ from config import (
     GEMINI_MODEL,
     MARKET_MAX_NEWS_SOURCES,
     MARKET_MIN_NEWS_SOURCES,
+    MARKET_RAG_DB_FILE,
     NEWS_WINDOW_DAYS_AFTER,
     NEWS_WINDOW_DAYS_BEFORE,
     NIM_API_URL,
@@ -47,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 LIMITED_REASON = "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다."
 LIMITED_MARKET_INTERPRETATION = (
-    "최근 한 달 내 시황 기사 3건 이상을 코드 기준으로 확인하지 못했습니다. "
+    "장 마감 시각 이전의 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. "
     "아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다."
 )
 
@@ -55,7 +57,9 @@ SYSTEM_PROMPT = """당신은 미국 주식 리서치 보조자입니다.
 모든 결과를 한국어로 작성하십시오. 제공된 Yahoo Finance 수치·기업 설명과 Finnhub 기사만 사용하십시오.
 웹 검색·외부 지식·기사에 없는 사실을 사용하지 마십시오. 코드가 선정해 제공한 Finnhub 기사만
 근거로 사용하십시오. 종목 등락 이유는 기사 제목 또는 요약에 직접 촉매가 명시될 때만 작성하고,
-시장 시황 해석도 제공된 시장 기사 3건 이상에서만 작성하십시오. JSON 외 텍스트를 반환하지 마십시오."""
+시장 시황의 당일 원인 해석은 direct_evidence에서만 작성하십시오. historical_context는 최근 거시·섹터
+배경 설명에만 사용하고 당일 움직임의 직접 원인으로 표현하지 마십시오. JSON 외 텍스트를 반환하지
+마십시오."""
 
 STOCK_RESPONSE_SCHEMA = {
     "type": "OBJECT",
@@ -91,8 +95,24 @@ MARKET_RESPONSE_SCHEMA = {
         "headline": {"type": "STRING"},
         "observation": {"type": "STRING"},
         "interpretation": {"type": "STRING"},
+        "recent_context": {"type": "STRING"},
+        "direct_evidence_ids": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
+        "context_evidence_ids": {
+            "type": "ARRAY",
+            "items": {"type": "STRING"},
+        },
     },
-    "required": ["headline", "observation", "interpretation"],
+    "required": [
+        "headline",
+        "observation",
+        "interpretation",
+        "recent_context",
+        "direct_evidence_ids",
+        "context_evidence_ids",
+    ],
 }
 
 # Finnhub의 general 뉴스에서 미국 주식시장과 직접 관련된 기사를 코드로 고르기 위한 기준이다.
@@ -127,6 +147,36 @@ MARKET_RELEVANCE_KEYWORDS = {
     "opec": 2,
     "volatility": 3,
 }
+MARKET_SCOPE_KEYWORDS = (
+    "s&p 500",
+    "s&p",
+    "nasdaq",
+    "dow jones",
+    "wall street",
+    "stock market",
+    "stocks",
+    "equities",
+    "federal reserve",
+    "interest rate",
+    "rate cut",
+    "rate hike",
+    "treasury",
+    "bond yield",
+    "inflation",
+    "cpi",
+    "pce",
+    "payroll",
+    "jobs report",
+    "unemployment",
+    "tariff",
+    "trade war",
+    "crude oil",
+    "opec",
+    "volatility",
+    "sector",
+    "industry",
+    "companies",
+)
 MARKET_PROXY_TICKERS = {"SPY", "QQQ", "DIA", "IWM", "VIX", "^GSPC", "^IXIC", "^DJI"}
 
 # 종목 뉴스는 직접 관련 티커 조건을 먼저 통과한 기사 안에서, 실제 등락 촉매를 우선한다.
@@ -252,21 +302,26 @@ def _finnhub_symbol(ticker: str) -> str:
     return {"BRK-B": "BRK.B", "BF-B": "BF.B"}.get(ticker, ticker)
 
 
-def _finnhub_get(path: str, params: dict) -> list[dict] | dict:
+def _finnhub_get(path: str, params: dict) -> list[dict]:
     api_key = os.getenv("FINNHUB_API_KEY")
     if not api_key:
         raise RuntimeError("FINNHUB_API_KEY가 설정되지 않았습니다.")
-    response = requests.get(
-        f"{FINNHUB_API_BASE_URL}/{path.lstrip('/')}",
-        params={**params, "token": api_key},
-        headers={"Accept": "application/json"},
-        timeout=FINNHUB_REQUEST_TIMEOUT_SEC,
-    )
+    try:
+        response = requests.get(
+            f"{FINNHUB_API_BASE_URL}/{path.lstrip('/')}",
+            params={**params, "token": api_key},
+            headers={"Accept": "application/json"},
+            timeout=FINNHUB_REQUEST_TIMEOUT_SEC,
+        )
+    except requests.RequestException as exc:
+        raise RuntimeError(
+            f"Finnhub 요청 실패: {type(exc).__name__}"
+        ) from exc
     if not response.ok:
-        raise RuntimeError(f"Finnhub HTTP {response.status_code}: {response.text[:300]}")
+        raise RuntimeError(f"Finnhub HTTP {response.status_code}")
     payload = response.json()
-    if not isinstance(payload, (list, dict)):
-        raise ValueError("Finnhub 응답 형식이 올바르지 않습니다.")
+    if not isinstance(payload, list):
+        raise ValueError("Finnhub news response is not an array")
     return payload
 
 
@@ -293,8 +348,15 @@ def _company_catalyst_score(article: dict) -> int:
 def _normalise_company_articles(
     ticker: str, raw_items: list[dict], start: date, end: date
 ) -> tuple[list[dict], int]:
-    """날짜·URL·관련 티커를 통과한 기사와 필터 통과 총건수를 반환한다."""
+    """날짜·장 마감·URL·관련 티커를 통과한 기사와 총건수를 반환한다."""
     expected_ticker = _canonical_ticker(ticker)
+    market_close = datetime(
+        end.year,
+        end.month,
+        end.day,
+        16,
+        tzinfo=ZoneInfo("America/New_York"),
+    )
     articles: list[dict] = []
     seen_ids: set[str] = set()
     for raw in raw_items:
@@ -319,7 +381,7 @@ def _normalise_company_articles(
         ):
             continue
         published_at, published_date = published
-        if not start <= published_date <= end:
+        if not start <= published_date <= end or published_at > market_close:
             continue
         seen_ids.add(article_id)
         articles.append(
@@ -448,18 +510,31 @@ def _article_date(article: dict) -> date | None:
         return None
 
 
-def _collect_market_news(start: date, end: date) -> list[dict]:
+def _collect_market_news(start: date, end: date) -> tuple[list[dict], dict]:
     """최신 general 뉴스를 한 달 롤링 풀에 합쳐 반환한다.
 
     Finnhub의 /news 엔드포인트는 날짜 범위 조회가 아니라 최신 뉴스만 제공하므로, Actions cache에
     매일 확보한 기사를 누적한 뒤 기간 밖 기사를 제거한다.
     """
-    raw_items = _finnhub_get("news", {"category": FINNHUB_MARKET_NEWS_CATEGORY})
-    fresh = _normalise_market_articles(
-        raw_items if isinstance(raw_items, list) else [], start, end
-    )
+    cached = _load_market_news_pool()
+    collection_status = {"status": "ok", "error": ""}
+    try:
+        raw_items = _finnhub_get("news", {"category": FINNHUB_MARKET_NEWS_CATEGORY})
+        if not isinstance(raw_items, list):
+            raise ValueError("Finnhub market news response is not an array")
+        fresh = _normalise_market_articles(raw_items, start, end)
+    except Exception as exc:
+        fresh = []
+        collection_status = {
+            "status": "degraded",
+            "error": type(exc).__name__,
+        }
+        logger.warning(
+            "Finnhub 시장 뉴스 실시간 조회 실패, 복원된 rolling pool만 사용합니다: %s",
+            type(exc).__name__,
+        )
     merged: dict[str, dict] = {}
-    for article in [*_load_market_news_pool(), *fresh]:
+    for article in [*cached, *fresh]:
         article_id = str(article.get("article_id", "")).strip()
         published_date = _article_date(article)
         if article_id and published_date and start <= published_date <= end:
@@ -469,7 +544,11 @@ def _collect_market_news(start: date, end: date) -> list[dict]:
     articles = articles[:FINNHUB_MARKET_NEWS_POOL_MAX_ITEMS]
     _save_market_news_pool(articles)
     logger.info("Finnhub 시장 뉴스 풀: 최신 %d건, 한 달 창 %d건", len(fresh), len(articles))
-    return articles
+    return articles, {
+        **collection_status,
+        "fresh_count": len(fresh),
+        "article_count": len(articles),
+    }
 
 
 def _market_relevance_score(article: dict, end: date) -> float:
@@ -487,13 +566,25 @@ def _market_relevance_score(article: dict, end: date) -> float:
     return score
 
 
+def _is_market_article_scope(article: dict) -> bool:
+    text = " ".join(
+        [str(article.get("headline", "")), str(article.get("summary", ""))]
+    ).casefold()
+    related = {_canonical_ticker(value) for value in article.get("related", [])}
+    return bool(related & MARKET_PROXY_TICKERS) or any(
+        re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", text)
+        for keyword in MARKET_SCOPE_KEYWORDS
+    )
+
+
 def _select_market_articles(articles: list[dict], end: date) -> list[dict]:
     """코드 기준으로 미국 증시 관련성과 최신성을 반영해 3~5건을 확정한다."""
     ranked = sorted(
         (
             (score, article)
             for article in articles
-            if (score := _market_relevance_score(article, end)) >= 3
+            if _is_market_article_scope(article)
+            and (score := _market_relevance_score(article, end)) >= 3
         ),
         key=lambda item: (item[0], item[1]["published_at"]),
         reverse=True,
@@ -629,6 +720,15 @@ def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
             len(reasoning_content),
         )
         raise ValueError(f"NIM JSON 파싱 실패: {exc}") from exc
+    known_top_level_keys = {
+        "items",
+        "headline",
+        "observation",
+        "interpretation",
+        "recent_context",
+        "direct_evidence_ids",
+        "context_evidence_ids",
+    }
     logger.info(
         "NIM 응답 진단 | model=%s | finish_reason=%s | content_chars=%d | "
         "reasoning_chars=%d | top_level_keys=%s | unknown_key_count=%d",
@@ -640,13 +740,12 @@ def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
             sorted(
                 key
                 for key in generated
-                if key
-                in {"items", "headline", "observation", "interpretation"}
+                if key in known_top_level_keys
             )
         )
         or "-",
         sum(
-            key not in {"items", "headline", "observation", "interpretation"}
+            key not in known_top_level_keys
             for key in generated
         ),
     )
@@ -676,9 +775,9 @@ def _stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> 
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 기업 정보와 Finnhub 기사만 사용하십시오. 웹 검색은 하지 마십시오.
 
-허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}입니다. 각 종목의 selected_finnhub_articles는
-코드가 이미 이 날짜 범위·원문 URL·관련 티커 조건을 확인하고 선정한 기사입니다. 기사 ID를 고르거나
-반환하지 마십시오.
+허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}이며 {data_date} 뉴욕 장 마감 시각
+이전 기사만 포함됩니다. 각 종목의 selected_finnhub_articles는 코드가 이미 이 날짜·시각 범위,
+원문 URL·관련 티커 조건을 확인하고 선정한 기사입니다. 기사 ID를 고르거나 반환하지 마십시오.
 
 business_ko는 business_source_en을 바탕으로 70자 이내 한국어 한 문장으로 작성하십시오.
 move_reason_ko는 기사 제목 또는 요약에 해당 종목의 직접 촉매(실적, 전망, 계약, 규제, M&A,
@@ -691,16 +790,26 @@ move_reason_ko는 기사 제목 또는 요약에 해당 종목의 직접 촉매(
 
 
 def _market_prompt(
-    base_market_summary: dict, articles: list[dict], data_date: str, start: date, end: date
+    base_market_summary: dict, retrieval: dict, data_date: str
 ) -> str:
-    payload = {"market_data": base_market_summary, "finnhub_market_articles": articles}
+    payload = {
+        "market_data": base_market_summary,
+        "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
+        "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
+        "direct_evidence": retrieval.get("direct_evidence", []),
+        "historical_context": retrieval.get("historical_context", []),
+    }
     return f"""미국 거래일은 {data_date}입니다.
 아래 시장 수치와 Finnhub 일반 시장 기사만 사용하십시오. 웹 검색이나 외부 지식은 사용하지 마십시오.
 
-기사는 {start.isoformat()}~{end.isoformat()}에 발행된 것만 입력되어 있으며, 코드가 미국 증시·주요
-섹터 관련성 기준으로 확정한 3~5건입니다. 기사 ID를 선택하거나 반환하지 마십시오. 모든 해석은 이
-확정 기사와 시장 수치에서만 도출하고, 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은
-금지합니다.
+direct_evidence는 장 마감 시각 이전에 발행된 당일 시황의 직접 근거입니다. interpretation의 인과
+해석은 direct_evidence에서 명시적으로 확인되는 내용으로만 작성하십시오. historical_context는 이전
+2~45일의 거시·섹터 배경이며 recent_context에서만 설명하십시오. historical_context를 당일 움직임의
+원인으로 표현하지 마십시오. 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은 금지합니다.
+
+사용한 직접 근거의 evidence_id를 direct_evidence_ids에 최소 3개 넣고, 최근 맥락 근거의
+evidence_id를 context_evidence_ids에 넣으십시오. historical_context가 비어 있으면 recent_context는
+빈 문자열, context_evidence_ids는 빈 배열로 반환하십시오. 입력에 없는 ID는 절대 반환하지 마십시오.
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
@@ -710,8 +819,8 @@ def _fallback_stock_prompt(items: list[dict], data_date: str, start: date, end: 
     payload = {"data_date": data_date, "stocks": items}
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 영문 사업 설명과 코드가 선정한 Finnhub 종목 기사만 사용하십시오. 외부 지식이나
-웹 검색을 사용하지 마십시오. selected_finnhub_articles는 {start.isoformat()}~{end.isoformat()}의
-직접 관련 기사이며, 기사 ID를 선택하거나 반환하지 마십시오.
+웹 검색을 사용하지 마십시오. selected_finnhub_articles는 {start.isoformat()}~{end.isoformat()} 중
+{data_date} 뉴욕 장 마감 이전의 직접 관련 기사이며, 기사 ID를 선택하거나 반환하지 마십시오.
 
 각 종목에 ticker, business_ko, move_reason_ko, evidence_status를 반환하십시오. business_ko는 70자 이내
 한국어 사업 요약입니다. 기사에 직접 촉매가 명시된 경우에만 evidence_status를 verified와 140자 이내
@@ -728,20 +837,46 @@ move_reason_ko로 작성하십시오. 그렇지 않으면 evidence_status는 lim
 
 
 def _fallback_market_prompt(
-    base_market_summary: dict, articles: list[dict], data_date: str, start: date, end: date
+    base_market_summary: dict, retrieval: dict, data_date: str
 ) -> str:
-    payload = {"market_data": base_market_summary, "finnhub_market_articles": articles}
+    direct_example_ids = [
+        str(article.get("evidence_id", ""))
+        for article in retrieval.get("direct_evidence", [])
+        if str(article.get("evidence_id", "")).strip()
+    ][:MARKET_MIN_NEWS_SOURCES]
+    context_example_ids = [
+        str(article.get("evidence_id", ""))
+        for article in retrieval.get("historical_context", [])
+        if str(article.get("evidence_id", "")).strip()
+    ]
+    response_example = {
+        "headline": "한국어 제목",
+        "observation": "수치와 기사에 근거한 관측",
+        "interpretation": "직접 근거에 한정한 해석",
+        "recent_context": "최근 거시·섹터 배경" if context_example_ids else "",
+        "direct_evidence_ids": direct_example_ids,
+        "context_evidence_ids": context_example_ids,
+    }
+    payload = {
+        "market_data": base_market_summary,
+        "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
+        "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
+        "direct_evidence": retrieval.get("direct_evidence", []),
+        "historical_context": retrieval.get("historical_context", []),
+    }
     return f"""미국 거래일은 {data_date}입니다.
-아래 시장 수치와 코드가 확정한 Finnhub 시장 기사 3~5건만 사용하십시오. 기사는
-{start.isoformat()}~{end.isoformat()}에 발행됐으며, 기사 ID를 선택하거나 반환하지 마십시오.
+아래 시장 수치와 코드가 확정한 Finnhub 기사만 사용하십시오. direct_evidence만 당일 움직임의 직접
+원인 해석에 사용할 수 있습니다. historical_context는 이전 2~45일의 배경으로 recent_context에서만
+설명하고 당일 원인으로 표현하지 마십시오.
 
-headline, observation, interpretation을 한국어로 작성하십시오. 모든 해석은 제공 기사와 시장 수치에
-한정하고, 기사에 없는 인과관계·투자 조언·가격 변동 원인 추정은 금지합니다. JSON 외 텍스트를
+headline, observation, interpretation, recent_context를 한국어로 작성하십시오. 사용한 근거 ID를
+direct_evidence_ids에 최소 3개, context_evidence_ids에 사용한 만큼 넣으십시오. 입력에 없는 ID, 기사에 없는
+인과관계, 투자 조언, 가격 변동 원인 추정은 금지합니다. historical_context가 비어 있으면
+recent_context는 빈 문자열, context_evidence_ids는 빈 배열로 반환하십시오. JSON 외 텍스트를
 반환하지 마십시오.
 
-반환 형식은 반드시 아래 세 필드를 모두 가진 최상위 JSON 객체여야 합니다.
-{{"headline":"한국어 제목","observation":"수치와 기사에 근거한 관측",
-"interpretation":"기사와 시장 수치에 한정한 해석"}}
+반환 형식은 반드시 아래 여섯 필드를 모두 가진 최상위 JSON 객체여야 합니다.
+{json.dumps(response_example, ensure_ascii=False)}
 
 입력 데이터:
 {json.dumps(payload, ensure_ascii=False)}"""
@@ -982,100 +1117,489 @@ def _fallback_stock_entries(
     )
 
 
-def _limited_market_summary(base_market_summary: dict) -> dict:
+def _market_close_cutoff(data_date: str) -> datetime:
+    session_date = datetime.strptime(data_date, "%Y-%m-%d").date()
+    return datetime(
+        session_date.year,
+        session_date.month,
+        session_date.day,
+        16,
+        tzinfo=ZoneInfo("America/New_York"),
+    )
+
+
+def _market_direct_start(data_date: str) -> datetime:
+    """시장 직접 근거 창의 시작일을 최근 3개 평일 세션으로 계산한다."""
+    session_date = datetime.strptime(data_date, "%Y-%m-%d").date()
+    included = 1
+    while included < 3:
+        session_date -= timedelta(days=1)
+        if session_date.weekday() < 5:
+            included += 1
+    return datetime(
+        session_date.year,
+        session_date.month,
+        session_date.day,
+        tzinfo=ZoneInfo("America/New_York"),
+    )
+
+
+def _article_timestamp(article: dict) -> datetime | None:
+    try:
+        value = datetime.fromisoformat(str(article.get("published_at", "")))
+    except (TypeError, ValueError):
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
+def _normalise_market_retrieval(retrieval: dict | list[dict], data_date: str) -> dict:
+    if isinstance(retrieval, dict):
+        result = dict(retrieval)
+    else:
+        result = {"direct_evidence": list(retrieval), "historical_context": []}
+
+    direct = []
+    for index, article in enumerate(result.get("direct_evidence", []), start=1):
+        if not isinstance(article, dict):
+            continue
+        item = dict(article)
+        item.setdefault(
+            "evidence_id", f"D{index}:{item.get('article_id') or index}"
+        )
+        direct.append(item)
+
+    context = []
+    for index, article in enumerate(result.get("historical_context", []), start=1):
+        if not isinstance(article, dict):
+            continue
+        item = dict(article)
+        item.setdefault(
+            "evidence_id", f"C{index}:{item.get('article_id') or index}"
+        )
+        context.append(item)
+
+    result["direct_evidence"] = direct
+    result["historical_context"] = context
+    result.setdefault("rag_status", "ready" if direct else "corpus_empty")
+    result.setdefault("retriever_version", "legacy-keyword-v1")
+    result.setdefault(
+        "market_close_cutoff",
+        _market_close_cutoff(data_date).isoformat() if data_date else "",
+    )
+    result.setdefault("retrieval_as_of", datetime.now(timezone.utc).isoformat())
+    result.setdefault("corpus_status", {})
+    return result
+
+
+def _market_retrieval_fingerprint(
+    retrieval: dict, market_data: dict | None = None
+) -> str:
+    payload = {
+        "market_data": market_data or {},
+        "evidence": [
+            [
+                str(article.get("evidence_id", "")),
+                str(article.get("published_at", "")),
+                str(article.get("url", "")),
+                str(article.get("headline", "")),
+                str(article.get("summary", "")),
+            ]
+            for article in [
+                *retrieval.get("direct_evidence", []),
+                *retrieval.get("historical_context", []),
+            ]
+        ]
+    }
+    return hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            default=str,
+        ).encode("utf-8")
+    ).hexdigest()[:16]
+
+
+def _market_sector_names(base_market_summary: dict) -> list[str]:
+    rows = [
+        row
+        for row in base_market_summary.get("sector_returns", [])
+        if isinstance(row, dict) and isinstance(row.get("sector"), str)
+    ]
+    rows.sort(key=lambda row: float(row.get("return_1d") or 0), reverse=True)
+    selected = [*rows[:2], *rows[-2:]]
+    return list(dict.fromkeys(str(row["sector"]) for row in selected))
+
+
+def _legacy_market_retrieval(
+    data_date: str, start: date, end: date, retrieval_as_of: datetime
+) -> dict:
+    cutoff = _market_close_cutoff(data_date)
+    direct_start = _market_direct_start(data_date)
+    candidates, collection_status = _collect_market_news(start, end)
+    eligible = [
+        article
+        for article in candidates
+        if (published_at := _article_timestamp(article)) is not None
+        and direct_start
+        <= published_at.astimezone(ZoneInfo("America/New_York"))
+        <= cutoff
+        and published_at.astimezone(timezone.utc)
+        <= retrieval_as_of.astimezone(timezone.utc)
+    ]
+    selected = _select_market_articles(eligible, datetime.strptime(data_date, "%Y-%m-%d").date())
+    return _normalise_market_retrieval(
+        {
+            "direct_evidence": selected,
+            "historical_context": [],
+            "rag_status": "direct_only" if selected else "corpus_empty",
+            "retriever_version": "legacy-keyword-v1",
+            "market_close_cutoff": cutoff.isoformat(),
+            "retrieval_as_of": retrieval_as_of.isoformat(),
+            "corpus_status": {
+                "fallback": "legacy_market_news_pool",
+                **collection_status,
+            },
+        },
+        data_date,
+    )
+
+
+def _retrieve_market_evidence(
+    base_market_summary: dict,
+    data_date: str,
+    start: date,
+    end: date,
+    retrieval_as_of: datetime,
+) -> dict:
+    rag_result: dict | None = None
+    try:
+        from market_rag import retrieve_market_context
+
+        retrieval = retrieve_market_context(
+            data_date=data_date,
+            retrieval_as_of=retrieval_as_of,
+            sector_names=_market_sector_names(base_market_summary),
+            db_path=MARKET_RAG_DB_FILE,
+        )
+        rag_result = _normalise_market_retrieval(retrieval, data_date)
+        if len(rag_result["direct_evidence"]) >= MARKET_MIN_NEWS_SOURCES:
+            return rag_result
+        logger.info(
+            "RAG 직접 근거가 부족해 기존 시장 뉴스 경로를 확인합니다: %d건",
+            len(rag_result["direct_evidence"]),
+        )
+    except Exception as exc:
+        logger.warning("시장 RAG 검색 실패, 기존 시장 뉴스 경로를 사용합니다: %s", exc)
+        rag_result = _normalise_market_retrieval(
+            {
+                "direct_evidence": [],
+                "historical_context": [],
+                "rag_status": "retrieval_failure",
+                "retriever_version": "unavailable",
+                "market_close_cutoff": _market_close_cutoff(data_date).isoformat(),
+                "retrieval_as_of": retrieval_as_of.isoformat(),
+                "corpus_status": {
+                    "ok": False,
+                    "status": "retrieval_failure",
+                    "error": type(exc).__name__,
+                },
+            },
+            data_date,
+        )
+
+    try:
+        legacy = _legacy_market_retrieval(data_date, start, end, retrieval_as_of)
+        if rag_result:
+            legacy["corpus_status"] = {
+                "rag": rag_result.get("corpus_status", {}),
+                "fallback": legacy.get("corpus_status", {}),
+            }
+            if rag_result["historical_context"]:
+                legacy["historical_context"] = rag_result["historical_context"]
+                legacy["rag_status"] = (
+                    "hybrid"
+                    if legacy["direct_evidence"]
+                    else rag_result.get("rag_status", "limited")
+                )
+                legacy["retriever_version"] = (
+                    f"{rag_result.get('retriever_version', 'unknown')}+"
+                    f"{legacy.get('retriever_version', 'legacy-keyword-v1')}"
+                )
+        return legacy
+    except Exception as exc:
+        logger.warning("기존 Finnhub 시장 뉴스 조회도 실패했습니다: %s", exc)
+        if rag_result is not None:
+            rag_result["rag_status"] = "legacy_fallback_failure"
+            rag_result["corpus_status"] = {
+                "rag": rag_result.get("corpus_status", {}),
+                "legacy_error": type(exc).__name__,
+            }
+            return rag_result
+        return _normalise_market_retrieval(
+            {
+                "direct_evidence": [],
+                "historical_context": [],
+                "rag_status": "retrieval_failure",
+                "retriever_version": "unavailable",
+                "market_close_cutoff": _market_close_cutoff(data_date).isoformat(),
+                "retrieval_as_of": retrieval_as_of.isoformat(),
+                "corpus_status": {"error": type(exc).__name__},
+            },
+            data_date,
+        )
+
+
+def _limited_retrieval_status(retrieval: dict) -> str:
+    corpus = retrieval.get("corpus_status")
+    if isinstance(corpus, dict):
+        corpus_states = [corpus.get("status")]
+        rag_corpus = corpus.get("rag")
+        if isinstance(rag_corpus, dict):
+            corpus_states.append(rag_corpus.get("status"))
+        for value in corpus_states:
+            corpus_state = str(value or "").strip()
+            if corpus_state and corpus_state != "ok":
+                return f"corpus_{corpus_state}"
+        fallback_corpus = corpus.get("fallback")
+        if isinstance(fallback_corpus, dict):
+            fallback_state = str(fallback_corpus.get("status") or "").strip()
+            if fallback_state and fallback_state != "ok":
+                return f"fallback_{fallback_state}"
+    retrieval_state = str(retrieval.get("rag_status") or "").strip()
+    if retrieval_state in {
+        "legacy_fallback_failure",
+        "retrieval_failure",
+        "unavailable",
+    }:
+        return retrieval_state
+    return "insufficient_direct_evidence"
+
+
+def _limited_market_summary(
+    base_market_summary: dict,
+    retrieval: dict | None = None,
+    *,
+    rag_attempted: bool = False,
+    rag_status: str = "insufficient_direct_evidence",
+) -> dict:
+    retrieval = dict(retrieval or {})
     return {
         "headline": str(base_market_summary.get("headline", "당일 시장 흐름")),
         "observation": str(base_market_summary.get("observation", "")),
         "interpretation": LIMITED_MARKET_INTERPRETATION,
+        "recent_context": "최근 거시·섹터 맥락을 뒷받침할 시점 적격 기사 근거가 충분하지 않습니다.",
         "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
         "source_urls": [],
         "source_titles": [],
+        "direct_source_urls": [],
+        "direct_source_titles": [],
+        "direct_source_dates": [],
+        "context_source_urls": [],
+        "context_source_titles": [],
+        "context_source_dates": [],
+        "direct_evidence_ids": [],
+        "context_evidence_ids": [],
         "provider": "규칙 기반 제한 문구",
+        "rag_status": rag_status,
+        "rag_attempted": rag_attempted,
+        "fallback_stage": "rule_based",
+        "retriever_version": str(retrieval.get("retriever_version", "unavailable")),
+        "market_close_cutoff": str(retrieval.get("market_close_cutoff", "")),
+        "retrieval_as_of": str(retrieval.get("retrieval_as_of", "")),
+        "corpus_status": retrieval.get("corpus_status", {}),
     }
 
 
+def _evidence_ids(generated: dict, field: str) -> list[str]:
+    raw_ids = generated.get(field)
+    if not isinstance(raw_ids, list) or any(
+        not isinstance(value, str) or not value.strip() for value in raw_ids
+    ):
+        raise ValueError(f"시황 응답 근거 ID 형식 오류: {field}")
+    ids = [value.strip() for value in raw_ids]
+    if len(ids) != len(set(ids)):
+        raise ValueError(f"시황 응답 근거 ID 중복: {field}")
+    return ids
+
+
+def _source_fields(sources: list[dict]) -> tuple[list[str], list[str], list[str]]:
+    return (
+        [str(source.get("url", "")) for source in sources],
+        [str(source.get("headline", "")) for source in sources],
+        [
+            str(source.get("published_date") or source.get("published_at", ""))[:10]
+            for source in sources
+        ],
+    )
+
+
 def _build_market_summary(
-    generated: dict, sources: list[dict], provider_name: str
+    generated: dict, retrieval: dict | list[dict], provider_name: str
 ) -> dict:
+    retrieval = _normalise_market_retrieval(retrieval, "")
     fields = ("headline", "observation", "interpretation")
     missing = [
         field
         for field in fields
-        if not isinstance(generated.get(field), str)
-        or not generated[field].strip()
+        if not isinstance(generated.get(field), str) or not generated[field].strip()
     ]
+    recent_context = generated.get("recent_context")
+    if not isinstance(recent_context, str):
+        missing.append("recent_context")
     if missing:
         raise ValueError(f"시황 응답 필수 필드 누락/형식 오류: {', '.join(missing)}")
+
+    direct_ids = _evidence_ids(generated, "direct_evidence_ids")
+    context_ids = _evidence_ids(generated, "context_evidence_ids")
+    direct_map = {
+        str(source["evidence_id"]): source
+        for source in retrieval["direct_evidence"]
+    }
+    context_map = {
+        str(source["evidence_id"]): source
+        for source in retrieval["historical_context"]
+    }
+    unknown_direct = [value for value in direct_ids if value not in direct_map]
+    unknown_context = [value for value in context_ids if value not in context_map]
+    if unknown_direct or unknown_context:
+        raise ValueError("시황 응답이 입력에 없는 근거 ID를 반환했습니다.")
+    if len(direct_ids) < MARKET_MIN_NEWS_SOURCES:
+        raise ValueError(
+            "시황 응답의 직접 근거가 기준보다 적습니다: "
+            f"{len(direct_ids)}/{MARKET_MIN_NEWS_SOURCES}"
+        )
+    if context_map and not context_ids:
+        raise ValueError("시황 응답이 최근 맥락 근거 ID를 반환하지 않았습니다.")
+    if context_map and not recent_context.strip():
+        raise ValueError("시황 응답이 최근 맥락 내용을 반환하지 않았습니다.")
+    if not context_map and recent_context.strip():
+        raise ValueError("시황 응답이 근거 없는 최근 맥락을 반환했습니다.")
+
+    direct_sources = [direct_map[value] for value in direct_ids]
+    context_sources = [context_map[value] for value in context_ids]
+    direct_urls, direct_titles, direct_dates = _source_fields(direct_sources)
+    context_urls, context_titles, context_dates = _source_fields(context_sources)
+    retriever_version = str(retrieval.get("retriever_version", "unknown"))
+    if retriever_version == "legacy-keyword-v1":
+        rag_status = "legacy_direct"
+    elif "legacy-keyword-v1" in retriever_version and context_sources:
+        rag_status = "hybrid_success"
+    else:
+        rag_status = "rag_success" if context_sources else "direct_only"
+    fallback_stage = (
+        "nvidia_nim" if provider_name == "NVIDIA NIM GPT-OSS 120B" else "none"
+    )
     return {
-        field: str(generated[field]).strip()[:600] for field in fields
-    } | {
+        **{field: str(generated[field]).strip()[:600] for field in fields},
+        "recent_context": recent_context.strip()[:600],
         "disclaimer": (
-            f"{provider_name}가 코드가 선정한 Finnhub 기사 {len(sources)}건과 시장 수치를 바탕으로 "
-            "작성한 자동 요약이며 투자 조언이 아닙니다."
+            f"{provider_name}가 코드가 선정한 직접 근거 {len(direct_sources)}건과 최근 맥락 "
+            f"{len(context_sources)}건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다."
         ),
-        "source_urls": [source["url"] for source in sources],
-        "source_titles": [source["headline"] for source in sources],
+        "source_urls": [*direct_urls, *context_urls],
+        "source_titles": [*direct_titles, *context_titles],
+        "direct_source_urls": direct_urls,
+        "direct_source_titles": direct_titles,
+        "direct_source_dates": direct_dates,
+        "context_source_urls": context_urls,
+        "context_source_titles": context_titles,
+        "context_source_dates": context_dates,
+        "direct_evidence_ids": direct_ids,
+        "context_evidence_ids": context_ids,
         "provider": provider_name,
+        "rag_status": rag_status,
+        "rag_attempted": True,
+        "fallback_stage": fallback_stage,
+        "retriever_version": retriever_version,
+        "market_close_cutoff": str(retrieval.get("market_close_cutoff", "")),
+        "retrieval_as_of": str(retrieval.get("retrieval_as_of", "")),
+        "corpus_status": retrieval.get("corpus_status", {}),
     }
 
 
 def _fallback_market_summary(
-    base_market_summary: dict, sources: list[dict], data_date: str, start: date, end: date
+    base_market_summary: dict, retrieval: dict, data_date: str
 ) -> dict:
     provider_name = "NVIDIA NIM GPT-OSS 120B"
     try:
         generated = _request_nim_json(
             NIM_GPT_OSS_MODEL,
-            "제공된 시장 수치와 코드가 확정한 Finnhub 기사만 사용하십시오. JSON만 답하십시오.",
-            _fallback_market_prompt(base_market_summary, sources, data_date, start, end),
+            (
+                "제공된 시장 수치와 코드가 확정한 Finnhub 직접 근거·최근 맥락만 "
+                "사용하십시오. JSON만 답하십시오."
+            ),
+            _fallback_market_prompt(base_market_summary, retrieval, data_date),
         )
-        return _build_market_summary(generated, sources, provider_name)
+        return _build_market_summary(generated, retrieval, provider_name)
     except Exception as exc:
         logger.warning("%s 시황 fallback 실패, 규칙 기반 제한 문구를 사용합니다: %s", provider_name, exc)
-        return _limited_market_summary(base_market_summary)
+        return _limited_market_summary(
+            base_market_summary,
+            retrieval,
+            rag_attempted=True,
+            rag_status="generation_failure",
+        )
 
 
 def _research_market_summary(
     base_market_summary: dict,
-    articles: list[dict],
+    retrieval: dict | list[dict],
     data_date: str,
-    start: date,
-    end: date,
+    start: date | None = None,
+    end: date | None = None,
     gemini_disabled_reason: str | None = None,
 ) -> dict:
-    if len(articles) < MARKET_MIN_NEWS_SOURCES:
-        return _limited_market_summary(base_market_summary)
+    retrieval = _normalise_market_retrieval(retrieval, data_date)
+    direct = retrieval["direct_evidence"]
+    if len(direct) < MARKET_MIN_NEWS_SOURCES:
+        return _limited_market_summary(
+            base_market_summary,
+            retrieval,
+            rag_attempted=True,
+            rag_status=_limited_retrieval_status(retrieval),
+        )
     if gemini_disabled_reason:
         logger.warning(
             "Gemini 공통 요청 오류로 시황 호출도 생략하고 NIM fallback을 시도합니다: %s",
             gemini_disabled_reason,
         )
-        return _fallback_market_summary(
-            base_market_summary, articles, data_date, start, end
-        )
+        return _fallback_market_summary(base_market_summary, retrieval, data_date)
     try:
         generated = _request_gemini_json(
-            _market_prompt(base_market_summary, articles, data_date, start, end),
+            _market_prompt(base_market_summary, retrieval, data_date),
             MARKET_RESPONSE_SCHEMA,
         )
-        return _build_market_summary(generated, articles, "Gemini + Finnhub")
+        provider_name = (
+            "Gemini + Finnhub"
+            if retrieval.get("retriever_version") == "legacy-keyword-v1"
+            else "Gemini + Finnhub RAG"
+        )
+        return _build_market_summary(generated, retrieval, provider_name)
     except Exception as exc:
         logger.warning("Gemini + Finnhub 시황 조사 실패, NIM fallback을 시도합니다: %s", exc)
-        return _fallback_market_summary(base_market_summary, articles, data_date, start, end)
+        return _fallback_market_summary(base_market_summary, retrieval, data_date)
 
 
 def enrich_with_ai(
     stocks_df: pd.DataFrame,
     data_date: str,
     base_market_summary: dict,
+    retrieval_as_of: datetime | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """상·하위 각 20종목을 Finnhub 뉴스로 검증하고, 없으면 제한 문구를 남긴다."""
     result = stocks_df.copy()
     cache = _load_cache()
+    retrieval_clock = retrieval_as_of or datetime.now(timezone.utc)
+    if retrieval_clock.tzinfo is None:
+        retrieval_clock = retrieval_clock.replace(tzinfo=timezone.utc)
     tickers = result["ticker"].astype(str).tolist()
     cache_keys = {
         ticker: f"{AI_INSIGHTS_CACHE_VERSION}:{data_date}:{ticker}" for ticker in tickers
     }
+    session_entries: dict[str, dict] = {}
     missing = [ticker for ticker in tickers if cache_keys[ticker] not in cache]
     start, end = _news_window(data_date)
     records = result.set_index(result["ticker"].astype(str)).to_dict("index")
@@ -1131,7 +1655,9 @@ def enrich_with_ai(
                         }
                     )
                     entry["diagnostic"] = diagnostic
-                    cache[cache_keys[ticker]] = entry
+                    session_entries[ticker] = entry
+                    if diagnostic.get("finnhub_status") == "ok":
+                        cache[cache_keys[ticker]] = entry
                     _log_stock_diagnostic(
                         ticker,
                         diagnostic,
@@ -1173,7 +1699,9 @@ def enrich_with_ai(
                             }
                         )
                         entry["diagnostic"] = diagnostic
-                        cache[cache_keys[ticker]] = entry
+                        session_entries[ticker] = entry
+                        if diagnostic.get("finnhub_status") == "ok":
+                            cache[cache_keys[ticker]] = entry
                         _log_stock_diagnostic(
                             ticker,
                             diagnostic,
@@ -1209,40 +1737,47 @@ def enrich_with_ai(
             cache_hit=True,
         )
 
+    resolved_entries = {
+        ticker: session_entries.get(ticker) or cache.get(cache_keys[ticker], {})
+        for ticker in tickers
+    }
     result["business_summary"] = [
-        cache.get(cache_keys[ticker], {}).get("business_summary")
+        resolved_entries[ticker].get("business_summary")
         or _business_fallback(records[ticker])
         for ticker in tickers
     ]
     result["move_reason"] = [
-        cache.get(cache_keys[ticker], {}).get("move_reason") or LIMITED_REASON
+        resolved_entries[ticker].get("move_reason") or LIMITED_REASON
         for ticker in tickers
     ]
     result["source_urls"] = [
-        cache.get(cache_keys[ticker], {}).get("source_urls") or []
+        resolved_entries[ticker].get("source_urls") or []
         for ticker in tickers
     ]
     result["source_titles"] = [
-        cache.get(cache_keys[ticker], {}).get("source_titles") or []
+        resolved_entries[ticker].get("source_titles") or []
         for ticker in tickers
     ]
 
-    market_key = f"{AI_INSIGHTS_CACHE_VERSION}:market:{data_date}"
+    retrieval = _retrieve_market_evidence(
+        base_market_summary, data_date, start, end, retrieval_clock
+    )
+    fingerprint = _market_retrieval_fingerprint(
+        retrieval,
+        base_market_summary,
+    )
+    retrieval_hour = str(retrieval.get("retrieval_as_of", ""))[:13]
+    market_key = (
+        f"{AI_INSIGHTS_CACHE_VERSION}:market:{data_date}:"
+        f"{retrieval.get('retriever_version', 'unknown')}:{retrieval_hour}:{fingerprint}"
+    )
     market_summary = cache.get(market_key)
     if not market_summary:
-        try:
-            market_candidates = _collect_market_news(start, end)
-            market_articles = _select_market_articles(market_candidates, end)
-        except Exception as exc:
-            logger.warning("Finnhub 시장 뉴스 조회 실패: %s", exc)
-            market_articles = []
         market_summary = _research_market_summary(
             base_market_summary,
-            market_articles,
+            retrieval,
             data_date,
-            start,
-            end,
-            gemini_disabled_reason,
+            gemini_disabled_reason=gemini_disabled_reason,
         )
         if market_summary.get("source_urls"):
             cache[market_key] = market_summary
