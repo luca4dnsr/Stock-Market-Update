@@ -1,80 +1,80 @@
 {
-  "data_date": "2026-07-24",
-  "advances": 357,
-  "declines": 136,
+  "data_date": "2026-07-27",
+  "advances": 346,
+  "declines": 150,
   "total": 503,
   "top3": [
     {
-      "ticker": "IP",
-      "name": "International Paper",
-      "return_1d": 11.2
+      "ticker": "WDAY",
+      "name": "Workday, Inc.",
+      "return_1d": 15.4
+    },
+    {
+      "ticker": "NOW",
+      "name": "ServiceNow",
+      "return_1d": 14.8
     },
     {
       "ticker": "SW",
       "name": "Smurfit Westrock",
-      "return_1d": 11.1
-    },
-    {
-      "ticker": "DLR",
-      "name": "Digital Realty",
-      "return_1d": 11.0
+      "return_1d": 14.6
     }
   ],
   "bot3": [
     {
       "ticker": "SNDK",
       "name": "Sandisk",
-      "return_1d": -10.8
-    },
-    {
-      "ticker": "COHR",
-      "name": "Coherent Corp.",
-      "return_1d": -9.8
+      "return_1d": -20.6
     },
     {
       "ticker": "CHRW",
       "name": "C.H. Robinson",
-      "return_1d": -9.2
+      "return_1d": -15.1
+    },
+    {
+      "ticker": "LITE",
+      "name": "Lumentum",
+      "return_1d": -14.6
     }
   ],
   "market_summary": {
-    "headline": "상승 종목 확산 속 변동성과 섹터 차별화 장세",
-    "observation": "상승 357개·하락 136개로 상승 비율은 72%였습니다. 강세 섹터는 Real Estate(+2.4%), Materials(+1.5%)였으며, 약세 섹터는 Information Technology(-0.8%), Consumer Discretionary(+0.0%)였습니다. 개별 종목 중 IP(+11.2%)가 가장 큰 폭으로 상승했고, SNDK(-10.8%)가 가장 큰 폭으로 하락했습니다.",
-    "interpretation": "정규장 뉴스에 따르면, AI 지출 우려와 유가 상승 부담이 시장에 하락 압력과 변동성을 더했습니다. 그러나 유가 상승세가 멈추면서 주가가 반등을 시도했고, '반도체 매도, 소프트웨어 매수' 트레이드가 재등장하는 등 섹터 간 차별화가 진행되었습니다. 이러한 흐름 속에서 정보기술 섹터가 약세를 나타낸 반면, 부동산 및 소재 섹터를 중심으로 시장 전반에 폭넓은 상승세가 전개되었습니다.",
+    "headline": "상승 종목 확산 속 빅테크 실적·연준 금리 결정 등 주요 이벤트 주시",
+    "observation": "상승 종목이 346개, 하락 종목이 150개로 상승 비율 70%를 기록했습니다. 섹터별로는 필수소비재(+2.8%), 커뮤니케이션 서비스(+2.2%)가 강세를 나타낸 반면, 에너지(-1.8%)와 정보기술(-1.5%) 섹터는 약세를 보였습니다. 개별 종목 중에서는 WDAY(+15.4%)가 가장 강세를 보였고 SNDK(-20.6%)가 가장 약세를 나타냈습니다.",
+    "interpretation": "주요 기사에 따르면 이번 주는 빅테크 실적 발표와 연준(Fed) 회의, 인플레이션 데이터 발표가 예정되어 있어 시장의 관심이 집중되고 있습니다. 유가가 100달러 부근에 다다르며 중앙은행들의 인플레이션 리스크 관리가 조명받는 한편, 미국-이란 간 교전 일시 중단과 연준 결정을 앞두고 금 가격이 상승하는 등 거시 경제 및 정책 이벤트를 앞둔 흐름이 확인됩니다.",
     "recent_context": "",
     "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 3건과 최근 맥락 0건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [
-      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
-      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMiogFBVV95cUxOVHhXdm1LMW9wUmp6UHctWldmTGpCQWlBOWVTdk5GeEtuMzNYQU42TGlWWXQtSDAxeE1aa3JvNFRDRUx6WVB5eGliS21TMEluRkJEUndXeHE1MUYzUVZlZG9CQ1V4VXFITFIyMEhJNUNlczhueTJpX2FjbFBoSmVkSnZJX0pQOS05RExueWpHMGpRMElqUTBVV0lqajBCRG9Kc1E?oc=5"
     ],
     "source_titles": [
-      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
-      "US stocks tumble as AI spending and oil prices weigh on market",
-      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Gold gains on pause in US-Iran fighting; Fed decision looms - Reuters"
     ],
     "direct_source_urls": [
-      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
-      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMiogFBVV95cUxOVHhXdm1LMW9wUmp6UHctWldmTGpCQWlBOWVTdk5GeEtuMzNYQU42TGlWWXQtSDAxeE1aa3JvNFRDRUx6WVB5eGliS21TMEluRkJEUndXeHE1MUYzUVZlZG9CQ1V4VXFITFIyMEhJNUNlczhueTJpX2FjbFBoSmVkSnZJX0pQOS05RExueWpHMGpRMElqUTBVV0lqajBCRG9Kc1E?oc=5"
     ],
     "direct_source_titles": [
-      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
-      "US stocks tumble as AI spending and oil prices weigh on market",
-      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Gold gains on pause in US-Iran fighting; Fed decision looms - Reuters"
     ],
     "direct_source_dates": [
-      "2026-07-24",
-      "2026-07-23",
-      "2026-07-23"
+      "2026-07-26",
+      "2026-07-26",
+      "2026-07-26"
     ],
     "context_source_urls": [],
     "context_source_titles": [],
     "context_source_dates": [],
     "direct_evidence_ids": [
-      "finnhub:8265308",
-      "finnhub:8266749",
-      "finnhub:8261779"
+      "finnhub:8275331",
+      "finnhub:8276862",
+      "finnhub:8276553"
     ],
     "context_evidence_ids": [],
     "provider": "Gemini + Finnhub RAG",
@@ -82,9 +82,9 @@
     "rag_attempted": true,
     "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
-    "market_close_cutoff": "2026-07-24T20:00:00Z",
-    "news_cutoff": "2026-07-24T22:00:00Z",
-    "retrieval_as_of": "2026-07-27T08:01:07Z",
+    "market_close_cutoff": "2026-07-27T20:00:00Z",
+    "news_cutoff": "2026-07-27T22:00:00Z",
+    "retrieval_as_of": "2026-07-27T22:56:51Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -92,63 +92,63 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 104,
-      "snapshot_count": 1,
+      "article_count": 115,
+      "snapshot_count": 2,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-07-27T04:32:00Z",
-      "size_bytes": 241664
+      "newest_published_at": "2026-07-27T21:12:26Z",
+      "size_bytes": 274432
     }
   },
   "market_snapshot": {
     "breadth": {
-      "advances": 357,
-      "declines": 136,
+      "advances": 346,
+      "declines": 150,
       "total": 503
     },
     "sector_returns": [
       {
-        "sector": "Real Estate",
-        "return_1d": 2.4
-      },
-      {
-        "sector": "Materials",
-        "return_1d": 1.5
-      },
-      {
         "sector": "Consumer Staples",
-        "return_1d": 1.0
-      },
-      {
-        "sector": "Financials",
-        "return_1d": 0.9
-      },
-      {
-        "sector": "Health Care",
-        "return_1d": 0.7
-      },
-      {
-        "sector": "Industrials",
-        "return_1d": 0.4
+        "return_1d": 2.8
       },
       {
         "sector": "Communication Services",
-        "return_1d": 0.4
+        "return_1d": 2.2
       },
       {
-        "sector": "Energy",
-        "return_1d": 0.3
+        "sector": "Financials",
+        "return_1d": 1.9
       },
       {
-        "sector": "Utilities",
-        "return_1d": 0.2
+        "sector": "Real Estate",
+        "return_1d": 1.9
+      },
+      {
+        "sector": "Materials",
+        "return_1d": 1.8
+      },
+      {
+        "sector": "Health Care",
+        "return_1d": 1.3
       },
       {
         "sector": "Consumer Discretionary",
-        "return_1d": 0.0
+        "return_1d": 0.8
+      },
+      {
+        "sector": "Industrials",
+        "return_1d": 0.8
+      },
+      {
+        "sector": "Utilities",
+        "return_1d": -1.1
       },
       {
         "sector": "Information Technology",
-        "return_1d": -0.8
+        "return_1d": -1.5
+      },
+      {
+        "sector": "Energy",
+        "return_1d": -1.8
       }
     ]
   },
@@ -159,13 +159,13 @@
     "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "c409019ef109fb9966cb3f2f4a13cb6b92e9d48b",
+    "git_sha": "30581d8d8dda91798551253757365ddc8bd8e172",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-07-27T08:01:07.690445+00:00",
-  "generated_at": "2026-07-27T08:12:01.299278+00:00"
+  "run_started_at": "2026-07-27T22:56:51.561817+00:00",
+  "generated_at": "2026-07-27T23:00:52.287814+00:00"
 }
