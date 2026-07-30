@@ -49,6 +49,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # 대기 중 원격이 갱신돼도 이벤트 생성 시점의 stale SHA가 아니라
+          # job 시작 시점의 최신 브랜치 HEAD에서 실행한다.
+          ref: ${{ github.ref_name }}
 
       # ── 2. Python 설정 ────────────────────────────────────
       - name: Set up Python 3.12
