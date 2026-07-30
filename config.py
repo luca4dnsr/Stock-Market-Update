@@ -70,7 +70,7 @@ NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v13-workflow-news-cutoff"
+AI_INSIGHTS_CACHE_VERSION = "v14-exact-tickers-response-diagnostics"
 GEMINI_INSIGHTS_MAX_TOKENS = 3000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120

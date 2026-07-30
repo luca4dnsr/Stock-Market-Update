@@ -243,13 +243,15 @@ def _json_has_unclosed_string(value: str) -> bool:
     return in_string
 
 
-def _repair_json_syntax(value: str) -> str | None:
+def _repair_json_syntax(value: str) -> tuple[str, dict] | None:
     """모델이 만든 완결된 내용의 흔한 문법 오류만 보수적으로 고친다."""
     if _json_has_unclosed_string(value):
         return None
 
+    trailing_comma_count = len(re.findall(r",\s*([}\]])", value))
     repaired = re.sub(r",\s*([}\]])", r"\1", value)
     # 배열에서 객체·배열 항목 사이의 쉼표 누락만 보완한다.
+    missing_item_comma_count = len(re.findall(r"([}\]])(\s*)(?=[{\[])", repaired))
     repaired = re.sub(r"([}\]])(\s*)(?=[{\[])", r"\1,\2", repaired)
 
     stack: list[str] = []
@@ -262,29 +264,57 @@ def _repair_json_syntax(value: str) -> str | None:
         elif char == "]":
             if not stack or stack.pop() != "[":
                 return None
-    return repaired + "".join("}" if opener == "{" else "]" for opener in reversed(stack))
+    closing_containers = "".join(
+        "}" if opener == "{" else "]" for opener in reversed(stack)
+    )
+    return repaired + closing_containers, {
+        "trailing_commas_removed": trailing_comma_count,
+        "item_commas_inserted": missing_item_comma_count,
+        "closed_containers": len(closing_containers),
+    }
 
 
-def _parse_json(content: str | dict) -> dict:
+def _parse_json_with_diagnostics(content: str | dict) -> tuple[dict, dict]:
     if isinstance(content, dict):
-        return content
+        return content, {
+            "parse_mode": "preparsed",
+            "content_chars": 0,
+            "trailing_commas_removed": 0,
+            "item_commas_inserted": 0,
+            "closed_containers": 0,
+        }
     cleaned = str(content).strip()
     start, end = cleaned.find("{"), cleaned.rfind("}")
     if start < 0 or end < start:
         raise ValueError("AI 응답에서 JSON 객체를 찾지 못했습니다.")
     candidate = cleaned[start : end + 1]
     try:
-        return json.loads(candidate)
+        return json.loads(candidate), {
+            "parse_mode": "direct",
+            "content_chars": len(cleaned),
+            "trailing_commas_removed": 0,
+            "item_commas_inserted": 0,
+            "closed_containers": 0,
+        }
     except json.JSONDecodeError as original_error:
-        repaired = _repair_json_syntax(candidate)
-        if not repaired:
+        repair_result = _repair_json_syntax(candidate)
+        if not repair_result:
             raise original_error
+        repaired, repair_diagnostics = repair_result
         try:
             parsed = json.loads(repaired)
         except json.JSONDecodeError:
             raise original_error
         logger.info("AI JSON 문법 복구 성공: 쉼표·괄호 오류를 보정했습니다.")
-        return parsed
+        return parsed, {
+            "parse_mode": "repaired",
+            "content_chars": len(cleaned),
+            **repair_diagnostics,
+        }
+
+
+def _parse_json(content: str | dict) -> dict:
+    return _parse_json_with_diagnostics(content)[0]
 
 
 def _chunked(items: list[dict], chunk_size: int) -> list[list[dict]]:
@@ -666,7 +696,11 @@ def _select_market_articles(
     return selected
 
 
-def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
+def _request_gemini_json(
+    prompt: str,
+    response_schema: dict,
+    expected_tickers: list[str] | None = None,
+) -> dict:
     """검색 도구 없이, 제공된 Finnhub 데이터만 해석하도록 Gemini를 호출한다."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -699,14 +733,73 @@ def _request_gemini_json(prompt: str, response_schema: dict) -> dict:
         for part in candidate.get("content", {}).get("parts", [])
     )
     try:
-        return _parse_json(content)
+        generated, parse_diagnostics = _parse_json_with_diagnostics(content)
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
         logger.warning(
-            "Gemini JSON 파싱 실패 | finishReason=%s | 원문 일부: %r",
+            "Gemini JSON 파싱 실패 | finishReason=%s | content_chars=%d | "
+            "unclosed_string=%s | output_ends_with_object=%s",
             finish_reason,
-            content[:500],
+            len(content),
+            _json_has_unclosed_string(content),
+            content.rstrip().endswith("}"),
         )
         raise ValueError(f"Gemini JSON 파싱 실패: {exc}") from exc
+
+    expected = [str(ticker) for ticker in expected_tickers or []]
+    expected_set = set(expected)
+    raw_items = generated.get("items")
+    items = raw_items if isinstance(raw_items, list) else []
+    returned_counts = {
+        ticker: sum(
+            isinstance(item, dict) and str(item.get("ticker", "")).strip() == ticker
+            for item in items
+        )
+        for ticker in expected
+    }
+    returned = [ticker for ticker in expected if returned_counts[ticker]]
+    missing = [ticker for ticker in expected if not returned_counts[ticker]]
+    duplicate_count = sum(max(count - 1, 0) for count in returned_counts.values())
+    unexpected_count = sum(
+        isinstance(item, dict)
+        and str(item.get("ticker", "")).strip() not in expected_set
+        for item in items
+    ) if expected else 0
+
+    finish_reason_upper = finish_reason.upper()
+    if finish_reason_upper == "MAX_TOKENS":
+        generation_outcome = "provider_token_limit"
+    elif parse_diagnostics["closed_containers"]:
+        generation_outcome = "incomplete_json_boundary"
+    elif missing:
+        generation_outcome = "model_omitted_expected_ticker"
+    elif duplicate_count:
+        generation_outcome = "duplicate_expected_ticker"
+    elif unexpected_count:
+        generation_outcome = "unexpected_ticker"
+    elif parse_diagnostics["parse_mode"] == "repaired":
+        generation_outcome = "syntax_repaired"
+    else:
+        generation_outcome = "complete"
+
+    logger.info(
+        "Gemini JSON 응답 진단 | finish_reason=%s | outcome=%s | content_chars=%d | "
+        "parse_mode=%s | trailing_commas_removed=%d | item_commas_inserted=%d | "
+        "closed_containers=%d | expected=%s | returned=%s | missing=%s | "
+        "duplicate_count=%d | unexpected_count=%d",
+        finish_reason,
+        generation_outcome,
+        parse_diagnostics["content_chars"],
+        parse_diagnostics["parse_mode"],
+        parse_diagnostics["trailing_commas_removed"],
+        parse_diagnostics["item_commas_inserted"],
+        parse_diagnostics["closed_containers"],
+        ",".join(expected) or "-",
+        ",".join(returned) or "-",
+        ",".join(missing) or "-",
+        duplicate_count,
+        unexpected_count,
+    )
+    return generated
 
 
 def _is_non_retryable_gemini_error(exc: Exception) -> bool:
@@ -826,9 +919,18 @@ def _business_fallback(record: dict) -> str:
 
 
 def _stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> str:
-    payload = {"data_date": data_date, "stocks": items}
+    expected_tickers = [str(item["ticker"]) for item in items]
+    payload = {
+        "data_date": data_date,
+        "expected_count": len(expected_tickers),
+        "expected_tickers": expected_tickers,
+        "stocks": items,
+    }
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 기업 정보와 Finnhub 기사만 사용하십시오. 웹 검색은 하지 마십시오.
+
+items 배열에는 expected_tickers의 모든 ticker를 입력 순서대로 정확히 한 번씩 반환하십시오.
+items 배열 길이는 반드시 expected_count와 같아야 하며 ticker를 생략·중복·추가하지 마십시오.
 
 허용 기사 발행일은 {start.isoformat()}~{end.isoformat()}이며 워크플로 뉴스 기준 시각 이전
 기사만 포함됩니다. 각 종목의 selected_finnhub_articles는 코드가 이미 이 날짜·시각 범위,
@@ -1823,7 +1925,9 @@ def enrich_with_ai(
                         f"Gemini 공통 오류로 이번 실행에서 생략: {gemini_disabled_reason}"
                     )
                 generated = _request_gemini_json(
-                    _stock_prompt(batch, data_date, start, end), STOCK_RESPONSE_SCHEMA
+                    _stock_prompt(batch, data_date, start, end),
+                    STOCK_RESPONSE_SCHEMA,
+                    expected_tickers=[str(item["ticker"]) for item in batch],
                 )
                 _require_complete_stock_response(generated, batch)
                 entries = _normalise_stock_batch(generated, batch, "Gemini + Finnhub")

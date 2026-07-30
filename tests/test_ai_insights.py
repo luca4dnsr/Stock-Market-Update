@@ -26,6 +26,7 @@ from ai_insights import (
     _retrieve_market_evidence,
     _select_market_articles,
     _stock_cache_key,
+    _stock_prompt,
     _valid_stock_response_items,
     _workflow_news_cutoff,
 )
@@ -147,6 +148,69 @@ class AiInsightsTest(unittest.TestCase):
             "APPLICATION_JSON",
         )
         self.assertEqual(generated, {"items": []})
+
+    @patch("ai_insights.requests.post")
+    def test_gemini_logs_incomplete_json_boundary_and_missing_ticker(self, mock_post):
+        response = Mock(ok=True)
+        response.json.return_value = {
+            "candidates": [
+                {
+                    "finishReason": "STOP",
+                    "content": {
+                        "parts": [{"text": '{"items":[{"ticker":"AAA"}'}]
+                    },
+                }
+            ]
+        }
+        mock_post.return_value = response
+
+        with (
+            patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}),
+            self.assertLogs("ai_insights", level="INFO") as captured,
+        ):
+            generated = _request_gemini_json(
+                "prompt",
+                {"type": "OBJECT"},
+                expected_tickers=["AAA", "BBB"],
+            )
+
+        self.assertEqual(generated["items"], [{"ticker": "AAA"}])
+        logs = "\n".join(captured.output)
+        self.assertIn("outcome=incomplete_json_boundary", logs)
+        self.assertIn("closed_containers=2", logs)
+        self.assertIn("expected=AAA,BBB", logs)
+        self.assertIn("returned=AAA", logs)
+        self.assertIn("missing=BBB", logs)
+
+    @patch("ai_insights.requests.post")
+    def test_gemini_logs_model_omission_for_complete_json(self, mock_post):
+        response = Mock(ok=True)
+        response.json.return_value = {
+            "candidates": [
+                {
+                    "finishReason": "STOP",
+                    "content": {
+                        "parts": [{"text": '{"items":[{"ticker":"AAA"}]}'}]
+                    },
+                }
+            ]
+        }
+        mock_post.return_value = response
+
+        with (
+            patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}),
+            self.assertLogs("ai_insights", level="INFO") as captured,
+        ):
+            _request_gemini_json(
+                "prompt",
+                {"type": "OBJECT"},
+                expected_tickers=["AAA", "BBB"],
+            )
+
+        logs = "\n".join(captured.output)
+        self.assertIn("outcome=model_omitted_expected_ticker", logs)
+        self.assertIn("closed_containers=0", logs)
+        self.assertIn("missing=BBB", logs)
 
     @patch("ai_insights.requests.post")
     def test_nim_logs_response_shape_without_logging_content(self, mock_post):
@@ -278,6 +342,19 @@ class AiInsightsTest(unittest.TestCase):
             self.assertIn(f'"{field}"', market_prompt)
         self.assertIn("post_close", market_prompt)
         self.assertIn("정규장 움직임의 원인으로 표현하지", market_prompt)
+
+    def test_gemini_stock_prompt_requires_each_expected_ticker_once(self):
+        prompt = _stock_prompt(
+            [_stock_input("AAA"), _stock_input("BBB")],
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+        )
+
+        self.assertIn('"expected_count": 2', prompt)
+        self.assertIn('"expected_tickers": ["AAA", "BBB"]', prompt)
+        self.assertIn("모든 ticker를 입력 순서대로 정확히 한 번씩", prompt)
+        self.assertIn("배열 길이는 반드시 expected_count와 같아야", prompt)
 
     def test_nim_market_prompt_uses_production_evidence_ids(self):
         retrieval = _market_retrieval()
