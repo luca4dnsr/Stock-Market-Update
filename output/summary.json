@@ -38,29 +38,87 @@
     }
   ],
   "market_summary": {
-    "headline": "하락 종목이 다소 우세한 약한 위험회피 흐름",
+    "headline": "하락 종목 우세 속 약한 위험회피 흐름 및 연준·실적 주목",
     "observation": "상승 174개·하락 314개로 상승 비율은 36%였습니다. 강세 섹터는 Energy +2.0%, Communication Services +0.5%, 약세 섹터는 Industrials -3.1%, Information Technology -2.4%였습니다. 개별 종목 중 GRMN(+16.2%)가 가장 강했고, LII(-21.0%)가 가장 약했습니다.",
-    "interpretation": "해당 거래일 장 마감 전 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.",
-    "recent_context": "최근 거시·섹터 맥락을 뒷받침할 시점 적격 기사 근거가 충분하지 않습니다.",
-    "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
-    "source_urls": [],
-    "source_titles": [],
-    "direct_source_urls": [],
-    "direct_source_titles": [],
-    "direct_source_dates": [],
-    "context_source_urls": [],
-    "context_source_titles": [],
-    "context_source_dates": [],
-    "direct_evidence_ids": [],
-    "context_evidence_ids": [],
-    "provider": "규칙 기반 제한 문구",
-    "rag_status": "generation_failure",
+    "interpretation": "정규장 동안 투자자들은 기술주 실적에 주목하고 연준의 금리 우려 및 정책 발언 전망을 주시했습니다. 정규장 이후 연준은 예상대로 기준금리를 동결했습니다.",
+    "recent_context": "최근 거시 환경에서는 반도체 매도 및 소프트웨어 매수 트레이드로 변동성이 형성되었으며, 유가가 100달러 선에 근접하며 중앙은행들의 인플레이션 대응이 주목받았습니다. 또한 높은 국채 수익률 수준이 이어지는 가운데 증시 상방이 제한되는 흐름이 있었습니다.",
+    "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 5건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
+    "source_urls": [
+      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html",
+      "https://news.google.com/rss/articles/CBMilgFBVV95cUxPbWNrM2R3eVRRWVNNdGhKSnJLUzVjQ0Qwb21PVmFUcXd2OEpDRnVsZDVCMGtFV3RTbE5aM3ZuS2xRWkZtcDZ1VWFseVBLSXBoZWVqV083TV9TQVAyUVYzLXQ5S2g4WDdLRDJQbUhodXhGSlg1a28yaU5laUFEbG8zaWp0X0xESkxsYkV0d2lYZnc2VTRIYlE?oc=5",
+      "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOeU1SVmJnT1JoV0Y4REN1azV4UWNFempXVC0wdE9oVTlZMlU4S2pjbl9icWUydkRYS2FBT1pseFBkb0FYbURtM05HSlNXNHF6eEtXcUstdjc1RG96MndKaUtYZjF3R3JyNHp6VVVwZDlSemYta3BYazdTYWlqUHZrbXRxUnlfcTBLZ1ZFZHFleTFsMXNBblFqd3NnNlVNOEVzcDJ1aE9STk5VS0lwaEhORTlQREpGT05zd05J?oc=5",
+      "https://www.bloomberg.com/news/articles/2026-07-27/bitcoin-etfs-end-inflow-streak-as-fed-rate-concerns-mount",
+      "https://www.cnbc.com/2026/07/29/here-are-the-five-big-takeaways-from-this-weeks-fed-meeting.html",
+      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+    ],
+    "source_titles": [
+      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week",
+      "Wall Street ends mixed as investors focus on tech earnings - Reuters",
+      "London stocks inch up as US-Iran pause, earnings lift risk appetite - Reuters",
+      "Bitcoin ETFs end inflow streak as Fed rate concerns mount",
+      "Here are the five big takeaways from this week's Fed meeting",
+      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+    ],
+    "direct_source_urls": [
+      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html",
+      "https://news.google.com/rss/articles/CBMilgFBVV95cUxPbWNrM2R3eVRRWVNNdGhKSnJLUzVjQ0Qwb21PVmFUcXd2OEpDRnVsZDVCMGtFV3RTbE5aM3ZuS2xRWkZtcDZ1VWFseVBLSXBoZWVqV083TV9TQVAyUVYzLXQ5S2g4WDdLRDJQbUhodXhGSlg1a28yaU5laUFEbG8zaWp0X0xESkxsYkV0d2lYZnc2VTRIYlE?oc=5",
+      "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOeU1SVmJnT1JoV0Y4REN1azV4UWNFempXVC0wdE9oVTlZMlU4S2pjbl9icWUydkRYS2FBT1pseFBkb0FYbURtM05HSlNXNHF6eEtXcUstdjc1RG96MndKaUtYZjF3R3JyNHp6VVVwZDlSemYta3BYazdTYWlqUHZrbXRxUnlfcTBLZ1ZFZHFleTFsMXNBblFqd3NnNlVNOEVzcDJ1aE9STk5VS0lwaEhORTlQREpGT05zd05J?oc=5",
+      "https://www.bloomberg.com/news/articles/2026-07-27/bitcoin-etfs-end-inflow-streak-as-fed-rate-concerns-mount",
+      "https://www.cnbc.com/2026/07/29/here-are-the-five-big-takeaways-from-this-weeks-fed-meeting.html"
+    ],
+    "direct_source_titles": [
+      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week",
+      "Wall Street ends mixed as investors focus on tech earnings - Reuters",
+      "London stocks inch up as US-Iran pause, earnings lift risk appetite - Reuters",
+      "Bitcoin ETFs end inflow streak as Fed rate concerns mount",
+      "Here are the five big takeaways from this week's Fed meeting"
+    ],
+    "direct_source_dates": [
+      "2026-07-27",
+      "2026-07-27",
+      "2026-07-27",
+      "2026-07-27",
+      "2026-07-29"
+    ],
+    "context_source_urls": [
+      "https://www.cnbc.com/2026/07/24/the-sell-chips-buy-software-trade-reappears-as-wall-street-caps-off-another-volatile-week.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxORzVSb2tZRUVrYzhLQ0hCcVk1clVDQ1hjaGFPVElvd0JKZ0RVeGFTQ2JBVlVwRFNLbUxHOGZKTnl3WGEyeU5PQzEtTnBmVjBRdVVVUHBaSzJXY1pRT2ZFenczR0d2emszLWpGZDItNEcxd29RSGdWSDhVOEM5RjZRRXc0VQ?oc=5"
+    ],
+    "context_source_titles": [
+      "The 'sell chips, buy software' trade reappears as Wall Street caps off another volatile week",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Stocks edge back up as oil prices pause climb but yields hover near highs - Reuters"
+    ],
+    "context_source_dates": [
+      "2026-07-24",
+      "2026-07-26",
+      "2026-07-23"
+    ],
+    "direct_evidence_ids": [
+      "finnhub:8277759",
+      "finnhub:8278144",
+      "finnhub:8278149",
+      "finnhub:8277811",
+      "finnhub:8281141"
+    ],
+    "context_evidence_ids": [
+      "finnhub:8265308",
+      "finnhub:8276862",
+      "finnhub:8261779"
+    ],
+    "provider": "Gemini + Finnhub RAG",
+    "rag_status": "rag_success",
     "rag_attempted": true,
-    "fallback_stage": "rule_based",
+    "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
     "market_close_cutoff": "2026-07-29T20:00:00Z",
     "news_cutoff": "2026-07-29T22:00:00Z",
-    "retrieval_as_of": "2026-07-29T22:57:02Z",
+    "retrieval_as_of": "2026-07-30T01:40:26Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -68,11 +126,11 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 204,
+      "article_count": 208,
       "snapshot_count": 4,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-07-29T21:26:21Z",
-      "size_bytes": 335872
+      "newest_published_at": "2026-07-29T23:58:50Z",
+      "size_bytes": 376832
     }
   },
   "market_snapshot": {
@@ -131,17 +189,17 @@
   "pipeline_status": {
     "terminal_stage": "report_success",
     "rag_attempted": true,
-    "rag_status": "generation_failure",
-    "fallback_stage": "rule_based"
+    "rag_status": "rag_success",
+    "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "dd09ba7fcbd65250feda9db8ccf34b3f6f26b3ca",
+    "git_sha": "aec8e80e31a0f9c2860fe5a0ff60e7e7d89c149c",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-07-29T22:57:02.110178+00:00",
-  "generated_at": "2026-07-29T23:16:46.291631+00:00"
+  "run_started_at": "2026-07-30T01:40:26.863822+00:00",
+  "generated_at": "2026-07-30T01:45:47.113961+00:00"
 }
