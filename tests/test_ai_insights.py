@@ -17,6 +17,7 @@ from ai_insights import (
     _is_non_retryable_gemini_error,
     _legacy_market_retrieval,
     _market_retrieval_fingerprint,
+    _market_prompt,
     _normalise_company_articles,
     _normalise_stock_batch,
     _parse_json,
@@ -26,6 +27,7 @@ from ai_insights import (
     _retrieve_market_evidence,
     _select_market_articles,
     _stock_cache_key,
+    _stock_evidence_outcome,
     _stock_prompt,
     _valid_stock_response_items,
     _workflow_news_cutoff,
@@ -93,7 +95,53 @@ def _nim_stock_item(ticker: str) -> dict:
     }
 
 
+def _korea_scenario(session_date: str = "2026-07-27") -> dict:
+    return {
+        "session_date": session_date,
+        "base_case": "미국장 흐름을 반영한 조건부 기본 시나리오",
+        "positive_conditions": ["위험선호 회복 확인"],
+        "risk_conditions": ["약세 지속 여부 확인"],
+        "watch_items": ["반도체와 금리"],
+    }
+
+
 class AiInsightsTest(unittest.TestCase):
+    def test_stock_evidence_outcome_distinguishes_display_states(self):
+        base = {
+            "finnhub_status": "ok",
+            "finnhub_selected": 3,
+            "finnhub_post_close_selected": 0,
+        }
+        self.assertEqual(
+            _stock_evidence_outcome(base, "verified"),
+            "verified_direct_catalyst",
+        )
+        self.assertEqual(
+            _stock_evidence_outcome(base, "limited"),
+            "related_news_no_direct_catalyst",
+        )
+        self.assertEqual(
+            _stock_evidence_outcome(
+                {**base, "finnhub_post_close_selected": 3},
+                "limited",
+            ),
+            "post_close_only",
+        )
+        self.assertEqual(
+            _stock_evidence_outcome(
+                {**base, "finnhub_selected": 0},
+                "limited",
+            ),
+            "no_eligible_articles",
+        )
+        self.assertEqual(
+            _stock_evidence_outcome(
+                {**base, "finnhub_status": "error:RuntimeError"},
+                "limited",
+            ),
+            "generation_failure",
+        )
+
     def test_workflow_news_cutoff_is_kst_0700_and_never_future(self):
         self.assertEqual(
             _workflow_news_cutoff(
@@ -356,6 +404,19 @@ class AiInsightsTest(unittest.TestCase):
         self.assertIn("모든 ticker를 입력 순서대로 정확히 한 번씩", prompt)
         self.assertIn("배열 길이는 반드시 expected_count와 같아야", prompt)
 
+    def test_market_prompt_structures_korea_session_scenario(self):
+        prompt = _market_prompt(
+            {"headline": "기본 요약"},
+            _market_retrieval(),
+            "2026-07-24",
+        )
+
+        self.assertIn('"korea_session_date": "2026-07-27"', prompt)
+        self.assertIn("korea_market_scenario", prompt)
+        self.assertIn("positive_conditions", prompt)
+        self.assertIn("risk_conditions", prompt)
+        self.assertIn("한국 개별 종목 추천", prompt)
+
     def test_nim_market_prompt_uses_production_evidence_ids(self):
         retrieval = _market_retrieval()
         for index, article in enumerate(retrieval["direct_evidence"], start=101):
@@ -466,6 +527,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "최근 물가와 섹터 맥락",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["D1", "D2", "D3"],
             "context_evidence_ids": ["C1"],
         }
@@ -479,6 +541,10 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(len(summary["direct_source_urls"]), 3)
         self.assertEqual(len(summary["context_source_urls"]), 1)
         self.assertEqual(summary["rag_status"], "rag_success")
+        self.assertEqual(
+            summary["korea_market_scenario"]["session_date"],
+            "2026-07-27",
+        )
 
     def test_market_response_rejects_context_id_as_direct_evidence(self):
         generated = {
@@ -486,6 +552,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "최근 물가와 섹터 맥락",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["C1", "D2", "D3"],
             "context_evidence_ids": ["C1"],
         }
@@ -503,6 +570,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["D1", "D2", "D3"],
             "context_evidence_ids": [],
         }
@@ -527,6 +595,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "최근 물가와 섹터 맥락",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["D1", "D2"],
             "context_evidence_ids": ["C1"],
         }
@@ -546,6 +615,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "최근 물가와 섹터 맥락",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["D1", "D2", "D3"],
             "context_evidence_ids": ["C1"],
         }
@@ -908,6 +978,7 @@ class AiInsightsTest(unittest.TestCase):
             "observation": "시장 폭 관측",
             "interpretation": "직접 기사에 근거한 해석",
             "recent_context": "",
+            "korea_market_scenario": _korea_scenario(),
             "direct_evidence_ids": ["D1", "D2", "D3"],
             "context_evidence_ids": [],
         }
@@ -1046,6 +1117,124 @@ class AiInsightsTest(unittest.TestCase):
     @patch("ai_insights._retrieve_market_evidence")
     @patch("ai_insights._save_cache")
     @patch("ai_insights._load_cache", return_value={})
+    def test_gemini_valid_item_is_preserved_and_only_missing_ticker_falls_back(
+        self,
+        _mock_load_cache,
+        _mock_save_cache,
+        mock_retrieve_market,
+        mock_collect_news,
+        mock_gemini,
+        mock_fallback,
+    ):
+        data_date = "2026-07-24"
+        sources = {
+            ticker: [
+                {
+                    **_article(
+                        ticker,
+                        f"{ticker} raises guidance",
+                        "Reuters",
+                        data_date,
+                    ),
+                    "session_phase": "regular_session",
+                }
+            ]
+            for ticker in ("AAA", "BBB")
+        }
+        mock_collect_news.return_value = (
+            sources,
+            {
+                ticker: {
+                    "finnhub_collected": 1,
+                    "finnhub_filter_passed": 1,
+                    "finnhub_selected": 1,
+                    "finnhub_post_close_selected": 0,
+                    "finnhub_status": "ok",
+                }
+                for ticker in sources
+            },
+        )
+        mock_gemini.return_value = {
+            "items": [
+                {
+                    "ticker": "AAA",
+                    "business_ko": "AAA 사업을 영위하는 기업",
+                    "move_reason_ko": "AAA가 가이던스를 상향했습니다.",
+                    "evidence_status": "verified",
+                }
+            ]
+        }
+        mock_fallback.return_value = {
+            "BBB": {
+                "business_summary": "BBB 사업을 영위하는 기업",
+                "move_reason": "BBB가 가이던스를 상향했습니다.",
+                "source_urls": ["https://example.com/BBB"],
+                "source_titles": ["BBB raises guidance"],
+                "provider": "NVIDIA NIM GPT-OSS 120B",
+                "model_verdict": "verified",
+            }
+        }
+        mock_retrieve_market.return_value = {
+            "direct_evidence": [],
+            "historical_context": [],
+            "rag_status": "empty",
+            "retriever_version": "test-v1",
+            "retrieval_as_of": "2026-07-27T01:00:00Z",
+        }
+        stocks = pd.DataFrame(
+            [
+                {
+                    "ticker": ticker,
+                    "name": f"{ticker} Inc.",
+                    "sector": "Information Technology",
+                    "return_1d": 1.0,
+                    "business_summary": f"{ticker} business",
+                }
+                for ticker in ("AAA", "BBB")
+            ]
+        )
+
+        with self.assertLogs("ai_insights", level="INFO") as captured:
+            enriched, _ = enrich_with_ai(
+                stocks,
+                data_date,
+                {"headline": "기본 요약"},
+                retrieval_as_of=datetime(
+                    2026,
+                    7,
+                    27,
+                    1,
+                    tzinfo=timezone.utc,
+                ),
+            )
+
+        fallback_batch = mock_fallback.call_args.args[0]
+        self.assertEqual(
+            [item["ticker"] for item in fallback_batch],
+            ["BBB"],
+        )
+        self.assertEqual(
+            enriched.set_index("ticker").loc["AAA", "move_reason"],
+            "AAA가 가이던스를 상향했습니다.",
+        )
+        self.assertEqual(
+            enriched.set_index("ticker").loc["BBB", "move_reason"],
+            "BBB가 가이던스를 상향했습니다.",
+        )
+        logs = "\n".join(captured.output)
+        self.assertIn(
+            "ticker=AAA",
+            logs,
+        )
+        self.assertIn("GPT fallback=not_used", logs)
+        self.assertIn("결과=verified_direct_catalyst", logs)
+
+    @patch("ai_insights._fallback_stock_entries")
+    @patch("ai_insights._request_gemini_json")
+    @patch("ai_insights._collect_company_news")
+    @patch("ai_insights._retrieve_market_evidence")
+    @patch("ai_insights._save_cache")
+    @patch("ai_insights._load_cache", return_value={})
     def test_gemini_post_close_timing_failure_uses_nim_fallback(
         self,
         _mock_load_cache,
@@ -1129,8 +1318,9 @@ class AiInsightsTest(unittest.TestCase):
         mock_fallback.assert_called_once()
         self.assertEqual(
             enriched.loc[0, "move_reason"],
-            "장 마감 후 가이던스를 상향 발표했습니다.",
+            "관련 기사는 장 마감 후 발표되어 해당 거래일 정규장 등락 원인으로 사용할 수 없습니다.",
         )
+        self.assertEqual(enriched.loc[0, "evidence_outcome"], "post_close_only")
         self.assertTrue(mock_save_cache.called)
 
     @patch("ai_insights._retrieve_market_evidence")
@@ -1186,17 +1376,13 @@ class AiInsightsTest(unittest.TestCase):
                 {"headline": "기본 요약"},
             )
 
-        stock_key = _stock_cache_key(
-            data_date,
-            "AAA",
-            datetime(2026, 7, 24, 22, tzinfo=timezone.utc),
+        self.assertEqual(
+            enriched.loc[0, "move_reason"],
+            "관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.",
         )
-        self.assertEqual(enriched.loc[0, "move_reason"], "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.")
+        self.assertEqual(enriched.loc[0, "evidence_outcome"], "generation_failure")
         mock_get.assert_called_once()
-        self.assertTrue(mock_save_cache.called)
-        self.assertTrue(
-            all(stock_key not in call.args[0] for call in mock_save_cache.call_args_list)
-        )
+        mock_save_cache.assert_not_called()
 
     def test_enrich_passes_cached_stock_sources_to_dataframe(self):
         data_date = "2026-07-23"

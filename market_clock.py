@@ -28,12 +28,33 @@ def _xnys():
     return xcals.get_calendar("XNYS")
 
 
+@lru_cache(maxsize=1)
+def _xkrx():
+    return xcals.get_calendar("XKRX")
+
+
 def market_close_utc(value: str | date) -> datetime:
     """Return the actual XNYS close, including holidays and early closes."""
     session = _session_date(value)
     if not _xnys().is_session(session):
         raise ValueError(f"XNYS 거래일이 아닙니다: {session}")
     return _xnys().session_close(session).to_pydatetime().astimezone(UTC)
+
+
+def target_korea_session_date(as_of: datetime) -> date:
+    """Return today's still-open XKRX session, or the next available session."""
+    observed = as_of if as_of.tzinfo is not None else as_of.replace(tzinfo=UTC)
+    observed_utc = observed.astimezone(UTC)
+    local_date = observed_utc.astimezone(SEOUL).date()
+    calendar = _xkrx()
+    if (
+        calendar.is_session(local_date)
+        and observed_utc < calendar.session_close(local_date).to_pydatetime()
+    ):
+        return local_date
+    if calendar.is_session(local_date):
+        return calendar.next_session(local_date).date()
+    return calendar.date_to_session(local_date, direction="next").date()
 
 
 def workflow_news_cutoff(

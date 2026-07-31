@@ -70,8 +70,9 @@ NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v14-exact-tickers-response-diagnostics"
-GEMINI_INSIGHTS_MAX_TOKENS = 3000
+AI_INSIGHTS_CACHE_VERSION = "v15-partial-fallback-korea-scenario"
+# 구조화 시황과 4종목 응답이 내부 추론 토큰 때문에 잘리지 않도록 여유를 둔다.
+GEMINI_INSIGHTS_MAX_TOKENS = 5000
 GEMINI_INSIGHTS_BATCH_SIZE = 4
 GEMINI_INSIGHTS_TIMEOUT_SEC = 120
 # 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.

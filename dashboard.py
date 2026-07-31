@@ -47,7 +47,7 @@ def _numeric_sort_value(value) -> str:
         return ""
 
 
-def _build_stock_source_links(titles, urls) -> str:
+def _build_stock_source_links(titles, urls, label: str = "근거") -> str:
     if not isinstance(urls, (list, tuple)):
         return ""
     safe_titles = titles if isinstance(titles, (list, tuple)) else []
@@ -61,16 +61,19 @@ def _build_stock_source_links(titles, urls) -> str:
         if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
             continue
         title = safe_titles[index] if index < len(safe_titles) else ""
-        label = str(title).strip() or f"기사 {len(links) + 1}"
+        link_label = str(title).strip() or f"기사 {len(links) + 1}"
         links.append(
             f'<a href="{escape(url, quote=True)}" target="_blank" '
-            f'rel="noopener noreferrer">{escape(label)}</a>'
+            f'rel="noopener noreferrer">{escape(link_label)}</a>'
         )
         if len(links) == 3:
             break
     if not links:
         return ""
-    return f'<div class="stock-source-links">근거: {" · ".join(links)}</div>'
+    return (
+        f'<div class="stock-source-links">{escape(label)}: '
+        f'{" · ".join(links)}</div>'
+    )
 
 
 def _color_class(val) -> str:
@@ -112,8 +115,17 @@ def _build_stock_rows(df: pd.DataFrame, section_class: str) -> str:
         sector = str(r.get("sector", ""))
         business = str(r.get("business_summary", ""))
         move_reason = str(r.get("move_reason", ""))
+        evidence_outcome = str(r.get("evidence_outcome", ""))
+        if evidence_outcome == "verified_direct_catalyst":
+            source_label = "직접 근거"
+        elif evidence_outcome:
+            source_label = "관련 기사"
+        else:
+            source_label = "근거"
         source_links = _build_stock_source_links(
-            r.get("source_titles", []), r.get("source_urls", [])
+            r.get("source_titles", []),
+            r.get("source_urls", []),
+            source_label,
         )
         mc_sort_value = _numeric_sort_value(mc_b)
 
@@ -208,6 +220,34 @@ def _build_market_summary_html(market_summary: dict) -> str:
         if recent_context
         else ""
     )
+    korea_scenario = market_summary.get("korea_market_scenario")
+    korea_scenario_html = ""
+    if isinstance(korea_scenario, dict):
+        def scenario_items(field: str) -> str:
+            values = korea_scenario.get(field)
+            if not isinstance(values, (list, tuple)):
+                return ""
+            return "".join(
+                f"<li>{escape(str(value))}</li>"
+                for value in values
+                if str(value).strip()
+            )
+
+        session_date = str(korea_scenario.get("session_date") or "")
+        base_case = str(korea_scenario.get("base_case") or "")
+        positive_items = scenario_items("positive_conditions")
+        risk_items = scenario_items("risk_conditions")
+        watch_items = scenario_items("watch_items")
+        korea_scenario_html = f"""
+    <div class="korea-market-scenario">
+      <h3>🇰🇷 한국 증시 확인 조건과 시나리오 · {escape(session_date)}</h3>
+      <p><strong>기본 시나리오</strong>{escape(base_case)}</p>
+      <div class="scenario-grid">
+        <div><strong>긍정 확인 조건</strong><ul>{positive_items}</ul></div>
+        <div><strong>위험 확인 조건</strong><ul>{risk_items}</ul></div>
+        <div><strong>관전 변수·업종</strong><ul>{watch_items}</ul></div>
+      </div>
+    </div>"""
     rag_status = str(market_summary.get("rag_status") or "legacy")
     provider = str(market_summary.get("provider") or "")
     return f"""
@@ -217,6 +257,7 @@ def _build_market_summary_html(market_summary: dict) -> str:
     <p><strong>관측</strong>{escape(str(market_summary.get('observation', '')))}</p>
     <p><strong>직접 해석</strong>{escape(str(market_summary.get('interpretation', '')))}</p>
     {recent_context_html}
+    {korea_scenario_html}
     {direct_sources_html}
     {context_sources_html}
     <p class="market-summary-rag">RAG {escape(rag_status)} · {escape(provider)}</p>
@@ -382,8 +423,21 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }}
     .market-summary-card strong {{ color: #fff; display: inline-block; min-width: 68px; }}
     .market-summary-sources a {{ color: #9bc8ff; text-decoration: underline; }}
+    .korea-market-scenario {{
+      margin: 18px 0; padding: 16px;
+      background: rgba(5, 18, 35, .32); border-radius: 10px;
+      border: 1px solid rgba(128, 179, 255, .18);
+    }}
+    .korea-market-scenario h3 {{ font-size: 14px; margin-bottom: 10px; }}
+    .scenario-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }}
+    .scenario-grid strong {{ font-size: 12px; margin-bottom: 6px; }}
+    .scenario-grid ul {{ margin: 4px 0 0 18px; color: rgba(220,230,248,.84); }}
+    .scenario-grid li {{ font-size: 12px; line-height: 1.55; margin-bottom: 4px; }}
     .market-summary-rag {{ color: #8bbdff !important; font-size: 10px !important; }}
     .market-summary-note {{ color: var(--muted) !important; font-size: 11px !important; margin-top: 14px !important; }}
+    @media (max-width: 760px) {{
+      .scenario-grid {{ grid-template-columns: 1fr; }}
+    }}
 
     /* ── Tables ── */
     .tables-grid {{

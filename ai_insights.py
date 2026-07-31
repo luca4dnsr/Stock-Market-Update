@@ -47,12 +47,27 @@ from config import (
 from market_clock import (
     market_close_utc,
     report_session_phase,
+    target_korea_session_date,
     workflow_news_cutoff as _workflow_news_cutoff,
 )
 
 logger = logging.getLogger(__name__)
 
 LIMITED_REASON = "최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다."
+STOCK_EVIDENCE_MESSAGES = {
+    "related_news_no_direct_catalyst": (
+        "관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다."
+    ),
+    "post_close_only": (
+        "관련 기사는 장 마감 후 발표되어 해당 거래일 정규장 등락 원인으로 사용할 수 없습니다."
+    ),
+    "generation_failure": (
+        "관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다."
+    ),
+    "no_eligible_articles": (
+        "날짜·URL·직접 관련 티커 조건을 충족한 기사를 찾지 못했습니다."
+    ),
+}
 LIMITED_MARKET_INTERPRETATION = (
     "해당 거래일 장 마감 전 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. "
     "아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다."
@@ -101,6 +116,32 @@ MARKET_RESPONSE_SCHEMA = {
         "observation": {"type": "STRING"},
         "interpretation": {"type": "STRING"},
         "recent_context": {"type": "STRING"},
+        "korea_market_scenario": {
+            "type": "OBJECT",
+            "properties": {
+                "session_date": {"type": "STRING"},
+                "base_case": {"type": "STRING"},
+                "positive_conditions": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                },
+                "risk_conditions": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                },
+                "watch_items": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                },
+            },
+            "required": [
+                "session_date",
+                "base_case",
+                "positive_conditions",
+                "risk_conditions",
+                "watch_items",
+            ],
+        },
         "direct_evidence_ids": {
             "type": "ARRAY",
             "items": {"type": "STRING"},
@@ -115,6 +156,7 @@ MARKET_RESPONSE_SCHEMA = {
         "observation",
         "interpretation",
         "recent_context",
+        "korea_market_scenario",
         "direct_evidence_ids",
         "context_evidence_ids",
     ],
@@ -489,6 +531,10 @@ def _collect_company_news(
                 "finnhub_collected": len(raw_articles),
                 "finnhub_filter_passed": passed_count,
                 "finnhub_selected": len(selected_articles),
+                "finnhub_post_close_selected": sum(
+                    article.get("session_phase") == "post_close"
+                    for article in selected_articles
+                ),
                 "finnhub_status": "ok",
             }
         except Exception as exc:
@@ -498,6 +544,7 @@ def _collect_company_news(
                 "finnhub_collected": 0,
                 "finnhub_filter_passed": 0,
                 "finnhub_selected": 0,
+                "finnhub_post_close_selected": 0,
                 "finnhub_status": f"error:{type(exc).__name__}",
             }
     return result, diagnostics
@@ -874,6 +921,7 @@ def _request_nim_json(model: str, system_prompt: str, prompt: str) -> dict:
         "observation",
         "interpretation",
         "recent_context",
+        "korea_market_scenario",
         "direct_evidence_ids",
         "context_evidence_ids",
     }
@@ -948,11 +996,22 @@ move_reason_ko는 기사 제목 또는 요약에 해당 종목의 직접 촉매(
 {json.dumps(payload, ensure_ascii=False)}"""
 
 
+def _korea_session_date(retrieval: dict) -> str:
+    raw_as_of = str(retrieval.get("retrieval_as_of") or "").strip()
+    try:
+        as_of = datetime.fromisoformat(raw_as_of.replace("Z", "+00:00"))
+    except ValueError:
+        as_of = datetime.now(timezone.utc)
+    return target_korea_session_date(as_of).isoformat()
+
+
 def _market_prompt(
     base_market_summary: dict, retrieval: dict, data_date: str
 ) -> str:
+    korea_session_date = _korea_session_date(retrieval)
     payload = {
         "market_data": base_market_summary,
+        "korea_session_date": korea_session_date,
         "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
         "news_cutoff": retrieval.get("news_cutoff", ""),
         "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
@@ -967,6 +1026,13 @@ direct_evidence는 워크플로 뉴스 기준 시각 이전에 발행된 당일 
 작성하십시오. post_close 근거는 장 마감 후 후속 동향으로만 설명하고 그날 정규장 움직임의 원인으로
 표현하지 마십시오. historical_context는 이전 2~45일의 거시·섹터 배경이며 recent_context에서만
 설명하십시오. 기사에 없는 인과관계·투자 조언·단순 가격 변동의 원인 추정은 금지합니다.
+
+미국장 관측과 검증된 기사 근거를 토대로 korea_session_date 한국 증시의 조건부 시나리오를
+korea_market_scenario에 작성하십시오. base_case는 미국장 흐름이 한국 증시에 전달될 수 있는 경로를
+단정하지 않고 설명하십시오. positive_conditions와 risk_conditions에는 장중 확인할 조건을 각각
+1~3개, watch_items에는 환율·금리·유가·반도체 등 입력 근거에서 실제 확인 가능한 관전 변수나 업종을
+1~4개 작성하십시오. 한국 개별 종목 추천, 매수·매도 지시, 입력에 없는 한국 시장 수치 추정은
+금지합니다. session_date는 반드시 {korea_session_date}로 반환하십시오.
 
 사용한 직접 근거의 evidence_id를 direct_evidence_ids에 넣되, session_phase가 regular_session인
 근거 ID를 최소 3개 포함하십시오. 최근 맥락 근거의 evidence_id는 context_evidence_ids에 넣으십시오.
@@ -1003,6 +1069,7 @@ move_reason_ko로 작성하십시오. 그렇지 않으면 evidence_status는 lim
 def _fallback_market_prompt(
     base_market_summary: dict, retrieval: dict, data_date: str
 ) -> str:
+    korea_session_date = _korea_session_date(retrieval)
     direct_example_ids = [
         str(article.get("evidence_id", ""))
         for article in retrieval.get("direct_evidence", [])
@@ -1019,11 +1086,19 @@ def _fallback_market_prompt(
         "observation": "수치와 기사에 근거한 관측",
         "interpretation": "직접 근거에 한정한 해석",
         "recent_context": "최근 거시·섹터 배경" if context_example_ids else "",
+        "korea_market_scenario": {
+            "session_date": korea_session_date,
+            "base_case": "미국장 근거에 기반한 조건부 기본 시나리오",
+            "positive_conditions": ["위험선호 회복 확인 조건"],
+            "risk_conditions": ["약세 지속 경고 조건"],
+            "watch_items": ["입력 근거에서 확인 가능한 관전 변수"],
+        },
         "direct_evidence_ids": direct_example_ids,
         "context_evidence_ids": context_example_ids,
     }
     payload = {
         "market_data": base_market_summary,
+        "korea_session_date": korea_session_date,
         "market_close_cutoff": retrieval.get("market_close_cutoff", ""),
         "news_cutoff": retrieval.get("news_cutoff", ""),
         "retrieval_as_of": retrieval.get("retrieval_as_of", ""),
@@ -1042,7 +1117,12 @@ direct_evidence_ids에 넣되 regular_session 근거 ID를 최소 3개 포함하
 추정은 금지합니다. historical_context가 비어 있으면 recent_context는 빈 문자열,
 context_evidence_ids는 빈 배열로 반환하십시오. JSON 외 텍스트를 반환하지 마십시오.
 
-반환 형식은 반드시 아래 여섯 필드를 모두 가진 최상위 JSON 객체여야 합니다.
+미국장 수치와 검증된 기사 근거를 토대로 korea_session_date 한국 증시의 조건부 시나리오를
+korea_market_scenario에 작성하십시오. 장중 확인 조건과 관전 변수만 제시하고 한국 개별 종목 추천,
+매수·매도 지시, 입력에 없는 한국 시장 수치 추정은 금지합니다. session_date는 반드시
+{korea_session_date}로 반환하십시오.
+
+반환 형식은 반드시 아래 일곱 필드를 모두 가진 최상위 JSON 객체여야 합니다.
 {json.dumps(response_example, ensure_ascii=False)}
 
 입력 데이터:
@@ -1103,7 +1183,11 @@ def _normalise_stock_batch(
             "move_reason": raw_move_reason[:280] if is_verified else LIMITED_REASON,
             "source_urls": [source["url"] for source in sources] if is_verified else [],
             "source_titles": [source["headline"] for source in sources] if is_verified else [],
-            "provider": provider_name if is_verified else f"{provider_name} (Finnhub 근거 부족)",
+            "provider": (
+                provider_name
+                if is_verified
+                else f"{provider_name} (직접 촉매 미확인)"
+            ),
             "model_verdict": model_verdict,
         }
     return entries
@@ -1168,10 +1252,13 @@ def _require_complete_stock_response(generated: dict, expected_items: list[dict]
             )
 
 
-def _valid_stock_response_items(
-    generated: dict, expected_items: list[dict], attempt: int
-) -> dict[str, dict]:
-    """NIM 응답에서 필수 필드가 완전한 종목만 추려 구조 진단을 남긴다."""
+def _inspect_stock_response_items(
+    generated: dict,
+    expected_items: list[dict],
+    attempt: int,
+    provider_name: str,
+) -> tuple[dict[str, dict], dict[str, list[str]]]:
+    """AI 응답에서 필수 필드가 완전한 종목과 나머지 문제를 분리한다."""
     expected_tickers = [str(item["ticker"]) for item in expected_items]
     expected_set = set(expected_tickers)
     expected_by_ticker = {
@@ -1229,8 +1316,9 @@ def _valid_stock_response_items(
         f"{ticker}:{','.join(fields)}" for ticker, fields in issues.items()
     )
     logger.info(
-        "NIM 종목 응답 진단 | attempt=%d | items_shape=%s | expected=%s | "
+        "%s 종목 응답 진단 | attempt=%d | items_shape=%s | expected=%s | "
         "returned=%s | valid=%s | issues=%s | unexpected_count=%d",
+        provider_name,
         attempt,
         "array" if isinstance(raw_items, list) else "not_array",
         ",".join(expected_tickers) or "-",
@@ -1239,7 +1327,70 @@ def _valid_stock_response_items(
         issue_text or "-",
         unexpected_count,
     )
-    return valid
+    return valid, issues
+
+
+def _valid_stock_response_items(
+    generated: dict, expected_items: list[dict], attempt: int
+) -> dict[str, dict]:
+    return _inspect_stock_response_items(
+        generated,
+        expected_items,
+        attempt,
+        "NIM",
+    )[0]
+
+
+def _stock_evidence_outcome(diagnostic: dict, model_verdict: str) -> str:
+    if diagnostic.get("finnhub_status") != "ok":
+        return "generation_failure"
+    selected = int(diagnostic.get("finnhub_selected") or 0)
+    post_close = int(diagnostic.get("finnhub_post_close_selected") or 0)
+    if selected == 0:
+        return "no_eligible_articles"
+    if post_close == selected:
+        return "post_close_only"
+    if model_verdict == "verified":
+        return "verified_direct_catalyst"
+    if model_verdict == "limited":
+        return "related_news_no_direct_catalyst"
+    return "generation_failure"
+
+
+def _finalise_stock_entry(
+    entry: dict | None,
+    source_item: dict,
+    diagnostic: dict,
+) -> dict:
+    result = dict(entry or {})
+    sources = [
+        source
+        for source in source_item.get("selected_finnhub_articles", [])
+        if isinstance(source, dict)
+    ]
+    diagnostic.setdefault("finnhub_selected", len(sources))
+    diagnostic.setdefault(
+        "finnhub_post_close_selected",
+        sum(source.get("session_phase") == "post_close" for source in sources),
+    )
+    model_verdict = str(result.get("model_verdict") or "generation_failure")
+    outcome = _stock_evidence_outcome(diagnostic, model_verdict)
+    diagnostic["evidence_outcome"] = outcome
+    result["evidence_outcome"] = outcome
+
+    if outcome != "verified_direct_catalyst":
+        result["move_reason"] = STOCK_EVIDENCE_MESSAGES[outcome]
+        result["source_urls"] = [
+            str(source.get("url") or "") for source in sources
+        ]
+        result["source_titles"] = [
+            str(source.get("headline") or "") for source in sources
+        ]
+        result.setdefault("provider", "규칙 기반 제한 문구")
+        result.setdefault("model_verdict", model_verdict)
+    result.setdefault("business_summary", _business_fallback(source_item))
+    result["diagnostic"] = diagnostic
+    return result
 
 
 def _log_stock_diagnostic(
@@ -1254,18 +1405,23 @@ def _log_stock_diagnostic(
     collected = diagnostic.get("finnhub_collected", "-")
     passed = diagnostic.get("finnhub_filter_passed", "-")
     selected = diagnostic.get("finnhub_selected", "-")
+    post_close = diagnostic.get("finnhub_post_close_selected", "-")
     finnhub_status = diagnostic.get("finnhub_status", "unknown")
+    evidence_outcome = diagnostic.get("evidence_outcome", "unknown")
     logger.info(
         "종목 뉴스 진단 | ticker=%s | cache=%s | Finnhub 수집=%s | 필터통과=%s | "
-        "LLM전달=%s | Finnhub=%s | Gemini=%s | GPT fallback=%s",
+        "LLM전달=%s | 장마감후=%s | Finnhub=%s | Gemini=%s | GPT fallback=%s | "
+        "결과=%s",
         ticker,
         "hit" if cache_hit else "miss",
         collected,
         passed,
         selected,
+        post_close,
         finnhub_status,
         gemini_verdict,
         gpt_fallback,
+        evidence_outcome,
     )
 
 
@@ -1634,11 +1790,19 @@ def _limited_market_summary(
     rag_status: str = "insufficient_direct_evidence",
 ) -> dict:
     retrieval = dict(retrieval or {})
+    korea_session_date = _korea_session_date(retrieval)
     return {
         "headline": str(base_market_summary.get("headline", "당일 시장 흐름")),
         "observation": str(base_market_summary.get("observation", "")),
         "interpretation": LIMITED_MARKET_INTERPRETATION,
         "recent_context": "최근 거시·섹터 맥락을 뒷받침할 시점 적격 기사 근거가 충분하지 않습니다.",
+        "korea_market_scenario": {
+            "session_date": korea_session_date,
+            "base_case": "미국장 직접 근거가 부족해 한국 증시 조건부 시나리오를 생성하지 못했습니다.",
+            "positive_conditions": [],
+            "risk_conditions": [],
+            "watch_items": [],
+        },
         "disclaimer": "뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.",
         "source_urls": [],
         "source_titles": [],
@@ -1685,6 +1849,45 @@ def _source_fields(sources: list[dict]) -> tuple[list[str], list[str], list[str]
     )
 
 
+def _normalise_korea_market_scenario(generated: dict, retrieval: dict) -> dict:
+    scenario = generated.get("korea_market_scenario")
+    if not isinstance(scenario, dict):
+        raise ValueError("시황 응답의 한국 증시 시나리오가 객체가 아닙니다.")
+
+    expected_date = _korea_session_date(retrieval)
+    session_date = str(scenario.get("session_date") or "").strip()
+    base_case = str(scenario.get("base_case") or "").strip()
+    if session_date != expected_date:
+        raise ValueError(
+            "한국 증시 시나리오 거래일이 예상 거래일과 다릅니다: "
+            f"{session_date or '-'} != {expected_date}"
+        )
+    if not base_case:
+        raise ValueError("한국 증시 시나리오 기본 시나리오가 비어 있습니다.")
+
+    result = {
+        "session_date": session_date,
+        "base_case": base_case[:500],
+    }
+    limits = {
+        "positive_conditions": 3,
+        "risk_conditions": 3,
+        "watch_items": 4,
+    }
+    for field, maximum in limits.items():
+        values = scenario.get(field)
+        if (
+            not isinstance(values, list)
+            or not 1 <= len(values) <= maximum
+            or any(not isinstance(value, str) or not value.strip() for value in values)
+        ):
+            raise ValueError(
+                f"한국 증시 시나리오 {field}는 1~{maximum}개의 문자열이어야 합니다."
+            )
+        result[field] = [value.strip()[:240] for value in values]
+    return result
+
+
 def _build_market_summary(
     generated: dict, retrieval: dict | list[dict], provider_name: str
 ) -> dict:
@@ -1700,6 +1903,7 @@ def _build_market_summary(
         missing.append("recent_context")
     if missing:
         raise ValueError(f"시황 응답 필수 필드 누락/형식 오류: {', '.join(missing)}")
+    korea_market_scenario = _normalise_korea_market_scenario(generated, retrieval)
 
     direct_ids = _evidence_ids(generated, "direct_evidence_ids")
     context_ids = _evidence_ids(generated, "context_evidence_ids")
@@ -1759,6 +1963,7 @@ def _build_market_summary(
     return {
         **{field: str(generated[field]).strip()[:600] for field in fields},
         "recent_context": recent_context.strip()[:600],
+        "korea_market_scenario": korea_market_scenario,
         "disclaimer": (
             f"{provider_name}가 코드가 선정한 직접 근거 {len(direct_sources)}건과 최근 맥락 "
             f"{len(context_sources)}건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다."
@@ -1899,6 +2104,7 @@ def enrich_with_ai(
                     "finnhub_collected": 0,
                     "finnhub_filter_passed": 0,
                     "finnhub_selected": 0,
+                    "finnhub_post_close_selected": 0,
                     "finnhub_status": f"collection_error:{type(exc).__name__}",
                 }
                 for ticker in missing
@@ -1919,6 +2125,10 @@ def enrich_with_ai(
         for batch_index, batch in enumerate(
             _chunked(items, GEMINI_INSIGHTS_BATCH_SIZE), start=1
         ):
+            gemini_entries: dict[str, dict] = {}
+            gemini_issues: dict[str, list[str]] = {}
+            gemini_error: Exception | None = None
+            unresolved = list(batch)
             try:
                 if gemini_disabled_reason:
                     raise RuntimeError(
@@ -1929,37 +2139,42 @@ def enrich_with_ai(
                     STOCK_RESPONSE_SCHEMA,
                     expected_tickers=[str(item["ticker"]) for item in batch],
                 )
-                _require_complete_stock_response(generated, batch)
-                entries = _normalise_stock_batch(generated, batch, "Gemini + Finnhub")
-                for ticker, entry in entries.items():
-                    diagnostic = dict(news_diagnostics[ticker])
-                    diagnostic.update(
+                valid_raw, gemini_issues = _inspect_stock_response_items(
+                    generated,
+                    batch,
+                    attempt=1,
+                    provider_name="Gemini",
+                )
+                valid_source_items = [
+                    item
+                    for item in batch
+                    if str(item["ticker"]) in valid_raw
+                ]
+                if valid_source_items:
+                    gemini_entries = _normalise_stock_batch(
                         {
-                            "gemini_verdict": entry["model_verdict"],
-                            "gpt_fallback": "not_used",
-                        }
+                            "items": [
+                                valid_raw[str(item["ticker"])]
+                                for item in valid_source_items
+                            ]
+                        },
+                        valid_source_items,
+                        "Gemini + Finnhub",
                     )
-                    entry["diagnostic"] = diagnostic
-                    session_entries[ticker] = entry
-                    if diagnostic.get("finnhub_status") == "ok":
-                        cache[cache_keys[ticker]] = entry
-                    _log_stock_diagnostic(
-                        ticker,
-                        diagnostic,
-                        diagnostic["gemini_verdict"],
-                        diagnostic["gpt_fallback"],
+                unresolved = [
+                    item
+                    for item in batch
+                    if str(item["ticker"]) not in gemini_entries
+                ]
+                if unresolved:
+                    logger.warning(
+                        "Gemini 미해결 종목만 GPT-OSS fallback으로 전달합니다 "
+                        "(묶음 %d): %s",
+                        batch_index,
+                        ", ".join(str(item["ticker"]) for item in unresolved),
                     )
-                _save_cache(cache)
-                verified_count = sum(
-                    entry["provider"] == "Gemini + Finnhub" for entry in entries.values()
-                )
-                logger.info(
-                    "Finnhub 종목 뉴스 해석 완료: 묶음 %d (%d/%d건 근거 확인)",
-                    batch_index,
-                    verified_count,
-                    len(batch),
-                )
             except Exception as exc:
+                gemini_error = exc
                 if gemini_disabled_reason is None and _is_non_retryable_gemini_error(exc):
                     gemini_disabled_reason = str(exc)
                     logger.warning(
@@ -1971,43 +2186,66 @@ def enrich_with_ai(
                     batch_index,
                     exc,
                 )
-                entries = _fallback_stock_entries(batch, data_date, start, end)
-                for item in batch:
-                    ticker = str(item["ticker"])
-                    diagnostic = dict(news_diagnostics[ticker])
-                    entry = entries.get(ticker)
-                    if entry:
-                        diagnostic.update(
-                            {
-                                "gemini_verdict": f"error:{type(exc).__name__}",
-                                "gpt_fallback": f"used:{entry['model_verdict']}",
-                            }
-                        )
-                        entry["diagnostic"] = diagnostic
-                        session_entries[ticker] = entry
-                        if diagnostic.get("finnhub_status") == "ok":
-                            cache[cache_keys[ticker]] = entry
-                        _log_stock_diagnostic(
-                            ticker,
-                            diagnostic,
-                            diagnostic["gemini_verdict"],
-                            diagnostic["gpt_fallback"],
-                        )
-                    else:
-                        diagnostic.update(
-                            {
-                                "gemini_verdict": f"error:{type(exc).__name__}",
-                                "gpt_fallback": "failed",
-                            }
-                        )
-                        _log_stock_diagnostic(
-                            ticker,
-                            diagnostic,
-                            diagnostic["gemini_verdict"],
-                            diagnostic["gpt_fallback"],
-                        )
-                if entries:
-                    _save_cache(cache)
+                unresolved = list(batch)
+
+            fallback_entries = (
+                _fallback_stock_entries(unresolved, data_date, start, end)
+                if unresolved
+                else {}
+            )
+            cached_any = False
+            final_entries: dict[str, dict] = {}
+            for item in batch:
+                ticker = str(item["ticker"])
+                diagnostic = dict(news_diagnostics[ticker])
+                entry = gemini_entries.get(ticker)
+                if entry is not None:
+                    gemini_verdict = str(entry["model_verdict"])
+                    gpt_fallback = "not_used"
+                else:
+                    entry = fallback_entries.get(ticker)
+                    issue_text = ",".join(gemini_issues.get(ticker, []))
+                    gemini_verdict = (
+                        f"error:{type(gemini_error).__name__}"
+                        if gemini_error is not None
+                        else f"invalid:{issue_text or 'unresolved'}"
+                    )
+                    gpt_fallback = (
+                        f"used:{entry['model_verdict']}" if entry else "failed"
+                    )
+                diagnostic.update(
+                    {
+                        "gemini_verdict": gemini_verdict,
+                        "gpt_fallback": gpt_fallback,
+                    }
+                )
+                final_entry = _finalise_stock_entry(entry, item, diagnostic)
+                final_entries[ticker] = final_entry
+                session_entries[ticker] = final_entry
+                if (
+                    entry is not None
+                    and diagnostic.get("finnhub_status") == "ok"
+                ):
+                    cache[cache_keys[ticker]] = final_entry
+                    cached_any = True
+                _log_stock_diagnostic(
+                    ticker,
+                    diagnostic,
+                    gemini_verdict,
+                    gpt_fallback,
+                )
+            if cached_any:
+                _save_cache(cache)
+            verified_count = sum(
+                entry.get("evidence_outcome") == "verified_direct_catalyst"
+                for entry in final_entries.values()
+            )
+            logger.info(
+                "Finnhub 종목 뉴스 해석 완료: 묶음 %d (%d/%d건 직접 촉매 확인)",
+                batch_index,
+                verified_count,
+                len(batch),
+            )
 
     for ticker in tickers:
         if ticker in missing:
@@ -2041,6 +2279,10 @@ def enrich_with_ai(
     ]
     result["source_titles"] = [
         resolved_entries[ticker].get("source_titles") or []
+        for ticker in tickers
+    ]
+    result["evidence_outcome"] = [
+        resolved_entries[ticker].get("evidence_outcome") or "generation_failure"
         for ticker in tickers
     ]
 
