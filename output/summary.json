@@ -1,118 +1,136 @@
 {
-  "data_date": "2026-07-30",
-  "advances": 194,
-  "declines": 300,
+  "data_date": "2026-07-31",
+  "advances": 218,
+  "declines": 275,
   "total": 503,
   "top3": [
     {
-      "ticker": "SNDK",
-      "name": "Sandisk",
-      "return_1d": 26.0
+      "ticker": "AMZN",
+      "name": "Amazon",
+      "return_1d": 15.3
     },
     {
-      "ticker": "EME",
-      "name": "Emcor",
-      "return_1d": 19.3
+      "ticker": "DXCM",
+      "name": "Dexcom",
+      "return_1d": 12.0
     },
     {
-      "ticker": "MU",
-      "name": "Micron Technology",
-      "return_1d": 18.4
+      "ticker": "MPWR",
+      "name": "Monolithic Power Systems",
+      "return_1d": 8.3
     }
   ],
   "bot3": [
     {
-      "ticker": "FICO",
-      "name": "Fair Isaac",
-      "return_1d": -17.0
+      "ticker": "GDDY",
+      "name": "GoDaddy",
+      "return_1d": -16.7
     },
     {
-      "ticker": "CHRW",
-      "name": "C.H. Robinson",
-      "return_1d": -15.4
+      "ticker": "CTVA",
+      "name": "Corteva",
+      "return_1d": -11.9
     },
     {
-      "ticker": "NCLH",
-      "name": "Norwegian Cruise Line Holdings",
-      "return_1d": -9.8
+      "ticker": "COIN",
+      "name": "Coinbase",
+      "return_1d": -10.6
     }
   ],
   "market_summary": {
-    "headline": "연준 금리 동결과 국채 금리 상승 속 약한 위험회피 흐름",
-    "observation": "상승 194개, 하락 300개로 상승 비율은 39%에 그치며 하락 종목이 다소 우세했습니다. 섹터별로는 정보기술(+5.7%)과 임의소비재(+1.8%)가 강세를 보인 반면, 필수소비재(-2.2%)와 통신서비스(-1.8%)는 약세를 보였습니다. 개별 종목 중에서는 SNDK(+26.0%)가 가장 강했고, FICO(-17.0%)가 가장 약했습니다.",
-    "interpretation": "연방준비제도(Fed)가 기준금리를 동결하기로 결정한 이후, 투자자들이 이를 평가하면서 미국 국채 수익률의 상승세가 지속되었습니다. 시장에서는 연준의 스탠스와 함께 미국이 이란의 미사일 공격을 요격하는 등 중동 지역의 긴장이 유가를 상승시키고, 달러화 약세 속에 금 가격이 상승하는 등의 상황을 함께 반영했습니다.",
-    "recent_context": "이전 배경을 보면 유가가 100달러 부근까지 오르며 중앙은행들의 인플레이션 위험 및 금리 결정에 대한 주목도가 높아진 바 있으며, OPEC+가 9월부터 원유 생산 목표를 다시 올릴 가능성이 있다는 보고가 있었습니다. 시장 참가자들은 지난주 공급 쇼크 등 거시 이슈와 관련해 연준의 입장에 주목해왔습니다.",
+    "headline": "연준 금리 동결 및 국채 수익률 상승 속에 하락 종목 우세",
+    "observation": "미국 증시는 상승 218개, 하락 275개로 하락 종목이 다소 우세를 보였습니다. 섹터별로는 경기소비재(+6.5%)와 통신 서비스(+5.5%)가 강세를 나타낸 반면, 소재(-2.6%)와 유틸리티(-0.7%) 섹터는 약세를 보였습니다. 개별 종목에서는 AMZN(+15.3%)이 가장 큰 폭으로 상승했고, GDDY(-16.7%)는 가장 큰 폭으로 하락했습니다.",
+    "interpretation": "연방준비제도(Fed)가 기준금리를 동결한 이후 투자자들이 그 결과를 평가하면서 미국 국채 수익률 상승세가 이어졌습니다. 미국 2분기 경제성장률의 경우 수입증가가 전체 성장을 제약했으나 내수 수요는 견조한 것으로 확인되었습니다. 한편 투자자들이 즉각적인 금리 변경 전망을 조정하는 가운데 약달러와 중동 긴장 상황이 맞물리며 금 가격은 소폭 상승 흐름을 보였습니다.",
+    "recent_context": "최근 2~45일 간의 배경을 살펴보면 유가가 100달러 부근까지 육박하면서 통화 당국의 인플레이션 위험 관리 부담이 가중되었고, 연준의 정책 인내심에 대한 시장의 경계감이 지속되어 왔습니다.",
+    "korea_market_scenario": {
+      "session_date": "2026-08-03",
+      "base_case": "미국 연준의 금리 동결 결정과 국채 수익률 상승, 견조한 미국 내수 지표 등 미국 시장의 요인들이 한국 증시로 유입되며 장 초반 자산군별 변동성을 형성할 가능성이 있습니다.",
+      "positive_conditions": [
+        "미국 국채 금리 상승세의 안정화 및 달러 약세 기조 유지",
+        "미국 견조한 내수 지표에 기반한 글로벌 경기 연착륙 기대감"
+      ],
+      "risk_conditions": [
+        "미국 국채 수익률의 추가 상승에 따른 위험자산 투자심리 위축",
+        "고금리 장기화 우려에 따른 외국인 자금 이탈 압력"
+      ],
+      "watch_items": [
+        "미국 국채 금리",
+        "달러 환율",
+        "유가",
+        "금 시세"
+      ]
+    },
     "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 4건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [
       "https://www.cnbc.com/2026/07/30/us-treasury-yields-divided-fed-interest-rates-hold-steady-.html",
       "https://www.cnbc.com/2026/07/29/here-are-the-five-big-takeaways-from-this-weeks-fed-meeting.html",
-      "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOQVJINlBLLWpMT3doZzQtUlVpbTFsZGt3c2xsczh0cmxHTEw1dG1HdFFNVUUxMkpuNE9pa1N5SDB0ZVVSYU51VUNvZ1lFdENrMmVzTUZ6RDAtYkp1Sm5hNy1PSXh6bmhKcTZMU3FtRmk0S1BSeUxNVWgtS3R0OWRIc0l2WG5ZaEpDVVAxT25FTTBacmMtYnlPTHh0bEdwQmUyVDRWUHFmSGJ4ZHBCRExSMGoybUlvTU16RGxxaE4zNm4?oc=5",
-      "https://www.bloomberg.com/news/articles/2026-07-28/trump-netanyahu-meet-at-white-house-us-dials-back-iran-threats",
+      "https://www.bloomberg.com/news/articles/2026-07-29/gold-advances-after-federal-reserve-keeps-interest-rates-on-hold",
+      "https://news.google.com/rss/articles/CBMiqwFBVV95cUxObWh4Um5od3luS0pRM0hOYTNwN0Z4bElZWFBXVDRRdFFVT2FpejU4ZkQ3MTVuY3hYb1NpMVd4QXV4WFhFMFUwbTRCbGs2cGlPOW11LWUxdzFyRnU0a0cwZU02b0s5b012M0p3Y2prV25KT0RQd3BGZk52aWNlanFDSDh5UTRRUVYtc2lsSm1RWjM4MjlzMXFCcEVrVjNvYVNzN3pNTm1zU2ZpV1U?oc=5",
       "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
-      "https://news.google.com/rss/articles/CBMitwFBVV95cUxQTU93Z2Fkc0xuTTVYTGlzWkxXbW9YTU9kX2lwa2xXeDJMS1RnZ18yM3drMEpEM0dxWmRBcWJkR2dSSGFqV3FsSVBvdXJzbW5fUm84TDI4THVRWDJpNHNzTFAwUEx6THl0ZnhuUVc1SERMSWtnMEd0YnMxSVptU1EtX2lmV2VSeWpIR2JlQ0Z1ZlY1d201NDI1b1dCQ1N1d3htLTZ6N1FXXzFjWkN5VlVRLWUxQlJFaWs?oc=5",
-      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html"
+      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html",
+      "https://news.google.com/rss/articles/CBMirgFBVV95cUxNU2xCM1U5RlBYYVFhWFdmeWxxZ3BYendOMTZIRXBIRVlhckdSUGVycjlNVXZ5UERsZzMycVJwaWVmaHBzMVZZQUV3c0ZGYWt4RWVfZEo2eFNVRTNvWlVPUmo2R29kX2dnZ09FZzFrOEhRbloxSXNUX1haZzJfUld0RFlGOUFWTml4dG9udFZfN1NxNXJEWjQ5c0ZJQUQwUFFhSWJ4cHdTQXFiUDA1M0E?oc=5"
     ],
     "source_titles": [
       "Treasury sell-off continues after divided Fed holds interest rates steady",
       "Here are the five big takeaways from this week's Fed meeting",
-      "Gold gains on softer dollar as markets assess Fed stance, Middle East tensions - Reuters",
-      "US intercepts Iranian missile attack as West Asia tensions push oil prices higher",
+      "Gold holds modest gain after Federal Reserve keeps rates steady",
+      "Imports hold back US economic growth in Q2, but domestic demand robust - Reuters",
       "Oil near $100 puts fed and peers in interest-rate spotlight",
-      "OPEC+ likely to again raise oil output targets from September, sources say - Reuters",
-      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week"
+      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week",
+      "Fed patience risks shredding credibility - Reuters"
     ],
     "direct_source_urls": [
       "https://www.cnbc.com/2026/07/30/us-treasury-yields-divided-fed-interest-rates-hold-steady-.html",
       "https://www.cnbc.com/2026/07/29/here-are-the-five-big-takeaways-from-this-weeks-fed-meeting.html",
-      "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOQVJINlBLLWpMT3doZzQtUlVpbTFsZGt3c2xsczh0cmxHTEw1dG1HdFFNVUUxMkpuNE9pa1N5SDB0ZVVSYU51VUNvZ1lFdENrMmVzTUZ6RDAtYkp1Sm5hNy1PSXh6bmhKcTZMU3FtRmk0S1BSeUxNVWgtS3R0OWRIc0l2WG5ZaEpDVVAxT25FTTBacmMtYnlPTHh0bEdwQmUyVDRWUHFmSGJ4ZHBCRExSMGoybUlvTU16RGxxaE4zNm4?oc=5",
-      "https://www.bloomberg.com/news/articles/2026-07-28/trump-netanyahu-meet-at-white-house-us-dials-back-iran-threats"
+      "https://www.bloomberg.com/news/articles/2026-07-29/gold-advances-after-federal-reserve-keeps-interest-rates-on-hold",
+      "https://news.google.com/rss/articles/CBMiqwFBVV95cUxObWh4Um5od3luS0pRM0hOYTNwN0Z4bElZWFBXVDRRdFFVT2FpejU4ZkQ3MTVuY3hYb1NpMVd4QXV4WFhFMFUwbTRCbGs2cGlPOW11LWUxdzFyRnU0a0cwZU02b0s5b012M0p3Y2prV25KT0RQd3BGZk52aWNlanFDSDh5UTRRUVYtc2lsSm1RWjM4MjlzMXFCcEVrVjNvYVNzN3pNTm1zU2ZpV1U?oc=5"
     ],
     "direct_source_titles": [
       "Treasury sell-off continues after divided Fed holds interest rates steady",
       "Here are the five big takeaways from this week's Fed meeting",
-      "Gold gains on softer dollar as markets assess Fed stance, Middle East tensions - Reuters",
-      "US intercepts Iranian missile attack as West Asia tensions push oil prices higher"
+      "Gold holds modest gain after Federal Reserve keeps rates steady",
+      "Imports hold back US economic growth in Q2, but domestic demand robust - Reuters"
     ],
     "direct_source_dates": [
       "2026-07-30",
       "2026-07-29",
-      "2026-07-29",
-      "2026-07-28"
+      "2026-07-30",
+      "2026-07-30"
     ],
     "context_source_urls": [
       "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
-      "https://news.google.com/rss/articles/CBMitwFBVV95cUxQTU93Z2Fkc0xuTTVYTGlzWkxXbW9YTU9kX2lwa2xXeDJMS1RnZ18yM3drMEpEM0dxWmRBcWJkR2dSSGFqV3FsSVBvdXJzbW5fUm84TDI4THVRWDJpNHNzTFAwUEx6THl0ZnhuUVc1SERMSWtnMEd0YnMxSVptU1EtX2lmV2VSeWpIR2JlQ0Z1ZlY1d201NDI1b1dCQ1N1d3htLTZ6N1FXXzFjWkN5VlVRLWUxQlJFaWs?oc=5",
-      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html"
+      "https://www.cnbc.com/2026/07/27/from-oil-to-shock-heres-what-kalshi-traders-expect-warsh-to-say.html",
+      "https://news.google.com/rss/articles/CBMirgFBVV95cUxNU2xCM1U5RlBYYVFhWFdmeWxxZ3BYendOMTZIRXBIRVlhckdSUGVycjlNVXZ5UERsZzMycVJwaWVmaHBzMVZZQUV3c0ZGYWt4RWVfZEo2eFNVRTNvWlVPUmo2R29kX2dnZ09FZzFrOEhRbloxSXNUX1haZzJfUld0RFlGOUFWTml4dG9udFZfN1NxNXJEWjQ5c0ZJQUQwUFFhSWJ4cHdTQXFiUDA1M0E?oc=5"
     ],
     "context_source_titles": [
       "Oil near $100 puts fed and peers in interest-rate spotlight",
-      "OPEC+ likely to again raise oil output targets from September, sources say - Reuters",
-      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week"
+      "From 'oil' to 'shock', here's what Kalshi traders expect Fed Chair Kevin Warsh will say this week",
+      "Fed patience risks shredding credibility - Reuters"
     ],
     "context_source_dates": [
       "2026-07-26",
-      "2026-07-23",
+      "2026-07-27",
       "2026-07-27"
     ],
     "direct_evidence_ids": [
       "finnhub:8283329",
       "finnhub:8281141",
-      "finnhub:8283542",
-      "finnhub:8282401"
+      "finnhub:8288104",
+      "finnhub:8286020"
     ],
     "context_evidence_ids": [
       "finnhub:8276862",
-      "finnhub:8277074",
-      "finnhub:8277759"
+      "finnhub:8277759",
+      "finnhub:8279857"
     ],
     "provider": "Gemini + Finnhub RAG",
     "rag_status": "rag_success",
     "rag_attempted": true,
     "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
-    "market_close_cutoff": "2026-07-30T20:00:00Z",
-    "news_cutoff": "2026-07-30T22:00:00Z",
-    "retrieval_as_of": "2026-07-30T23:00:47Z",
+    "market_close_cutoff": "2026-07-31T20:00:00Z",
+    "news_cutoff": "2026-07-31T22:00:00Z",
+    "retrieval_as_of": "2026-07-31T22:56:34Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -120,63 +138,63 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 253,
-      "snapshot_count": 5,
+      "article_count": 281,
+      "snapshot_count": 6,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-07-30T20:08:12Z",
-      "size_bytes": 434176
+      "newest_published_at": "2026-07-31T18:34:20Z",
+      "size_bytes": 462848
     }
   },
   "market_snapshot": {
     "breadth": {
-      "advances": 194,
-      "declines": 300,
+      "advances": 218,
+      "declines": 275,
       "total": 503
     },
     "sector_returns": [
       {
-        "sector": "Information Technology",
-        "return_1d": 5.7
-      },
-      {
         "sector": "Consumer Discretionary",
-        "return_1d": 1.8
+        "return_1d": 6.5
       },
       {
-        "sector": "Industrials",
-        "return_1d": 1.1
-      },
-      {
-        "sector": "Financials",
-        "return_1d": 0.6
+        "sector": "Communication Services",
+        "return_1d": 5.5
       },
       {
         "sector": "Energy",
-        "return_1d": 0.5
+        "return_1d": 0.8
       },
       {
-        "sector": "Materials",
-        "return_1d": 0.3
+        "sector": "Industrials",
+        "return_1d": 0.8
       },
       {
-        "sector": "Utilities",
+        "sector": "Financials",
+        "return_1d": -0.1
+      },
+      {
+        "sector": "Consumer Staples",
+        "return_1d": -0.3
+      },
+      {
+        "sector": "Information Technology",
+        "return_1d": -0.4
+      },
+      {
+        "sector": "Health Care",
         "return_1d": -0.5
       },
       {
         "sector": "Real Estate",
-        "return_1d": -1.2
+        "return_1d": -0.7
       },
       {
-        "sector": "Health Care",
-        "return_1d": -1.6
+        "sector": "Utilities",
+        "return_1d": -0.7
       },
       {
-        "sector": "Communication Services",
-        "return_1d": -1.8
-      },
-      {
-        "sector": "Consumer Staples",
-        "return_1d": -2.2
+        "sector": "Materials",
+        "return_1d": -2.6
       }
     ]
   },
@@ -187,13 +205,13 @@
     "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "56282f0e27fe003bb0fd16597cb4362432aa0102",
+    "git_sha": "06c3cff512999666d06f0eba0904ac346007eac6",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-07-30T23:00:47.003660+00:00",
-  "generated_at": "2026-07-30T23:13:08.293514+00:00"
+  "run_started_at": "2026-07-31T22:56:34.967741+00:00",
+  "generated_at": "2026-07-31T23:01:07.128007+00:00"
 }
