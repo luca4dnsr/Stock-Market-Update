@@ -1,136 +1,141 @@
 {
-  "data_date": "2026-08-10",
-  "advances": 225,
-  "declines": 264,
-  "total": 502,
+  "data_date": "2026-08-11",
+  "advances": 270,
+  "declines": 216,
+  "total": 503,
   "top3": [
     {
-      "ticker": "DDOG",
-      "name": "Datadog",
-      "return_1d": 11.5
+      "ticker": "KKR",
+      "name": "KKR & Co.",
+      "return_1d": 6.9
     },
     {
-      "ticker": "APA",
-      "name": "APA Corporation",
-      "return_1d": 9.0
+      "ticker": "AXON",
+      "name": "Axon Enterprise",
+      "return_1d": 6.7
     },
     {
-      "ticker": "MPC",
-      "name": "Marathon Petroleum",
-      "return_1d": 7.4
+      "ticker": "APO",
+      "name": "Apollo Global Management",
+      "return_1d": 6.3
     }
   ],
   "bot3": [
     {
-      "ticker": "COHR",
-      "name": "Coherent Corp.",
-      "return_1d": -14.2
+      "ticker": "APP",
+      "name": "AppLovin",
+      "return_1d": -6.0
     },
     {
-      "ticker": "LITE",
-      "name": "Lumentum",
-      "return_1d": -8.6
+      "ticker": "DDOG",
+      "name": "Datadog",
+      "return_1d": -5.4
     },
     {
-      "ticker": "MNST",
-      "name": "Monster Beverage",
-      "return_1d": -6.2
+      "ticker": "VTR",
+      "name": "Ventas",
+      "return_1d": -5.4
     }
   ],
   "market_summary": {
-    "headline": "섹터 및 개별 종목 간 차별화 속 혼조세 마감",
-    "observation": "상승 225개, 하락 264개로 상승 비율은 46%를 기록했습니다. 강세 섹터는 에너지(+4.6%), 헬스케어(+1.7%)였으며, 약세 섹터는 리얼에스테이트(-1.2%), 유틸리티(-1.1%)였습니다. 개별 종목 중에서는 DDOG(+11.5%)가 가장 강세를 보였고, COHR(-14.2%)가 가장 약세를 보였습니다.",
-    "interpretation": "지수 내부의 방향성이 분산된 장세로, 전체 지수보다 주도 섹터와 개별 종목의 차별화가 두드러졌습니다. 최근 주간 시장에서는 약화된 고용 보고서 이후 미국 주식과 채권이 반등한 가운데, 소프트웨어 섹터에서는 인공지능(AI) 영향으로부터 안전한 종목을 찾으려는 투자자들의 주가 변동성 논쟁이 이어졌습니다. 또한 7월 물가 데이터 발표에 시장의 관심이 쏠려 있으며, 중국의 7월 생산자물가 및 소비자물가 상승률은 둔화되었습니다.",
-    "recent_context": "이전 2~45일간의 배경을 보면, 미국과 이란 간 평화 회담 재개 소식으로 유가가 완화되는 모습을 보였고 헬스케어 분야의 대형 M&A 가능성이 주목받았습니다. 한편 AI 지출 부담 및 유가 변동이 증시 전반에 부담으로 작용하기도 했습니다.",
+    "headline": "상승 종목 우세 속 에너지·유틸리티 강세 및 통신·부동산 약세",
+    "observation": "S&P 500 구성 종목 중 상승 270개, 하락 216개로 상승 비율은 약 56%를 기록했습니다. 섹터별로는 에너지(+1.1%)와 유틸리티(+1.1%) 섹터가 강세를 보인 반면, 커뮤니케이션 서비스(-2.7%)와 리얼에스테이트(-0.9%) 섹터는 약세를 나타냈습니다. 개별 종목 중에서는 KKR(+6.9%)이 가장 높은 상승률을 보였고, APP(-6.0%)가 가장 큰 하락폭을 기록했습니다.",
+    "interpretation": "미국 고용 지표 둔화로 연준의 금리 인상 기대가 완화되면서 글로벌 증시 상승세가 지속되었습니다. 그러나 이란 및 호르무즈 해협 이슈로 유가가 급등하면서 인플레이션 우려가 다시 주목받았습니다. 또한 소프트웨어 섹터에서는 AI 기술 확산에 따른 영향을 둘러싸고 변동성이 확대되는 모습이 나타났으며, 시장 전반적으로는 7월 인플레이션 데이터 발표에 주목하는 흐름입니다. 한편 중국의 7월 생산자물가(PPI) 상승률은 3개월래 최저치로 완화되고 소비자물가(CPI) 상승세도 둔화되었습니다.",
+    "recent_context": "최근 2~45일 동안 시장은 빅테크 실적, 연준 회의 및 인플레이션 지표 발표에 주목해 왔습니다. 유가가 100달러 선에 근접하며 중앙은행의 인플레이션 관리가 주요 화두로 부각되었으며, 이란 관련 협상 소식에 유가가 하락하고 나스닥이 약세를 보이는 등 증시 혼조세가 이어진 배경이 있습니다.",
     "korea_market_scenario": {
-      "session_date": "2026-08-11",
-      "base_case": "미국 증시에서 나타난 개별 섹터 차별화와 물가 지표 발표를 앞둔 관망세가 한국 증시로 전달되며 지수 전체보다는 섹터별 순환매 흐름이 전개될 수 있습니다.",
+      "session_date": "2026-08-12",
+      "base_case": "미국 증시의 완만한 위험선호 흐름과 에너지 섹터 강세, 기술·소프트웨어 업종의 변동성이 한국 증시의 관련 업종 및 투자심리에 부분적으로 전달될 수 있습니다.",
       "positive_conditions": [
-        "미국 고용 지표 약화 이후 형성된 금리 및 채권 시장 안정 흐름 지속",
-        "에너지 및 헬스케어 등 미 증시 강세 섹터 관련 국내 업종으로의 투자 심리 개선"
+        "연준 금리 인상 우려 완화에 따른 글로벌 위험선호 심리 유지",
+        "에너지 및 원자재 관련 업종으로의 매수세 유입"
       ],
       "risk_conditions": [
-        "미국 7월 CPI 지표 발표를 앞둔 시장 전반의 관망세 심화",
-        "중국 물가 지표 둔화에 따른 경기 우려 및 IT/소프트웨어 섹터의 변동성 확대"
+        "국제 유가 급등에 따른 인플레이션 우려 재부상",
+        "소프트웨어 및 기술주 전반의 변동성 확대"
       ],
       "watch_items": [
-        "미국 7월 소비자물가지수(CPI) 발표 예정 일정",
-        "중국 7월 생산자물가(PPI) 및 소비자물가(CPI) 둔화 영향",
-        "유가 동향 및 에너지 섹터 변동성",
-        "소프트웨어 및 IT 섹터 변동성"
+        "국제 유가 및 호르무즈 해협 관련 동향",
+        "미국 7월 인플레이션 지표 발표 관련 일정",
+        "에너지 및 소프트웨어/IT 섹터 흐름"
       ]
     },
-    "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 4건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
+    "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 5건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [
+      "https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates",
       "https://news.google.com/rss/articles/CBMipgFBVV95cUxOaVNBcVdFSHViUm10d0NJVTdNYVJOdDgwZ3FvTy1JbFVwTVVlWmN1a1B3UjRaTWdYOG5VRm0yZWZXUWVKMEtLVzk4azgwcHVuX1Y3LWFrMGhnam0zRFU1dnRFQlBaSmpEOUVzM0sxUVYybml4QkIwNlVIck1LNE5wQTBEcWUtaFhZMGdCTFpnS0R5QTNDLWJheUNGT3VINWtSRzBFek13?oc=5",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxOc0YzMU1OZXgxZVVsOS1zOHl4RnZ3SVU4WWtmNFVBd24xM1JNbVlvY0dXMm5DQUZQcDh4WHh1YTZpemRib1NEX1JDOTVqR20wZ2ZObnFJN3dtVkdHS3otcEF3OVBaTUVlTEtNNGw5eUx2QkozTGhvRTQxOHd0Vk5xX194QQ?oc=5",
       "https://www.cnbc.com/2026/08/07/saaspocalypse-debate-intensifies-as-software-stocks-swing-wildly.html",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5",
       "https://www.cnbc.com/2026/08/09/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
-      "https://www.cnbc.com/2026/08/03/jim-cramers-top-10-things-to-watch-in-the-stock-market-monday.html",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxPSjNOaFJhdXRJblJMNldJM09LeFJDOXNqY2Y0R3dhcGt3S1ZyNm1peFdvVlBfN2RrNmtCYVhQa3pzenI5VlBld2c2Y0JPLTAzNWRhTWxUYWxjNEpvWGxIYlR3M2NLdGg5RnpRSmtYVVVwamJfYTZ5S1JaQ3J5QjFEQ3B0WQ?oc=5",
-      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps"
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxPSjNOaFJhdXRJblJMNldJM09LeFJDOXNqY2Y0R3dhcGt3S1ZyNm1peFdvVlBfN2RrNmtCYVhQa3pzenI5VlBld2c2Y0JPLTAzNWRhTWxUYWxjNEpvWGxIYlR3M2NLdGg5RnpRSmtYVVVwamJfYTZ5S1JaQ3J5QjFEQ3B0WQ?oc=5"
     ],
     "source_titles": [
+      "Global stock rally extends, oil advances on Iran: Markets Wrap",
       "China July factory-gate inflation eases to 3-month low, CPI slows - Reuters",
-      "US stocks, bonds rally after soft jobs report; yen bounces back - Reuters",
       "‘SaaSpocalypse’ debate intensifies as software stocks swing wildly",
+      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters",
       "Here are the 2 big things we're watching in the stock market in the week ahead",
-      "Jim Cramer's top 10 things to watch in the stock market Monday",
-      "Stocks mixed with Nasdaq down; US oil eases on Iran talks - reuters.com",
-      "US stocks tumble as AI spending and oil prices weigh on market"
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Stocks mixed with Nasdaq down; US oil eases on Iran talks - reuters.com"
     ],
     "direct_source_urls": [
+      "https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates",
       "https://news.google.com/rss/articles/CBMipgFBVV95cUxOaVNBcVdFSHViUm10d0NJVTdNYVJOdDgwZ3FvTy1JbFVwTVVlWmN1a1B3UjRaTWdYOG5VRm0yZWZXUWVKMEtLVzk4azgwcHVuX1Y3LWFrMGhnam0zRFU1dnRFQlBaSmpEOUVzM0sxUVYybml4QkIwNlVIck1LNE5wQTBEcWUtaFhZMGdCTFpnS0R5QTNDLWJheUNGT3VINWtSRzBFek13?oc=5",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxOc0YzMU1OZXgxZVVsOS1zOHl4RnZ3SVU4WWtmNFVBd24xM1JNbVlvY0dXMm5DQUZQcDh4WHh1YTZpemRib1NEX1JDOTVqR20wZ2ZObnFJN3dtVkdHS3otcEF3OVBaTUVlTEtNNGw5eUx2QkozTGhvRTQxOHd0Vk5xX194QQ?oc=5",
       "https://www.cnbc.com/2026/08/07/saaspocalypse-debate-intensifies-as-software-stocks-swing-wildly.html",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5",
       "https://www.cnbc.com/2026/08/09/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
     ],
     "direct_source_titles": [
+      "Global stock rally extends, oil advances on Iran: Markets Wrap",
       "China July factory-gate inflation eases to 3-month low, CPI slows - Reuters",
-      "US stocks, bonds rally after soft jobs report; yen bounces back - Reuters",
       "‘SaaSpocalypse’ debate intensifies as software stocks swing wildly",
+      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters",
       "Here are the 2 big things we're watching in the stock market in the week ahead"
     ],
     "direct_source_dates": [
+      "2026-08-10",
       "2026-08-08",
-      "2026-08-06",
       "2026-08-07",
+      "2026-08-09",
       "2026-08-09"
     ],
     "context_source_urls": [
-      "https://www.cnbc.com/2026/08/03/jim-cramers-top-10-things-to-watch-in-the-stock-market-monday.html",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxPSjNOaFJhdXRJblJMNldJM09LeFJDOXNqY2Y0R3dhcGt3S1ZyNm1peFdvVlBfN2RrNmtCYVhQa3pzenI5VlBld2c2Y0JPLTAzNWRhTWxUYWxjNEpvWGxIYlR3M2NLdGg5RnpRSmtYVVVwamJfYTZ5S1JaQ3J5QjFEQ3B0WQ?oc=5",
-      "https://www.bloomberg.com/news/articles/2026-07-23/us-stock-futures-drop-as-traders-focus-on-ai-spending-oil-jumps"
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
+      "https://www.bloomberg.com/news/articles/2026-07-25/fed-bank-of-england-bank-of-japan-face-100-oil-inflation-test",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxPSjNOaFJhdXRJblJMNldJM09LeFJDOXNqY2Y0R3dhcGt3S1ZyNm1peFdvVlBfN2RrNmtCYVhQa3pzenI5VlBld2c2Y0JPLTAzNWRhTWxUYWxjNEpvWGxIYlR3M2NLdGg5RnpRSmtYVVVwamJfYTZ5S1JaQ3J5QjFEQ3B0WQ?oc=5"
     ],
     "context_source_titles": [
-      "Jim Cramer's top 10 things to watch in the stock market Monday",
-      "Stocks mixed with Nasdaq down; US oil eases on Iran talks - reuters.com",
-      "US stocks tumble as AI spending and oil prices weigh on market"
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
+      "Oil near $100 puts fed and peers in interest-rate spotlight",
+      "Stocks mixed with Nasdaq down; US oil eases on Iran talks - reuters.com"
     ],
     "context_source_dates": [
-      "2026-08-03",
-      "2026-08-05",
-      "2026-07-23"
+      "2026-07-26",
+      "2026-07-26",
+      "2026-08-05"
     ],
     "direct_evidence_ids": [
+      "finnhub:8330054",
       "finnhub:8320337",
-      "finnhub:8312115",
       "finnhub:8313272",
+      "finnhub:8325630",
       "finnhub:8321550"
     ],
     "context_evidence_ids": [
-      "finnhub:8291162",
-      "finnhub:8300539",
-      "finnhub:8266749"
+      "finnhub:8275331",
+      "finnhub:8276862",
+      "finnhub:8300539"
     ],
     "provider": "Gemini + Finnhub RAG",
     "rag_status": "rag_success",
     "rag_attempted": true,
     "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
-    "market_close_cutoff": "2026-08-10T20:00:00Z",
-    "news_cutoff": "2026-08-10T22:00:00Z",
-    "retrieval_as_of": "2026-08-10T22:32:09Z",
+    "market_close_cutoff": "2026-08-11T20:00:00Z",
+    "news_cutoff": "2026-08-11T22:00:00Z",
+    "retrieval_as_of": "2026-08-11T22:36:22Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -138,63 +143,63 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 598,
-      "snapshot_count": 12,
+      "article_count": 643,
+      "snapshot_count": 13,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-08-10T20:22:37Z",
-      "size_bytes": 835584
+      "newest_published_at": "2026-08-11T20:47:44Z",
+      "size_bytes": 901120
     }
   },
   "market_snapshot": {
     "breadth": {
-      "advances": 225,
-      "declines": 264,
-      "total": 502
+      "advances": 270,
+      "declines": 216,
+      "total": 503
     },
     "sector_returns": [
       {
         "sector": "Energy",
-        "return_1d": 4.6
+        "return_1d": 1.1
       },
       {
-        "sector": "Health Care",
-        "return_1d": 1.7
-      },
-      {
-        "sector": "Communication Services",
-        "return_1d": 0.7
-      },
-      {
-        "sector": "Materials",
-        "return_1d": 0.7
-      },
-      {
-        "sector": "Consumer Discretionary",
-        "return_1d": 0.4
-      },
-      {
-        "sector": "Financials",
-        "return_1d": 0.3
-      },
-      {
-        "sector": "Consumer Staples",
-        "return_1d": -0.3
+        "sector": "Utilities",
+        "return_1d": 1.1
       },
       {
         "sector": "Industrials",
+        "return_1d": 0.6
+      },
+      {
+        "sector": "Materials",
+        "return_1d": -0.0
+      },
+      {
+        "sector": "Financials",
+        "return_1d": -0.0
+      },
+      {
+        "sector": "Consumer Staples",
+        "return_1d": -0.2
+      },
+      {
+        "sector": "Health Care",
         "return_1d": -0.3
       },
       {
         "sector": "Information Technology",
-        "return_1d": -1.0
+        "return_1d": -0.3
       },
       {
-        "sector": "Utilities",
-        "return_1d": -1.1
+        "sector": "Consumer Discretionary",
+        "return_1d": -0.7
       },
       {
         "sector": "Real Estate",
-        "return_1d": -1.2
+        "return_1d": -0.9
+      },
+      {
+        "sector": "Communication Services",
+        "return_1d": -2.7
       }
     ]
   },
@@ -205,13 +210,13 @@
     "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "1f57f7eb2eec9dc3f34a4feb5977b766e223abd5",
+    "git_sha": "ce9c10729177713e8b32e49e5d8ed0a5bb501760",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-08-10T22:32:09.541918+00:00",
-  "generated_at": "2026-08-10T22:40:33.990486+00:00"
+  "run_started_at": "2026-08-11T22:36:22.777833+00:00",
+  "generated_at": "2026-08-11T22:41:16.627275+00:00"
 }
