@@ -1,135 +1,136 @@
 {
-  "data_date": "2026-08-13",
-  "advances": 317,
-  "declines": 179,
+  "data_date": "2026-08-14",
+  "advances": 247,
+  "declines": 238,
   "total": 503,
   "top3": [
     {
-      "ticker": "WDAY",
-      "name": "Workday, Inc.",
-      "return_1d": 17.8
+      "ticker": "CPRT",
+      "name": "Copart",
+      "return_1d": 7.6
     },
     {
       "ticker": "SNDK",
       "name": "Sandisk",
-      "return_1d": 13.7
+      "return_1d": 7.4
     },
     {
-      "ticker": "GDDY",
-      "name": "GoDaddy",
-      "return_1d": 9.5
+      "ticker": "AMD",
+      "name": "Advanced Micro Devices",
+      "return_1d": 6.5
     }
   ],
   "bot3": [
     {
-      "ticker": "TPR",
-      "name": "Tapestry, Inc.",
-      "return_1d": -16.5
+      "ticker": "AVGO",
+      "name": "Broadcom",
+      "return_1d": -5.9
     },
     {
-      "ticker": "CSCO",
-      "name": "Cisco",
-      "return_1d": -8.4
+      "ticker": "GDDY",
+      "name": "GoDaddy",
+      "return_1d": -5.6
     },
     {
-      "ticker": "COHR",
-      "name": "Coherent Corp.",
-      "return_1d": -8.0
+      "ticker": "AMAT",
+      "name": "Applied Materials",
+      "return_1d": -5.1
     }
   ],
   "market_summary": {
-    "headline": "금리 인상 기대 완화 및 유가 하락 속 상승 종목 우위 흐름",
-    "observation": "상승 317개·하락 179개로 상승 비율은 64%였습니다. 강세 섹터는 Real Estate(+1.3%), Communication Services(+1.2%), Information Technology(+1.0%) 등이었으며, 약세 섹터는 Materials(-0.7%), Energy(-0.1%)였습니다. 개별 종목 중 WDAY(+17.8%)가 가장 강했고, TPR(-16.5%)가 가장 약했습니다.",
-    "interpretation": "트레이더들이 금리 인상 기대를 줄이고 국제 유가가 하락함에 따라 주가가 상승을 나타냈습니다. 미국 10년물 국채 금리는 도매 물가 데이터 발표를 앞두고 4.674%로 1bp 이상 하락했습니다. 아울러 7월 CPI가 예상치에 부합하고 엔비디아 칩에 대한 수요 호조 및 대규모 자금 조달 소식이 전해진 가운데 시장 전반에서 상승 종목이 우세를 보였습니다.",
-    "recent_context": "최근 글로벌 증시는 부드러운 미국 고용 지표로 연준의 금리 인상 기대가 완화되면서 신고가 근처에서 거래된 바 있습니다. 다만 호르무즈 해협 및 이란 관련 이슈로 유가가 상승하고, 물가 및 연준 통화정책 불확실성과 주요 빅테크 실적 발표가 지속적인 관전 포인트로 작용해 왔습니다.",
+    "headline": "상승·하락 종목이 엇갈린 혼조 흐름",
+    "observation": "상승 247개·하락 238개로 상승 비율은 51%였습니다. 강세 섹터는 Energy +1.4%, Utilities +0.6%, 약세 섹터는 Health Care -0.6%, Information Technology -0.4%였습니다. 개별 종목 중 CPRT(+7.6%)가 가장 강했고, AVGO(-5.9%)가 가장 약했습니다.",
+    "interpretation": "7월 소비자물가지수(CPI)가 예상치에 부합하고 연준 굴스비 총재가 인플레이션 데이터 개선을 언급한 가운데, 도매 인플레이션 지표 발표를 앞두고 10년물 미국 국채 금리는 하락했습니다. 또한 미국 경제 지표 발표로 연준의 금리 인상 가능성이 인하되는 한편 유가가 상승하는 등 복합적인 거시 환경 속에서 시장 내부의 방향성이 분산되었습니다.",
+    "recent_context": "최근 며칠간 시장은 빅테크 실적 발표와 연준 정책 회의, 인플레이션 지표를 집중 주시해왔습니다. 미국 고용 지표 둔화가 연준의 금리 인상 기대를 완화하며 글로벌 증시 상승을 견인했던 한편, 호르무즈 해협 관련 우려와 유가 상승, 인플레이션 향방이 지속적인 관전 포인트로 작용했습니다.",
     "korea_market_scenario": {
-      "session_date": "2026-08-14",
-      "base_case": "미국 증시에서 금리 인상 가능성 감소와 국채 금리 및 유가 하락 흐름이 관측됨에 따라, 한국 증시에서도 완화된 금리 및 물가 환경이 투자 심리에 미치는 영향을 점검하는 장세가 예상됩니다.",
+      "session_date": "2026-08-18",
+      "base_case": "미국 증시에서 나타난 국채 금리 하락 및 금리 인상 가능성 완화 신호와 유가 상승 흐름이 국내 증시의 섹터별 투자심리에 상반된 방향으로 전달될 수 있습니다.",
       "positive_conditions": [
-        "미국 10년물 국채 금리 및 유가의 안정을 통한 온건한 금리 환경 유지",
-        "반도체 및 AI 칩 수요 관련 긍정적 소식 지속"
+        "미국 국채 금리 하락 및 인플레이션 지표 개선에 따른 금리 부담 완화",
+        "유가 강세에 따른 에너지 관련 업종의 온기 전달"
       ],
       "risk_conditions": [
-        "도매 물가 지표 발표를 앞두고 국채 금리가 다시 반등하는 경우",
-        "지정학적 리스크 재부각에 따른 유가 재상승 및 물가 압력 우려"
+        "유가 상승으로 인한 인플레이션 재부각 우려",
+        "미국 정보기술(IT) 및 헬스케어 섹터 약세에 따른 연동 심리"
       ],
       "watch_items": [
-        "미국 10년물 국채 금리(4.674% 수준 변화)",
-        "국제 유가 동향",
-        "반도체 및 AI 칩 관련 수요 지표"
+        "미국 국채 금리",
+        "국제 유가",
+        "인플레이션 지표",
+        "정보기술(IT) 및 반도체 섹터"
       ]
     },
     "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 4건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxNazlfTWozZlI1am8yV1pmREdVZGswQ1NPWl92dGhIN3lVbWJRaFA2YWhWNDQ4NWwweXZpbmpLOGFmcDlUdDhBSGFyU1piOVBzam1JOEN2RVFDOXdWOFk2LTB1MklsRzRfVmlaR3BTb2ZFNmw2U0hjUnhNLUd3cVV0WElxVQ?oc=5",
-      "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
       "https://www.cnbc.com/2026/08/12/jim-cramers-top-10-things-to-watch-in-the-stock-market-wednesday.html",
-      "https://www.bloomberg.com/news/articles/2026-08-10/nvidia-to-team-with-wall-street-on-500-billion-package-ft-says",
+      "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
+      "https://news.google.com/rss/articles/CBMilwFBVV95cUxQMHQ3RV9DUU5mVVpveUtFNmJfelJtYnluMGVCQ2FPRzEzSG1nUUZidUsxSURTQ3Rwa1htSm5EMXpZVHNpN1Y3aDMzd1pwV2gydjE5RkZWOFdQWFE2WGVZMU1GX1h4dnh0OFlwWnJKOHZrVndsaFA2cm45SDNjdmJXd3k0YklSVkxsaWphX1paQkNpUE1xWFlJ?oc=5",
+      "https://news.google.com/rss/articles/CBMie0FVX3lxTE14MHZSdkQ3TzZONVh4dW9nU1B5RlNOZHJSdzN1eVlQV3Eycm14NGZhb2F0QWdneVhPR2VqLWVVR1Bkb3lqTldGa3JVTXR0eGdFVi12UTJVTi1pTWVNVWhHX2tCUUJ1b21hT0dkampGU0Ric1d2WHAyclRfSQ?oc=5",
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
       "https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5",
-      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5"
     ],
     "source_titles": [
-      "Stocks rise as traders reduce rate hike bets, oil prices drop - Reuters",
-      "Treasury yields dip as Wall Street awaits wholesale inflation data",
       "Jim Cramer's top 10 things to watch in the stock market Wednesday",
-      "Nvidia taps Wall Street for $500 billion funding commitment",
+      "Treasury yields dip as Wall Street awaits wholesale inflation data",
+      "Fed's Goolsbee says latest inflation data is better - Reuters",
+      "Oil prices rally, US data dents chances of Fed rate hike - reuters.com",
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
       "Global stock rally extends, oil advances on Iran: Markets Wrap",
-      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters",
-      "Here are the 3 big things we're watching in the stock market in the week ahead"
+      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters"
     ],
     "direct_source_urls": [
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxNazlfTWozZlI1am8yV1pmREdVZGswQ1NPWl92dGhIN3lVbWJRaFA2YWhWNDQ4NWwweXZpbmpLOGFmcDlUdDhBSGFyU1piOVBzam1JOEN2RVFDOXdWOFk2LTB1MklsRzRfVmlaR3BTb2ZFNmw2U0hjUnhNLUd3cVV0WElxVQ?oc=5",
-      "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
       "https://www.cnbc.com/2026/08/12/jim-cramers-top-10-things-to-watch-in-the-stock-market-wednesday.html",
-      "https://www.bloomberg.com/news/articles/2026-08-10/nvidia-to-team-with-wall-street-on-500-billion-package-ft-says"
+      "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
+      "https://news.google.com/rss/articles/CBMilwFBVV95cUxQMHQ3RV9DUU5mVVpveUtFNmJfelJtYnluMGVCQ2FPRzEzSG1nUUZidUsxSURTQ3Rwa1htSm5EMXpZVHNpN1Y3aDMzd1pwV2gydjE5RkZWOFdQWFE2WGVZMU1GX1h4dnh0OFlwWnJKOHZrVndsaFA2cm45SDNjdmJXd3k0YklSVkxsaWphX1paQkNpUE1xWFlJ?oc=5",
+      "https://news.google.com/rss/articles/CBMie0FVX3lxTE14MHZSdkQ3TzZONVh4dW9nU1B5RlNOZHJSdzN1eVlQV3Eycm14NGZhb2F0QWdneVhPR2VqLWVVR1Bkb3lqTldGa3JVTXR0eGdFVi12UTJVTi1pTWVNVWhHX2tCUUJ1b21hT0dkampGU0Ric1d2WHAyclRfSQ?oc=5"
     ],
     "direct_source_titles": [
-      "Stocks rise as traders reduce rate hike bets, oil prices drop - Reuters",
-      "Treasury yields dip as Wall Street awaits wholesale inflation data",
       "Jim Cramer's top 10 things to watch in the stock market Wednesday",
-      "Nvidia taps Wall Street for $500 billion funding commitment"
+      "Treasury yields dip as Wall Street awaits wholesale inflation data",
+      "Fed's Goolsbee says latest inflation data is better - Reuters",
+      "Oil prices rally, US data dents chances of Fed rate hike - reuters.com"
     ],
     "direct_source_dates": [
-      "2026-08-13",
-      "2026-08-13",
       "2026-08-12",
-      "2026-08-11"
+      "2026-08-13",
+      "2026-08-13",
+      "2026-08-13"
     ],
     "context_source_urls": [
+      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
       "https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates",
-      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5",
-      "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5"
     ],
     "context_source_titles": [
+      "Here are the 3 big things we're watching in the stock market in the week ahead",
       "Global stock rally extends, oil advances on Iran: Markets Wrap",
-      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters",
-      "Here are the 3 big things we're watching in the stock market in the week ahead"
+      "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters"
     ],
     "context_source_dates": [
+      "2026-07-26",
       "2026-08-10",
-      "2026-08-09",
-      "2026-07-26"
+      "2026-08-09"
     ],
     "direct_evidence_ids": [
-      "finnhub:8340605",
-      "finnhub:8340924",
       "finnhub:8336524",
-      "finnhub:8335326"
+      "finnhub:8340924",
+      "finnhub:8346101",
+      "finnhub:8344620"
     ],
     "context_evidence_ids": [
+      "finnhub:8275331",
       "finnhub:8330054",
-      "finnhub:8325630",
-      "finnhub:8275331"
+      "finnhub:8325630"
     ],
     "provider": "Gemini + Finnhub RAG",
     "rag_status": "rag_success",
     "rag_attempted": true,
     "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
-    "market_close_cutoff": "2026-08-13T20:00:00Z",
-    "news_cutoff": "2026-08-13T22:00:00Z",
-    "retrieval_as_of": "2026-08-13T22:35:54Z",
+    "market_close_cutoff": "2026-08-14T20:00:00Z",
+    "news_cutoff": "2026-08-14T22:00:00Z",
+    "retrieval_as_of": "2026-08-14T22:17:33Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -137,63 +138,63 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 750,
-      "snapshot_count": 15,
+      "article_count": 818,
+      "snapshot_count": 16,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-08-13T21:21:16Z",
-      "size_bytes": 1015808
+      "newest_published_at": "2026-08-14T20:38:40Z",
+      "size_bytes": 1073152
     }
   },
   "market_snapshot": {
     "breadth": {
-      "advances": 317,
-      "declines": 179,
+      "advances": 247,
+      "declines": 238,
       "total": 503
     },
     "sector_returns": [
       {
-        "sector": "Real Estate",
-        "return_1d": 1.3
-      },
-      {
-        "sector": "Communication Services",
-        "return_1d": 1.2
-      },
-      {
-        "sector": "Information Technology",
-        "return_1d": 1.0
-      },
-      {
-        "sector": "Consumer Staples",
-        "return_1d": 0.8
-      },
-      {
-        "sector": "Financials",
-        "return_1d": 0.6
-      },
-      {
-        "sector": "Consumer Discretionary",
-        "return_1d": 0.5
+        "sector": "Energy",
+        "return_1d": 1.4
       },
       {
         "sector": "Utilities",
-        "return_1d": 0.4
-      },
-      {
-        "sector": "Health Care",
-        "return_1d": -0.0
-      },
-      {
-        "sector": "Industrials",
-        "return_1d": -0.0
-      },
-      {
-        "sector": "Energy",
-        "return_1d": -0.1
+        "return_1d": 0.6
       },
       {
         "sector": "Materials",
-        "return_1d": -0.7
+        "return_1d": 0.5
+      },
+      {
+        "sector": "Real Estate",
+        "return_1d": 0.4
+      },
+      {
+        "sector": "Industrials",
+        "return_1d": 0.3
+      },
+      {
+        "sector": "Consumer Staples",
+        "return_1d": 0.0
+      },
+      {
+        "sector": "Communication Services",
+        "return_1d": -0.1
+      },
+      {
+        "sector": "Financials",
+        "return_1d": -0.2
+      },
+      {
+        "sector": "Consumer Discretionary",
+        "return_1d": -0.3
+      },
+      {
+        "sector": "Information Technology",
+        "return_1d": -0.4
+      },
+      {
+        "sector": "Health Care",
+        "return_1d": -0.6
       }
     ]
   },
@@ -204,13 +205,13 @@
     "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "aa89b1f5b7223e9941dd515c0dc70b3ee9ae4a67",
+    "git_sha": "d6fbda33c0dec200f7e0198428e44a784622276f",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-08-13T22:35:54.316252+00:00",
-  "generated_at": "2026-08-13T22:40:03.483655+00:00"
+  "run_started_at": "2026-08-14T22:17:33.150496+00:00",
+  "generated_at": "2026-08-14T22:21:22.095107+00:00"
 }
