@@ -1,101 +1,101 @@
 {
-  "data_date": "2026-08-14",
-  "advances": 247,
-  "declines": 238,
-  "total": 503,
+  "data_date": "2026-08-17",
+  "advances": 126,
+  "declines": 363,
+  "total": 502,
   "top3": [
-    {
-      "ticker": "CPRT",
-      "name": "Copart",
-      "return_1d": 7.6
-    },
     {
       "ticker": "SNDK",
       "name": "Sandisk",
-      "return_1d": 7.4
+      "return_1d": 8.9
     },
     {
-      "ticker": "AMD",
-      "name": "Advanced Micro Devices",
-      "return_1d": 6.5
+      "ticker": "COHR",
+      "name": "Coherent Corp.",
+      "return_1d": 7.8
+    },
+    {
+      "ticker": "FIX",
+      "name": "Comfort Systems USA",
+      "return_1d": 6.0
     }
   ],
   "bot3": [
     {
-      "ticker": "AVGO",
-      "name": "Broadcom",
-      "return_1d": -5.9
+      "ticker": "CVNA",
+      "name": "Carvana",
+      "return_1d": -7.3
     },
     {
-      "ticker": "GDDY",
-      "name": "GoDaddy",
-      "return_1d": -5.6
+      "ticker": "CHTR",
+      "name": "Charter Communications",
+      "return_1d": -6.6
     },
     {
-      "ticker": "AMAT",
-      "name": "Applied Materials",
-      "return_1d": -5.1
+      "ticker": "STZ",
+      "name": "Constellation Brands",
+      "return_1d": -6.2
     }
   ],
   "market_summary": {
-    "headline": "상승·하락 종목이 엇갈린 혼조 흐름",
-    "observation": "상승 247개·하락 238개로 상승 비율은 51%였습니다. 강세 섹터는 Energy +1.4%, Utilities +0.6%, 약세 섹터는 Health Care -0.6%, Information Technology -0.4%였습니다. 개별 종목 중 CPRT(+7.6%)가 가장 강했고, AVGO(-5.9%)가 가장 약했습니다.",
-    "interpretation": "7월 소비자물가지수(CPI)가 예상치에 부합하고 연준 굴스비 총재가 인플레이션 데이터 개선을 언급한 가운데, 도매 인플레이션 지표 발표를 앞두고 10년물 미국 국채 금리는 하락했습니다. 또한 미국 경제 지표 발표로 연준의 금리 인상 가능성이 인하되는 한편 유가가 상승하는 등 복합적인 거시 환경 속에서 시장 내부의 방향성이 분산되었습니다.",
-    "recent_context": "최근 며칠간 시장은 빅테크 실적 발표와 연준 정책 회의, 인플레이션 지표를 집중 주시해왔습니다. 미국 고용 지표 둔화가 연준의 금리 인상 기대를 완화하며 글로벌 증시 상승을 견인했던 한편, 호르무즈 해협 관련 우려와 유가 상승, 인플레이션 향방이 지속적인 관전 포인트로 작용했습니다.",
+    "headline": "하락 종목이 시장 전반으로 확산된 강한 위험회피 흐름",
+    "observation": "2026년 8월 17일 미국 증시는 상승 126개, 하락 363개(상승 비율 26%)로 하락 종목이 시장 전반으로 확산되었습니다. 섹터별로는 에너지(+0.9%)와 정보기술(-0.1%)이 상대적 강세를 보인 반면, 필수소비재(-1.4%)와 통신서비스(-1.1%)는 약세를 보였습니다. 개별 종목 중에서는 SNDK(+8.9%)가 가장 강했고, CVNA(-7.3%)가 가장 약했습니다.",
+    "interpretation": "시장 폭이 약해 단기적으로 방어적 포지셔닝과 변동성 확대 가능성이 유의되는 가운데, 외환·채권 시장에서는 연준의 금리 인하 기대 속에 달러가 하락하고 금리가 변동하는 흐름이 나타났습니다. 연준 굴스비 총재의 인플레이션 지표 개선 발언과 더불어 주택 시장 및 소비 지출, 도매 물가 지표에 시장의 관심이 집중되고 있습니다.",
+    "recent_context": "최근 2~45일 동안의 거시 및 섹터 배경을 보면, 빅테크 실적 발표와 연준 통화정책 회의, 인플레이션 지표가 주된 관전 포인트였습니다. 미국 고용 지표 완화로 연준의 금리 인상 기대가 줄어들며 글로벌 증시가 강세를 보이기도 했으나, 이란 및 호르무즈 해협 이슈에 따른 유가 상승과 인플레이션 우려가 시장에 지속적인 부담으로 작용했습니다.",
     "korea_market_scenario": {
       "session_date": "2026-08-18",
-      "base_case": "미국 증시에서 나타난 국채 금리 하락 및 금리 인상 가능성 완화 신호와 유가 상승 흐름이 국내 증시의 섹터별 투자심리에 상반된 방향으로 전달될 수 있습니다.",
+      "base_case": "미국 증시에서 나타난 위험회피 심리와 연준의 금리 인하 기대 및 물가 지표 관망세가 한국 증시로 복합적으로 전달될 수 있습니다.",
       "positive_conditions": [
-        "미국 국채 금리 하락 및 인플레이션 지표 개선에 따른 금리 부담 완화",
-        "유가 강세에 따른 에너지 관련 업종의 온기 전달"
+        "연준 위원의 인플레이션 지표 개선 발언에 따른 금리 인하 기대 유지",
+        "미국 에너지 섹터 강세에 따른 관련 산업 투자심리 방어"
       ],
       "risk_conditions": [
-        "유가 상승으로 인한 인플레이션 재부각 우려",
-        "미국 정보기술(IT) 및 헬스케어 섹터 약세에 따른 연동 심리"
+        "미국 증시 내 광범위한 하락 종목 확산으로 인한 위험자산 선호 약화",
+        "주요 물가 및 소비 지표 발표를 앞둔 관망세 지속"
       ],
       "watch_items": [
         "미국 국채 금리",
-        "국제 유가",
-        "인플레이션 지표",
-        "정보기술(IT) 및 반도체 섹터"
+        "달러화 환율",
+        "유가 변동성",
+        "정보기술 및 에너지 업종 동향"
       ]
     },
     "disclaimer": "Gemini + Finnhub RAG가 코드가 선정한 직접 근거 4건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.",
     "source_urls": [
-      "https://www.cnbc.com/2026/08/12/jim-cramers-top-10-things-to-watch-in-the-stock-market-wednesday.html",
       "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
       "https://news.google.com/rss/articles/CBMilwFBVV95cUxQMHQ3RV9DUU5mVVpveUtFNmJfelJtYnluMGVCQ2FPRzEzSG1nUUZidUsxSURTQ3Rwa1htSm5EMXpZVHNpN1Y3aDMzd1pwV2gydjE5RkZWOFdQWFE2WGVZMU1GX1h4dnh0OFlwWnJKOHZrVndsaFA2cm45SDNjdmJXd3k0YklSVkxsaWphX1paQkNpUE1xWFlJ?oc=5",
-      "https://news.google.com/rss/articles/CBMie0FVX3lxTE14MHZSdkQ3TzZONVh4dW9nU1B5RlNOZHJSdzN1eVlQV3Eycm14NGZhb2F0QWdneVhPR2VqLWVVR1Bkb3lqTldGa3JVTXR0eGdFVi12UTJVTi1pTWVNVWhHX2tCUUJ1b21hT0dkampGU0Ric1d2WHAyclRfSQ?oc=5",
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxNNl9yb3JkT21xaHcxVWgydjJJc1lLNU5LNDBicTBWTm1YekxBb0VJRUI5MWo2Qm9Ic0NfY3p4LU9BcXVQeUpZVkZ4Uk50dERwb01aOW0tM1ZVaHlDa2VIaEVOSmlGWG9PYWxNNDdRbDJtQzVrQ29RZVV5a3dBb1l0NGozaw?oc=5",
+      "https://www.cnbc.com/2026/08/16/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
       "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
       "https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates",
       "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5"
     ],
     "source_titles": [
-      "Jim Cramer's top 10 things to watch in the stock market Wednesday",
       "Treasury yields dip as Wall Street awaits wholesale inflation data",
       "Fed's Goolsbee says latest inflation data is better - Reuters",
-      "Oil prices rally, US data dents chances of Fed rate hike - reuters.com",
+      "Stocks mixed, dollar falls on Fed rate bets, yields rise - Reuters",
+      "Here are the 2 big things we're watching in the stock market in the week ahead",
       "Here are the 3 big things we're watching in the stock market in the week ahead",
       "Global stock rally extends, oil advances on Iran: Markets Wrap",
       "Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters"
     ],
     "direct_source_urls": [
-      "https://www.cnbc.com/2026/08/12/jim-cramers-top-10-things-to-watch-in-the-stock-market-wednesday.html",
       "https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html",
       "https://news.google.com/rss/articles/CBMilwFBVV95cUxQMHQ3RV9DUU5mVVpveUtFNmJfelJtYnluMGVCQ2FPRzEzSG1nUUZidUsxSURTQ3Rwa1htSm5EMXpZVHNpN1Y3aDMzd1pwV2gydjE5RkZWOFdQWFE2WGVZMU1GX1h4dnh0OFlwWnJKOHZrVndsaFA2cm45SDNjdmJXd3k0YklSVkxsaWphX1paQkNpUE1xWFlJ?oc=5",
-      "https://news.google.com/rss/articles/CBMie0FVX3lxTE14MHZSdkQ3TzZONVh4dW9nU1B5RlNOZHJSdzN1eVlQV3Eycm14NGZhb2F0QWdneVhPR2VqLWVVR1Bkb3lqTldGa3JVTXR0eGdFVi12UTJVTi1pTWVNVWhHX2tCUUJ1b21hT0dkampGU0Ric1d2WHAyclRfSQ?oc=5"
+      "https://news.google.com/rss/articles/CBMigwFBVV95cUxNNl9yb3JkT21xaHcxVWgydjJJc1lLNU5LNDBicTBWTm1YekxBb0VJRUI5MWo2Qm9Ic0NfY3p4LU9BcXVQeUpZVkZ4Uk50dERwb01aOW0tM1ZVaHlDa2VIaEVOSmlGWG9PYWxNNDdRbDJtQzVrQ29RZVV5a3dBb1l0NGozaw?oc=5",
+      "https://www.cnbc.com/2026/08/16/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html"
     ],
     "direct_source_titles": [
-      "Jim Cramer's top 10 things to watch in the stock market Wednesday",
       "Treasury yields dip as Wall Street awaits wholesale inflation data",
       "Fed's Goolsbee says latest inflation data is better - Reuters",
-      "Oil prices rally, US data dents chances of Fed rate hike - reuters.com"
+      "Stocks mixed, dollar falls on Fed rate bets, yields rise - Reuters",
+      "Here are the 2 big things we're watching in the stock market in the week ahead"
     ],
     "direct_source_dates": [
-      "2026-08-12",
       "2026-08-13",
       "2026-08-13",
-      "2026-08-13"
+      "2026-08-16",
+      "2026-08-16"
     ],
     "context_source_urls": [
       "https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html",
@@ -113,10 +113,10 @@
       "2026-08-09"
     ],
     "direct_evidence_ids": [
-      "finnhub:8336524",
       "finnhub:8340924",
       "finnhub:8346101",
-      "finnhub:8344620"
+      "finnhub:8358990",
+      "finnhub:8356968"
     ],
     "context_evidence_ids": [
       "finnhub:8275331",
@@ -128,9 +128,9 @@
     "rag_attempted": true,
     "fallback_stage": "none",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff",
-    "market_close_cutoff": "2026-08-14T20:00:00Z",
-    "news_cutoff": "2026-08-14T22:00:00Z",
-    "retrieval_as_of": "2026-08-14T22:17:33Z",
+    "market_close_cutoff": "2026-08-17T20:00:00Z",
+    "news_cutoff": "2026-08-17T22:00:00Z",
+    "retrieval_as_of": "2026-08-17T22:18:43Z",
     "corpus_status": {
       "ok": true,
       "status": "ok",
@@ -138,63 +138,63 @@
       "db_path": "/home/runner/work/Stock-Market-Update/Stock-Market-Update/cache/market_rag.sqlite3",
       "quick_check": "ok",
       "schema_version": "1",
-      "article_count": 818,
-      "snapshot_count": 16,
+      "article_count": 898,
+      "snapshot_count": 17,
       "oldest_published_at": "2026-07-23T12:28:17Z",
-      "newest_published_at": "2026-08-14T20:38:40Z",
-      "size_bytes": 1073152
+      "newest_published_at": "2026-08-17T21:17:54Z",
+      "size_bytes": 1171456
     }
   },
   "market_snapshot": {
     "breadth": {
-      "advances": 247,
-      "declines": 238,
-      "total": 503
+      "advances": 126,
+      "declines": 363,
+      "total": 502
     },
     "sector_returns": [
       {
         "sector": "Energy",
-        "return_1d": 1.4
-      },
-      {
-        "sector": "Utilities",
-        "return_1d": 0.6
-      },
-      {
-        "sector": "Materials",
-        "return_1d": 0.5
-      },
-      {
-        "sector": "Real Estate",
-        "return_1d": 0.4
-      },
-      {
-        "sector": "Industrials",
-        "return_1d": 0.3
-      },
-      {
-        "sector": "Consumer Staples",
-        "return_1d": 0.0
-      },
-      {
-        "sector": "Communication Services",
-        "return_1d": -0.1
-      },
-      {
-        "sector": "Financials",
-        "return_1d": -0.2
-      },
-      {
-        "sector": "Consumer Discretionary",
-        "return_1d": -0.3
+        "return_1d": 0.9
       },
       {
         "sector": "Information Technology",
-        "return_1d": -0.4
+        "return_1d": -0.1
+      },
+      {
+        "sector": "Industrials",
+        "return_1d": -0.2
       },
       {
         "sector": "Health Care",
-        "return_1d": -0.6
+        "return_1d": -0.2
+      },
+      {
+        "sector": "Utilities",
+        "return_1d": -0.4
+      },
+      {
+        "sector": "Materials",
+        "return_1d": -0.5
+      },
+      {
+        "sector": "Real Estate",
+        "return_1d": -0.8
+      },
+      {
+        "sector": "Consumer Discretionary",
+        "return_1d": -1.0
+      },
+      {
+        "sector": "Financials",
+        "return_1d": -1.0
+      },
+      {
+        "sector": "Communication Services",
+        "return_1d": -1.1
+      },
+      {
+        "sector": "Consumer Staples",
+        "return_1d": -1.4
       }
     ]
   },
@@ -205,13 +205,13 @@
     "fallback_stage": "none"
   },
   "build": {
-    "git_sha": "d6fbda33c0dec200f7e0198428e44a784622276f",
+    "git_sha": "352c6e995944476aea9f38edad97c8280ea65ffb",
     "python_version": "3.12.13",
     "pandas_version": "3.0.5",
     "yfinance_version": "1.5.2",
     "calendar_version": "4.13.2",
     "retriever_version": "v2-sqlite-fts5-workflow-cutoff"
   },
-  "run_started_at": "2026-08-14T22:17:33.150496+00:00",
-  "generated_at": "2026-08-14T22:21:22.095107+00:00"
+  "run_started_at": "2026-08-17T22:18:43.950823+00:00",
+  "generated_at": "2026-08-17T22:29:21.730342+00:00"
 }
