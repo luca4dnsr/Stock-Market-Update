@@ -254,6 +254,7 @@ def _build_market_summary_html(market_summary: dict) -> str:
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
     <h2>📈 {escape(str(market_summary.get('headline', '당일 시장 흐름')))}</h2>
+    
     <p><strong>관측</strong>{escape(str(market_summary.get('observation', '')))}</p>
     <p><strong>직접 해석</strong>{escape(str(market_summary.get('interpretation', '')))}</p>
     {recent_context_html}
@@ -420,7 +421,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       letter-spacing: .14em; margin-bottom: 8px;
     }}
     .market-summary-card h2 {{ font-size: 17px; margin-bottom: 16px; }}
-    .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }}
+    .market-summary-card h2 + p {{ margin-top: 0; }}
+    .market-summary-card p {{ color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; display: block; }}
     .market-summary-card strong {{ color: #fff; display: inline-block; min-width: 68px; }}
     .market-summary-sources a {{ color: #9bc8ff; text-decoration: underline; }}
     .korea-market-scenario {{
