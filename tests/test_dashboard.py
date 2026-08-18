@@ -98,7 +98,7 @@ class DashboardTest(unittest.TestCase):
         self.assertIn("<strong>직접 근거</strong>", html)
         self.assertIn("<strong>맥락 근거</strong>", html)
         self.assertIn("<strong>최근 맥락</strong>", html)
-        self.assertIn("</h2>\n    \n    <p><strong>관측</strong>", html)
+        self.assertIn("</h2>\n    <br>\n    <p><strong>관측</strong>", html)
         self.assertIn("2026-07-24", html)
         self.assertIn("한국 증시 확인 조건과 시나리오", html)
         self.assertIn("반도체 낙폭 축소", html)

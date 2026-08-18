@@ -254,7 +254,7 @@ def _build_market_summary_html(market_summary: dict) -> str:
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
     <h2>📈 {escape(str(market_summary.get('headline', '당일 시장 흐름')))}</h2>
-    
+    <br>
     <p><strong>관측</strong>{escape(str(market_summary.get('observation', '')))}</p>
     <p><strong>직접 해석</strong>{escape(str(market_summary.get('interpretation', '')))}</p>
     {recent_context_html}
