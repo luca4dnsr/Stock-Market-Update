@@ -411,8 +411,8 @@ jobs:
           path: ${{ env.MARKET_RAG_DB_PATH }}
           key: market-rag-schema-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-report
 
-      # ── 5. GitHub Pages용 HTML 복사 ─────────────────────
-      - name: Prepare GitHub Pages (docs/)
+      # ── 5. Cloudflare Pages 배포용 정적 파일 준비 ───────
+      - name: Prepare static site for Cloudflare Pages (docs/)
         id: prepare_pages
         if: >-
           steps.run_spx.outcome == 'success' &&
@@ -422,7 +422,7 @@ jobs:
         run: |
           mkdir -p docs
           cp "${{ steps.run_spx.outputs.html_path }}" docs/index.html
-          echo "GitHub Pages: ${{ steps.run_spx.outputs.html_path }} -> docs/index.html"
+          echo "Cloudflare Pages static site: ${{ steps.run_spx.outputs.html_path }} -> docs/index.html"
 
       # ── 6. 최신 웹 대시보드를 Actions Artifact로 업로드 ───
       - name: Upload dashboard as artifact
@@ -439,28 +439,20 @@ jobs:
             docs/index.html
           retention-days: 30    # 30일 보관 후 자동 삭제
 
-      # ── 7. output/ + docs/ 를 저장소에 커밋 ──────────────
-      - name: Commit and push output
+      # ── 7. Cloudflare Pages로 배포 ────────────────────────
+      - name: Deploy to Cloudflare Pages
         if: >-
           steps.run_spx.outputs.report_generated == 'true' &&
           steps.prepare_pages.outcome == 'success' &&
           github.event.inputs.dry_run != 'true' &&
           github.event.inputs.nim_probe != 'true'
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # output/ 및 docs/는 로컬 산출물을 무시하도록 .gitignore에 있으므로
-          # Actions가 생성한 검증 완료 산출물만 의도적으로 강제 스테이징한다.
-          git add -f output/ docs/
-          # 변경 사항이 있을 때만 커밋
-          if git diff --staged --quiet; then
-            echo "변경 사항 없음 — 커밋 생략"
-          else
-            DATE=$(date -u +'%Y-%m-%d')
-            git commit -m "📈 SPX Daily Update ${DATE} [auto]"
-            git push
-            echo "커밋 및 푸시 완료"
-          fi
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: quantism-stock-market
+          directory: docs
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       # ── 8. 이메일 본문(HTML) 생성 ────────────────────────
       - name: Generate email body
