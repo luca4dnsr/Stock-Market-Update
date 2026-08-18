@@ -216,7 +216,7 @@ def _build_market_summary_html(market_summary: dict) -> str:
     )
     recent_context = str(market_summary.get("recent_context") or "").strip()
     recent_context_html = (
-        f"<p><strong>최근 맥락</strong>{escape(recent_context)}</p>"
+        f"<p><strong>최근 맥락</strong><br>{escape(recent_context)}</p>"
         if recent_context
         else ""
     )
@@ -241,7 +241,7 @@ def _build_market_summary_html(market_summary: dict) -> str:
         korea_scenario_html = f"""
     <div class="korea-market-scenario">
       <h3>🇰🇷 한국 증시 확인 조건과 시나리오 · {escape(session_date)}</h3>
-      <p><strong>기본 시나리오</strong>{escape(base_case)}</p>
+      <p><strong>기본 시나리오</strong><br>{escape(base_case)}</p>
       <div class="scenario-grid">
         <div><strong>긍정 확인 조건</strong><ul>{positive_items}</ul></div>
         <div><strong>위험 확인 조건</strong><ul>{risk_items}</ul></div>
@@ -255,8 +255,8 @@ def _build_market_summary_html(market_summary: dict) -> str:
     <div class="market-summary-label">MARKET TAKEAWAY</div>
     <h2>📈 {escape(str(market_summary.get('headline', '당일 시장 흐름')))}</h2>
     <br>
-    <p><strong>관측</strong>{escape(str(market_summary.get('observation', '')))}</p>
-    <p><strong>직접 해석</strong>{escape(str(market_summary.get('interpretation', '')))}</p>
+    <p><strong>관측</strong><br>{escape(str(market_summary.get('observation', '')))}</p>
+    <p><strong>직접 해석</strong><br>{escape(str(market_summary.get('interpretation', '')))}</p>
     {recent_context_html}
     {korea_scenario_html}
     {direct_sources_html}
