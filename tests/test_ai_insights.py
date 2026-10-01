@@ -93,7 +93,32 @@ class AiInsightsTest(unittest.TestCase):
         payload = mock_post.call_args.kwargs["json"]
         self.assertEqual(payload["model"], "moonshotai/kimi-k3")
         self.assertEqual(payload["response_format"], {"type": "json_object"})
+        self.assertEqual(payload["temperature"], 0)
         self.assertEqual(generated, {"items": []})
+
+    def test_kimi_request_retries_empty_response_with_repair_prompt(self):
+        empty_response = Mock(ok=True)
+        empty_response.json.return_value = {
+            "choices": [{"message": {"content": ""}}],
+        }
+        valid_response = Mock(ok=True)
+        valid_response.json.return_value = {
+            "choices": [{"message": {"content": '{"items": []}'}}],
+        }
+
+        with (
+            patch(
+                "ai_insights.requests.post",
+                side_effect=[empty_response, valid_response],
+            ) as mock_post,
+            patch.dict(os.environ, {"NVIDIA_API_KEY": "test-key"}),
+        ):
+            generated = _request_kimi_json("prompt")
+
+        self.assertEqual(generated, {"items": []})
+        self.assertEqual(mock_post.call_count, 2)
+        retry_prompt = mock_post.call_args_list[1].kwargs["json"]["messages"][-1]["content"]
+        self.assertIn("JSON 객체만", retry_prompt)
 
     def test_kimi_request_redacts_no_secret_in_errors(self):
         response = Mock(ok=False, status_code=401, text="token=test-key")

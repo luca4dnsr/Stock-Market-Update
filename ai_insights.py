@@ -735,7 +735,7 @@ def _select_market_articles(
     return selected
 
 
-def _request_kimi_json(prompt: str) -> dict:
+def _request_kimi_json_once(prompt: str) -> dict:
     """NVIDIA NIM의 Kimi K3를 호출해 JSON 응답을 반환한다."""
     api_key = os.getenv("NVIDIA_API_KEY")
     if not api_key:
@@ -753,7 +753,7 @@ def _request_kimi_json(prompt: str) -> dict:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            "temperature": 0.1,
+            "temperature": 0,
             "max_tokens": KIMI_INSIGHTS_MAX_TOKENS,
             "response_format": {"type": "json_object"},
             "stream": False,
@@ -766,6 +766,8 @@ def _request_kimi_json(prompt: str) -> dict:
     try:
         choice = response.json()["choices"][0]
         content = str(choice["message"].get("content") or "")
+        if choice.get("finish_reason") == "length":
+            raise ValueError("Kimi K3 응답이 토큰 제한으로 잘렸습니다.")
         generated = _parse_json(content)
         if not isinstance(generated, dict):
             raise ValueError("Kimi K3 JSON 최상위 값이 객체가 아닙니다.")
@@ -779,6 +781,20 @@ def _request_kimi_json(prompt: str) -> dict:
         )
         raise ValueError(f"Kimi K3 JSON 파싱 실패: {exc}") from exc
     return generated
+
+
+def _request_kimi_json(prompt: str) -> dict:
+    """Kimi K3 응답 형식 오류와 일시적 네트워크 오류를 한 번 재시도한다."""
+    retry_prompt = (
+        "\n\n이전 응답이 비어 있거나 JSON 형식이 아니었습니다. "
+        "설명, Markdown, 코드 펜스 없이 유효한 JSON 객체만 다시 출력하십시오. "
+        "요청한 모든 필수 필드를 빠짐없이 포함하십시오."
+    )
+    try:
+        return _request_kimi_json_once(prompt)
+    except (requests.RequestException, ValueError) as exc:
+        logger.info("Kimi K3 응답 복구 재시도: 원인=%s", type(exc).__name__)
+        return _request_kimi_json_once(prompt + retry_prompt)
 
 
 def _business_fallback(record: dict) -> str:

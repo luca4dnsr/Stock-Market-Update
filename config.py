@@ -67,7 +67,7 @@ KIMI_MODEL = "moonshotai/kimi-k3"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
 AI_INSIGHTS_CACHE_VERSION = "v16-kimi-k3-single-provider"
-KIMI_INSIGHTS_BATCH_SIZE = 4
+KIMI_INSIGHTS_BATCH_SIZE = 2
 KIMI_INSIGHTS_MAX_TOKENS = 5000
 # 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.
 WORKFLOW_NEWS_CUTOFF_HOUR_KST = 7
