@@ -28,6 +28,11 @@ on:
         default: 'false'
         type: choice
         options: ['false', 'true']
+      report_date:
+        description: '재생성할 기준일 (YYYY-MM-DD, 비워두면 최신 거래일)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write   # output/ 및 docs/ 커밋·푸시를 위해 필요
@@ -278,6 +283,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          REPORT_DATE: ${{ github.event.inputs.report_date }}
         run: |
           RUN_MARKER="$RUNNER_TEMP/spx-run-start"
           touch "$RUN_MARKER"
@@ -303,6 +309,13 @@ jobs:
           fi
           if [ "${{ github.event.inputs.force_same_date }}" = "true" ]; then
             MAIN_ARGS+=(--force-same-date)
+          fi
+          if [ -n "$REPORT_DATE" ]; then
+            if ! [[ "$REPORT_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::error title=잘못된 report_date 형식::YYYY-MM-DD 형식으로 입력해야 합니다: $REPORT_DATE"
+              exit 1
+            fi
+            MAIN_ARGS+=(--expected-date "$REPORT_DATE" --force-same-date)
           fi
 
           while true; do
@@ -424,7 +437,29 @@ jobs:
           cp "${{ steps.run_spx.outputs.html_path }}" docs/index.html
           echo "Static dashboard prepared: ${{ steps.run_spx.outputs.html_path }} -> docs/index.html"
 
-      # ── 6. 최신 웹 대시보드를 Actions Artifact로 업로드 ───
+      # ── 6. GitHub Pages 소스 브랜치에 최신 대시보드 반영 ──
+      - name: Publish dashboard to GitHub Pages source
+        id: publish_pages
+        if: >-
+          steps.prepare_pages.outcome == 'success' &&
+          github.event.inputs.dry_run != 'true' &&
+          github.event.inputs.nim_probe != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f docs/index.html
+
+          if git diff --cached --quiet; then
+            echo "Dashboard is unchanged; no commit is needed."
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "📈 Update SPX dashboard"
+          git push origin "HEAD:${{ github.ref_name }}"
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      # ── 7. 최신 웹 대시보드를 Actions Artifact로 업로드 ───
       - name: Upload dashboard as artifact
         if: >-
           steps.run_spx.outputs.report_generated == 'true' &&
@@ -439,7 +474,7 @@ jobs:
             docs/index.html
           retention-days: 30    # 30일 보관 후 자동 삭제
 
-      # ── 8. 이메일 본문(HTML) 생성 ────────────────────────
+      # ── 9. 이메일 본문(HTML) 생성 ────────────────────────
       - name: Generate email body
         if: >-
           steps.run_spx.outputs.report_generated == 'true' &&
@@ -546,7 +581,7 @@ jobs:
           REPORT_DATE=$(python3 -c "import json; print(json.load(open('output/summary.json'))['data_date'])")
           echo "REPORT_DATE=${REPORT_DATE}" >> "$GITHUB_ENV"
 
-      # ── 9. 이메일 발송 ────────────────────────────────────
+      # ── 10. 이메일 발송 ───────────────────────────────────
       # 사전 설정 필요: GitHub Secrets에 EMAIL_USERNAME, EMAIL_PASSWORD, EMAIL_TO 등록
       # 설정 안 되어 있으면 이 스텝은 조용히 건너뜀 (continue-on-error: true)
       - name: Send email report
@@ -568,7 +603,7 @@ jobs:
           to: ${{ secrets.EMAIL_TO }}
           from: "SPX Daily Monitor <${{ secrets.EMAIL_USERNAME }}>"
 
-      # ── 10. 실행 요약 ─────────────────────────────────────
+      # ── 11. 실행 요약 ─────────────────────────────────────
       - name: Summary
         if: always()
         run: |
@@ -595,7 +630,8 @@ jobs:
           PRICE_COVERAGE="${{ steps.run_spx.outputs.coverage }}"
           ATTEMPTS_USED="${{ steps.run_spx.outputs.attempts_used }}"
           RETRY_EXHAUSTED="${{ steps.run_spx.outputs.retry_exhausted }}"
-          PAGES_OUTCOME="${{ steps.prepare_pages.outcome }}"
+          PAGES_OUTCOME="${{ steps.publish_pages.outcome }}"
+          PAGES_PUBLISHED="${{ steps.publish_pages.outputs.published }}"
 
           [ -n "$RAG_INGEST_OUTCOME" ] || RAG_INGEST_OUTCOME="skipped"
           [ -n "$RAG_INGEST_STATUS" ] || RAG_INGEST_STATUS="not_run"
@@ -621,6 +657,7 @@ jobs:
           [ -n "$ATTEMPTS_USED" ] || ATTEMPTS_USED="0"
           [ -n "$RETRY_EXHAUSTED" ] || RETRY_EXHAUSTED="false"
           [ -n "$PAGES_OUTCOME" ] || PAGES_OUTCOME="skipped"
+          [ -n "$PAGES_PUBLISHED" ] || PAGES_PUBLISHED="false"
 
           echo "### 📈 SPX Daily Automation Result" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -646,4 +683,4 @@ jobs:
           echo "| Yahoo raw / observed date | $RAW_LATEST_DATE / $OBSERVED_DATE |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Expected-date coverage | $PRICE_COVERAGE |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Price attempts / exhausted | $ATTEMPTS_USED / $RETRY_EXHAUSTED |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Pages preparation | $PAGES_OUTCOME |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Pages publish / changed | $PAGES_OUTCOME / $PAGES_PUBLISHED |" >> "$GITHUB_STEP_SUMMARY"
