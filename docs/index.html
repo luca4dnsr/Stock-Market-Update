@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SPX Daily Monitor — 2026-08-17</title>
-  <meta name="description" content="S&P 500 일간 등락률 대시보드 2026-08-17"/>
+  <title>SPX Daily Monitor — 2026-09-29</title>
+  <meta name="description" content="S&P 500 일간 등락률 대시보드 2026-09-29"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
@@ -149,7 +149,8 @@
       letter-spacing: .14em; margin-bottom: 8px;
     }
     .market-summary-card h2 { font-size: 17px; margin-bottom: 16px; }
-    .market-summary-card p { color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; }
+    .market-summary-card h2 + p { margin-top: 0; }
+    .market-summary-card p { color: rgba(220,230,248,.86); font-size: 13px; line-height: 1.75; margin: 8px 0; display: block; }
     .market-summary-card strong { color: #fff; display: inline-block; min-width: 68px; }
     .market-summary-sources a { color: #9bc8ff; text-decoration: underline; }
     .korea-market-scenario {
@@ -273,19 +274,19 @@
       <h1>SPX Daily Monitor</h1>
       <div class="subtitle">S&amp;P 500 — 일간 등락률 자동 대시보드</div>
     </div>
-    <div class="header-date">📅 2026-08-17</div>
+    <div class="header-date">📅 2026-09-29</div>
   </header>
 
   <!-- ── Market Breadth ── -->
   <div class="breadth-card">
     <div class="breadth-label">Market Breadth — 상승 vs 하락 종목 수</div>
     <div class="breadth-row">
-      <span class="breadth-num pos">↑ 126</span>
+      <span class="breadth-num pos">↑ 188</span>
       <div class="breadth-bar-wrap">
         <div class="breadth-bar-fill" id="breadthFill" style="width:0%"></div>
       </div>
-      <span class="breadth-num neg">↓ 363</span>
-      <span class="breadth-desc">502 종목 중</span>
+      <span class="breadth-num neg">↓ 286</span>
+      <span class="breadth-desc">503 종목 중</span>
     </div>
   </div>
 
@@ -294,27 +295,42 @@
   <div class="sector-grid">
     
         <div class="sector-tile" style="background:rgba(180,60,60,0.5);">
-          <div class="sector-name">Energy</div>
-          <div class="sector-val pos">+0.9%</div>
+          <div class="sector-name">Utilities</div>
+          <div class="sector-val pos">+1.2%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(150,80,80,0.3);">
+          <div class="sector-name">Industrials</div>
+          <div class="sector-val pos">+0.2%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(150,80,80,0.3);">
+          <div class="sector-name">Communication Services</div>
+          <div class="sector-val pos">+0.1%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
+          <div class="sector-name">Real Estate</div>
+          <div class="sector-val flat">-0.0%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
+          <div class="sector-name">Consumer Discretionary</div>
+          <div class="sector-val flat">+0.0%</div>
         </div>
 
         <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
           <div class="sector-name">Information Technology</div>
-          <div class="sector-val neg">-0.1%</div>
-        </div>
-
-        <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
-          <div class="sector-name">Industrials</div>
           <div class="sector-val neg">-0.2%</div>
         </div>
 
         <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
           <div class="sector-name">Health Care</div>
-          <div class="sector-val neg">-0.2%</div>
+          <div class="sector-val neg">-0.3%</div>
         </div>
 
         <div class="sector-tile" style="background:rgba(60,100,180,0.3);">
-          <div class="sector-name">Utilities</div>
+          <div class="sector-name">Financials</div>
           <div class="sector-val neg">-0.4%</div>
         </div>
 
@@ -324,28 +340,13 @@
         </div>
 
         <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
-          <div class="sector-name">Real Estate</div>
-          <div class="sector-val neg">-0.8%</div>
-        </div>
-
-        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
-          <div class="sector-name">Consumer Discretionary</div>
-          <div class="sector-val neg">-1.0%</div>
-        </div>
-
-        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
-          <div class="sector-name">Financials</div>
-          <div class="sector-val neg">-1.0%</div>
-        </div>
-
-        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
-          <div class="sector-name">Communication Services</div>
-          <div class="sector-val neg">-1.1%</div>
-        </div>
-
-        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
           <div class="sector-name">Consumer Staples</div>
-          <div class="sector-val neg">-1.4%</div>
+          <div class="sector-val neg">-0.7%</div>
+        </div>
+
+        <div class="sector-tile" style="background:rgba(50,90,200,0.5);">
+          <div class="sector-name">Energy</div>
+          <div class="sector-val neg">-0.9%</div>
         </div>
   </div>
 
@@ -379,242 +380,242 @@
             
         <tr class="top-row">
           <td class="rank-cell">1</td>
-          <td class="ticker-cell">SNDK</td>
-          <td class="name-cell" title="Sandisk">Sandisk</td>
-          <td class="num-cell" data-sort-value="264.6">$264.6B</td>
-          <td class="pct pos">+8.9%</td><td class="pct pos">+44.3%</td><td class="pct pos">+31.9%</td><td class="pct pos">+26.9%</td>
-          <td class="num-cell">47</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">샌디스크는 NAND 플래시 기술을 활용한 데이터 저장 장치 및 솔루션을 개발, 제조, 판매합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=8e7fbc035dd720e744a130949fa23f87fbc91716d85b7b9fb7693b77133d3b8e" target="_blank" rel="noopener noreferrer">Chip Stocks Find Buyers After Earnings Shock Shakes Out AI Trade</a> · <a href="https://finnhub.io/api/news?id=d172a7fd415d899d9a98a5c544a720598cbbd1c007c0b378b6a3eca4d519f452" target="_blank" rel="noopener noreferrer">SanDisk Traded Margin Upside For Years Of Contracted Revenue</a> · <a href="https://finnhub.io/api/news?id=82bad46a5349dcc7d397c8ac4e7910af4dca8f32a45e7f0d4ea06a23509cea1e" target="_blank" rel="noopener noreferrer">The S&amp;P 500&#x27;s 50% Earnings Boom Comes With A Giant Asterisk</a></div></td>
+          <td class="ticker-cell">CCL</td>
+          <td class="name-cell" title="Carnival Corporation">Carnival Corporation</td>
+          <td class="num-cell" data-sort-value="33">$33.0B</td>
+          <td class="pct pos">+13.4%</td><td class="pct pos">+12.7%</td><td class="pct pos">+1.4%</td><td class="pct neg">-11.7%</td>
+          <td class="num-cell">294</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=c31853ea41e84a0ccbdd47fc45706962acbb87b2eb941d45bff4f7e782e08867" target="_blank" rel="noopener noreferrer">Carnival Q3 Earnings Beat Estimates on Record Revenues &amp; Net Yields</a> · <a href="https://finnhub.io/api/news?id=9fb42be2f810690f5ab4858655f4d47fe30bee90725ed07626040fa6d2a357d2" target="_blank" rel="noopener noreferrer">Carnival (CCL) Q3 Earnings and Revenues Top Estimates</a> · <a href="https://finnhub.io/api/news?id=987154f890fd8dd3f7fb258cfe535c01ac75e4ba3bc494d3ca38a16bb7effa2e" target="_blank" rel="noopener noreferrer">Carnival Raises FY2026 Adj EPS Guidance from $2.22 to $2.24 vs $2.22 Est</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">2</td>
-          <td class="ticker-cell">COHR</td>
-          <td class="name-cell" title="Coherent Corp.">Coherent Corp.</td>
-          <td class="num-cell" data-sort-value="68.7">$68.7B</td>
-          <td class="pct pos">+7.8%</td><td class="pct pos">+8.0%</td><td class="pct pos">+26.5%</td><td class="pct neg">-8.2%</td>
-          <td class="num-cell">190</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">코히런트는 광학 및 포토닉스 솔루션을 개발하고 제공하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=5cf1e2975cf5d99d0278b86203b9dec1a143a519e14a67f5e150001fbdb6f626" target="_blank" rel="noopener noreferrer">Coherent Stock Drops Despite Earnings Beat and Strong Outlook</a> · <a href="https://finnhub.io/api/news?id=cdf23891f483ff93244689a370f236e0ff835d065fbb0c66623db18e402f4236" target="_blank" rel="noopener noreferrer">Coherent’s (NYSE:COHR) Q2 CY2026 Sales Beat Estimates, Provides Optimistic Revenue Guidance for Next Quarter</a> · <a href="https://finnhub.io/api/news?id=517b9c03f2ec26da4a0080abc3a7fc264525daadd98be7bf5263cfdaa103a2a3" target="_blank" rel="noopener noreferrer">Coherent (COHR) Q4 Earnings and Revenues Top Estimates</a></div></td>
+          <td class="ticker-cell">BE</td>
+          <td class="name-cell" title="Bloom Energy">Bloom Energy</td>
+          <td class="num-cell" data-sort-value="81.6">$81.6B</td>
+          <td class="pct pos">+10.8%</td><td class="pct pos">+5.3%</td><td class="pct pos">+38.2%</td><td class="pct neg">-3.8%</td>
+          <td class="num-cell">146</td>
+          <td class="sector-cell">Industrials</td>
+          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=7c9fc6ad16272a297e84e0382e1e961df7455d90095d85f9083ad84f1f85b5ee" target="_blank" rel="noopener noreferrer">Q3 Earnings Could Be the Catalyst the Market Has Been Waiting For</a> · <a href="https://finnhub.io/api/news?id=dd6a0fd76c58488e5490b0bb4bb3b4a8b0b77469113b98ffeba909ffe2e3c606" target="_blank" rel="noopener noreferrer">Bloom Energy vs. NANO Nuclear Energy: Which Stock Is a Better Buy in 2026?</a> · <a href="https://finnhub.io/api/news?id=72eefe0f81b501e479bfe442814e566c12e9c2badba9a9ef82c4455b2ef23e7e" target="_blank" rel="noopener noreferrer">Bloom Energy Jumps 8% as Oracle Reaffirms 2.4 GW Fuel Cell Contract After Force Majeure Notice</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">3</td>
-          <td class="ticker-cell">FIX</td>
-          <td class="name-cell" title="Comfort Systems USA">Comfort Systems USA</td>
-          <td class="num-cell" data-sort-value="66.2">$66.2B</td>
-          <td class="pct pos">+6.0%</td><td class="pct pos">+12.4%</td><td class="pct pos">+12.4%</td><td class="pct neg">-5.5%</td>
-          <td class="num-cell">194</td>
-          <td class="sector-cell">Industrials</td>
-          <td class="business-cell">컴포트 시스템즈 USA는 기계 및 전기 설치, 개보수, 유지보수 및 교체 서비스를 제공합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=1fca526104380528563b46a79d25410b6960b24394aeb57c17663e77eed81026" target="_blank" rel="noopener noreferrer">Sterling Q2 Earnings &amp; Revenues Beat Estimates, Increase Y/Y</a> · <a href="https://finnhub.io/api/news?id=275dbb2cd9032926cd8fe2f5c5ea2d558ac065c8035971aa4ec748e4dc16cd10" target="_blank" rel="noopener noreferrer">CRH Stock Up on Q2 Earnings &amp; Revenue Beat, Both Up Y/Y</a> · <a href="https://finnhub.io/api/news?id=c9ff85826e8c8b7e284f816485c64ec9a2dc2e6f049b2f4abb6e14719b8df0e6" target="_blank" rel="noopener noreferrer">Martin Marietta Q2 Earnings &amp; Revenues Beat on Shipment Growth</a></div></td>
+          <td class="ticker-cell">RCL</td>
+          <td class="name-cell" title="Royal Caribbean Group">Royal Caribbean Group</td>
+          <td class="num-cell" data-sort-value="71.1">$71.1B</td>
+          <td class="pct pos">+7.5%</td><td class="pct pos">+11.0%</td><td class="pct neg">-6.2%</td><td class="pct neg">-17.4%</td>
+          <td class="num-cell">173</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=ed16ed086c3ef21ce076f77e023a513638497de9ed094cf3e09ae57f091bd6d7" target="_blank" rel="noopener noreferrer">Carnival Stock Surges After Earnings Show Record Revenue</a> · <a href="https://finnhub.io/api/news?id=201e166243c14d9a38594eb40b80ba5f53d45d00e649c0894b4a83688659879a" target="_blank" rel="noopener noreferrer">Stock Market Today, Sept. 29: Carnival Surges 13% on Record Bookings, Raised Guidance</a> · <a href="https://finnhub.io/api/news?id=40ad8119958e321255fa54e69c5df854d27e909053535969334bd7f2cda64140" target="_blank" rel="noopener noreferrer">Royal Caribbean Cruises Confirms It Will Acquire 50% Stake In Sandals And Beaches Resorts Holding Company For ~$3B In Cash</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">4</td>
-          <td class="ticker-cell">TER</td>
-          <td class="name-cell" title="Teradyne">Teradyne</td>
-          <td class="num-cell" data-sort-value="69.3">$69.3B</td>
-          <td class="pct pos">+5.8%</td><td class="pct pos">+21.4%</td><td class="pct pos">+37.5%</td><td class="pct pos">+31.2%</td>
-          <td class="num-cell">187</td>
+          <td class="ticker-cell">LITE</td>
+          <td class="name-cell" title="Lumentum">Lumentum</td>
+          <td class="num-cell" data-sort-value="87.1">$87.1B</td>
+          <td class="pct pos">+5.7%</td><td class="pct pos">+2.9%</td><td class="pct pos">+8.8%</td><td class="pct pos">+13.5%</td>
+          <td class="num-cell">135</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">테라다인은 반도체 테스트 장비 등을 개발 및 공급하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=86b0e87e19a3ee81069338fda50e55cb607a855dc5256234fbf782935cd51557" target="_blank" rel="noopener noreferrer">Teradyne Stock Jumps as Earnings Guidance Does the Seemingly Impossible—Impresses Wall Street</a> · <a href="https://finnhub.io/api/news?id=8052648d44dfe13c8d6e1bb92c0903561109a7e7996d483ce6cb7babab312c4e" target="_blank" rel="noopener noreferrer">Teradyne Shares Rise After Record Quarterly Results and Strong Q3 Outlook</a> · <a href="https://finnhub.io/api/news?id=1925bdcbb900c52b8278ada29cde08dc36b2bd31cc8d2944aa86d9e08ca5cf24" target="_blank" rel="noopener noreferrer">Cisco&#x27;s Q4 Earnings Beat Estimates, Strong Networking Aids Revenues</a></div></td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=f4cd1e985d5f0d0dd650f0ec64360c43779f228908471c2596d762cf8077d0f1" target="_blank" rel="noopener noreferrer">GoPro Zooms 34% Higher on Starman Optical Merger and Markiplier Stake; Coherent Climbs 7%, Lumentum Gains 3%</a> · <a href="https://finnhub.io/api/news?id=a0d5427010f07ac8c392db489bce930e7980c70bbbe87406be7bb87a9deab0df" target="_blank" rel="noopener noreferrer">Why Is Lumentum (LITE) Up 6.1% Since Last Earnings Report?</a> · <a href="https://finnhub.io/api/news?id=d16e510f97a25fba80459af0e6701a5bc5531e25c7d5dba20f469231fde710a0" target="_blank" rel="noopener noreferrer">Credo Earnings: Waiting For A Buying Opportunity? Here It Is</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">5</td>
-          <td class="ticker-cell">MRVL</td>
-          <td class="name-cell" title="Marvell Technology">Marvell Technology</td>
-          <td class="num-cell" data-sort-value="210.3">$210.3B</td>
-          <td class="pct pos">+5.5%</td><td class="pct pos">+12.4%</td><td class="pct pos">+24.2%</td><td class="pct pos">+32.5%</td>
-          <td class="num-cell">59</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">마벨 테크놀로지는 데이터 센터 핵심부터 네트워크 엣지까지 데이터 인프라 반도체 솔루션을 제공합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=fae7c16eef46e7c2e0345e01c13c0090e1b7b02f133e7110adc1180f5b665292" target="_blank" rel="noopener noreferrer">Insight Enterprises Q2 Earnings Call Highlights</a> · <a href="https://finnhub.io/api/news?id=1ad0aa2494e81855104d9b404da1185e13bef34be006fed280a0d112bb3255d3" target="_blank" rel="noopener noreferrer">Should Investors Hold on to Astera Labs Stock Post Q2 Earnings?</a> · <a href="https://finnhub.io/api/news?id=310a10ba2298e2e85ac0362b9b37f2a21b4387b1c7880ee0fa5dbb0fbf61c17f" target="_blank" rel="noopener noreferrer">Cerebras Plummets 13% After Earnings. But Intel &amp; AMD Barrel Ahead with Strong Gains.</a></div></td>
+          <td class="ticker-cell">CVNA</td>
+          <td class="name-cell" title="Carvana">Carvana</td>
+          <td class="num-cell" data-sort-value="45">$45.0B</td>
+          <td class="pct pos">+5.2%</td><td class="pct neg">-2.7%</td><td class="pct neg">-14.1%</td><td class="pct neg">-3.3%</td>
+          <td class="num-cell">247</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=aef12c76a2b5e35386a3a6f53a7f3827fd00c11f4ed99ced319a3f9eebb71a63" target="_blank" rel="noopener noreferrer">CarMax Beats Earnings Estimates as Revenue Jumps 20%. The Stock Rises.</a> · <a href="https://finnhub.io/api/news?id=9c32ce6f0eb581f7b60ca97c305608c705b2e1b42a63fa49e66076905defd8c8" target="_blank" rel="noopener noreferrer">Oracle, Adobe Results In Focus As Earnings Season Winds Down</a> · <a href="https://finnhub.io/api/news?id=6c1837d0a28cdfef458cdf48a3b5d1af3d574479b5fd9286509bc5f0207840f6" target="_blank" rel="noopener noreferrer">CarMax Jumps 6% as Quarterly Earnings Hit $1.16 per Share and Buybacks Set to Resume; Carvana Rises 3%, Lithia Motors Ticks Up</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">6</td>
           <td class="ticker-cell">AMAT</td>
           <td class="name-cell" title="Applied Materials">Applied Materials</td>
-          <td class="num-cell" data-sort-value="425">$425.0B</td>
-          <td class="pct pos">+5.5%</td><td class="pct pos">+2.5%</td><td class="pct pos">+1.1%</td><td class="pct pos">+22.8%</td>
-          <td class="num-cell">25</td>
+          <td class="num-cell" data-sort-value="405.8">$405.8B</td>
+          <td class="pct pos">+5.2%</td><td class="pct pos">+8.4%</td><td class="pct pos">+10.9%</td><td class="pct neg">-29.1%</td>
+          <td class="num-cell">26</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">어플라이드 머티어리얼즈는 반도체 및 디스플레이 제조 장비 솔루션을 제공하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=3e0d6a8617764f112a2e0dc378750d8c4472b700b011b8b4b4a65db2077ce8eb" target="_blank" rel="noopener noreferrer">APPS Tops Q1 Earnings &amp; Revenue Estimates, Raises Fiscal 2027 Guidance</a> · <a href="https://finnhub.io/api/news?id=c5f7c29b6e48f449b6e8f11e6e0ee82d4fa1f35e589b64258316569557382c93" target="_blank" rel="noopener noreferrer">ACMR Q2 Earnings Surpass Estimates, Revenues Rise Y/Y</a> · <a href="https://finnhub.io/api/news?id=1412a53972cc39dec52348caa5bb54b3c8b23361f7565df5513f9d1bd8ddd058" target="_blank" rel="noopener noreferrer">Earnings live updates: Plug Power stock jumps on improving margins, raised revenue guidance</a></div></td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=5a46b7b27478cbbea700dc4086079258016af38b5863249dddba7a1b33cba5e1" target="_blank" rel="noopener noreferrer">AI Is Powering A Profit Boom — But Is It An &#x27;Earnings Bubble&#x27;? Wall Street Analyst Weighs In</a> · <a href="https://finnhub.io/api/news?id=8d0cb8aae946432c362e205f32d7215e3e4ec0187996b01bcb18fce3b8150550" target="_blank" rel="noopener noreferrer">Semiconductor Equipment Stocks Face ASML and Applied Materials Earnings Test After High-Quality Pullback</a> · <a href="https://finnhub.io/api/news?id=49e793e9a2bbac7fbdcb8649acfe70d3effeb63ae5a11af4ff811a6590b197d7" target="_blank" rel="noopener noreferrer">PANW Q4 Earnings Beat Estimates on Platformization Strength</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">7</td>
-          <td class="ticker-cell">WDC</td>
-          <td class="name-cell" title="Western Digital">Western Digital</td>
-          <td class="num-cell" data-sort-value="184.8">$184.8B</td>
-          <td class="pct pos">+5.3%</td><td class="pct pos">+22.3%</td><td class="pct pos">+12.3%</td><td class="pct pos">+11.2%</td>
-          <td class="num-cell">67</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">웨스턴 디지털은 하드 디스크 드라이브 기술 기반의 데이터 저장 장치 및 솔루션을 개발하고 판매합니다.</td>
-          <td class="reason-cell">클라우드 및 저장 장치 수요 증가에 힘입어 4분기 실적이 시장 전망치를 상회하고 2027 회계연도 가이던스를 긍정적으로 제시함.<div class="stock-source-links">직접 근거: <a href="https://finnhub.io/api/news?id=676b2c752c453df4bd1052442349f4c6225be51f91fec5db1dec36696bd2e25c" target="_blank" rel="noopener noreferrer">Western Digital Q4 Earnings Beat as Revenue Jumps 44% on Cloud Demand</a> · <a href="https://finnhub.io/api/news?id=94650e4701aabb79ec99d6f982051e723124949f8fff3dafe46d9f2c5cfb857c" target="_blank" rel="noopener noreferrer">Western Digital Corp (WDC) (Q4 2026) Earnings Call Highlights: Record Revenue and EPS Soar on ...</a> · <a href="https://finnhub.io/api/news?id=fb2b996add193eec9aeb675e4ec54aaded3e0ea824a8bd9a765597304c37b307" target="_blank" rel="noopener noreferrer">Western Digital beats forecasts and raises outlook, but shares fall in premarket trading</a></div></td>
+          <td class="ticker-cell">DASH</td>
+          <td class="name-cell" title="DoorDash">DoorDash</td>
+          <td class="num-cell" data-sort-value="79.5">$79.5B</td>
+          <td class="pct pos">+4.9%</td><td class="pct neg">-2.7%</td><td class="pct neg">-21.0%</td><td class="pct pos">+1.4%</td>
+          <td class="num-cell">150</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=f841d8f79e845e59cbe51dc4488893ce32080daea0a6e2c74d18a506f3e96f34" target="_blank" rel="noopener noreferrer">Top Wall Street Forecasters Revamp Costco Expectations Ahead Of Q4 Earnings</a> · <a href="https://finnhub.io/api/news?id=e9b69ad1371cce8495fd4bebc58c00ba82c3ea00d1da94487e7853bbeac93a12" target="_blank" rel="noopener noreferrer">DoorDash to Acquire Wonder’s Grubhub Campus Dining Business, Invest $125M in Company</a> · <a href="https://finnhub.io/api/news?id=2f5580f1cd7d7f761f17869d262dc1350cc4caaa06bbe0611f2caa93db1effa8" target="_blank" rel="noopener noreferrer">DoorDash and Wonder Announce Strategic Partnership</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">8</td>
-          <td class="ticker-cell">PWR</td>
-          <td class="name-cell" title="Quanta Services">Quanta Services</td>
-          <td class="num-cell" data-sort-value="108.6">$108.6B</td>
-          <td class="pct pos">+5.3%</td><td class="pct pos">+9.3%</td><td class="pct pos">+14.9%</td><td class="pct neg">-6.2%</td>
-          <td class="num-cell">108</td>
-          <td class="sector-cell">Industrials</td>
-          <td class="business-cell">콴타 서비시스는 전력망, 에너지 및 인프라 구축 관련 통합 솔루션을 제공하는 기업입니다.</td>
-          <td class="reason-cell">AI 인프라 수요 호조로 2분기 실적이 전망치를 크게 상회하고 2026 회계연도 연간 매출 및 이익 가이던스를 대폭 상향 조정함.<div class="stock-source-links">직접 근거: <a href="https://finnhub.io/api/news?id=73ac1968e1ed9c80965f1e8c08ec87b7b46389b8939d4ed93300f44b4308b267" target="_blank" rel="noopener noreferrer">Is Quanta Services (PWR) Fairly Valued Following Strong Earnings And Raised 2026 Guidance?</a> · <a href="https://finnhub.io/api/news?id=05905e1d12f6b17634b8a6e5770f9bfd6a2212e31e7a3573d3fd03922f414c4c" target="_blank" rel="noopener noreferrer">Quanta Services Surges On Blowout Earnings For AI Power Infrastructure Giant</a> · <a href="https://finnhub.io/api/news?id=4d900f152739388de155f41c7b1b063524daf9b5656929716bc76a6363fdb6ba" target="_blank" rel="noopener noreferrer">Quanta Services Raises FY2026 Adj EPS Guidance from $13.55-$14.25 to $16.45-$16.95 vs $14.01 Est; Raises FY2026 Sales Guidance from $34.700B-$35.200B to $39.300B-$39.700B vs $35.009B Est</a></div></td>
+          <td class="ticker-cell">GLW</td>
+          <td class="name-cell" title="Corning Inc.">Corning Inc.</td>
+          <td class="num-cell" data-sort-value="132.4">$132.4B</td>
+          <td class="pct pos">+4.7%</td><td class="pct neg">-0.6%</td><td class="pct pos">+6.7%</td><td class="pct neg">-37.7%</td>
+          <td class="num-cell">88</td>
+          <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=dde4b381732c8c38a799f05c44c6833dba4e22829e6c6fc0c705f75d6d084541" target="_blank" rel="noopener noreferrer">CIEN Q3 Earnings Beat on AI-Led Cloud Demand, Top Line Climbs 37% Y/Y</a> · <a href="https://finnhub.io/api/news?id=631f7fade29f95dfc76ce44ccaa4c73ba9a11fd4b252188b6feaf111dbdb9cd7" target="_blank" rel="noopener noreferrer">CIEN Targets 30% Revenue Growth Through 2029 — Peers COHR, GLW And AAOI Rally After Guidance</a> · <a href="https://finnhub.io/api/news?id=a0d5427010f07ac8c392db489bce930e7980c70bbbe87406be7bb87a9deab0df" target="_blank" rel="noopener noreferrer">Why Is Lumentum (LITE) Up 6.1% Since Last Earnings Report?</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">9</td>
-          <td class="ticker-cell">LITE</td>
-          <td class="name-cell" title="Lumentum">Lumentum</td>
-          <td class="num-cell" data-sort-value="85.8">$85.8B</td>
-          <td class="pct pos">+4.6%</td><td class="pct pos">+19.1%</td><td class="pct pos">+32.2%</td><td class="pct neg">-0.2%</td>
-          <td class="num-cell">150</td>
+          <td class="ticker-cell">MRVL</td>
+          <td class="name-cell" title="Marvell Technology">Marvell Technology</td>
+          <td class="num-cell" data-sort-value="237.4">$237.4B</td>
+          <td class="pct pos">+4.5%</td><td class="pct pos">+0.3%</td><td class="pct pos">+21.5%</td><td class="pct neg">-11.6%</td>
+          <td class="num-cell">52</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=c5f7c29b6e48f449b6e8f11e6e0ee82d4fa1f35e589b64258316569557382c93" target="_blank" rel="noopener noreferrer">ACMR Q2 Earnings Surpass Estimates, Revenues Rise Y/Y</a> · <a href="https://finnhub.io/api/news?id=957fdbb6a4f52ff9d2a3c168c682c016c13e2c8fa3e5e59919479258eb3362f1" target="_blank" rel="noopener noreferrer">Datadog Q2 Earnings and Revenues Surpass Estimates, Rise Y/Y</a> · <a href="https://finnhub.io/api/news?id=7c220c0ebe70194454712c28d31cd41c37f6122a646502f7b7c5f1738e3845f8" target="_blank" rel="noopener noreferrer">Gen Digital Q1 Earnings Beat Estimates, Revenues Increase Y/Y</a></div></td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=618e749b92ba5ebb35884d35db4870ba5fae1d641a26a90fff36a3aa04717064" target="_blank" rel="noopener noreferrer">Despite Hype, Broadcom Keeps Edging Sideways and Down: This Wall Street Analyst Says It Will Provide 75% Returns Soon</a> · <a href="https://finnhub.io/api/news?id=983c5512147a8b976761c6574b7ee667d74e730cc4b7e0ec4c098f356b4282e4" target="_blank" rel="noopener noreferrer">Should You Sell Your Marvell Stock Now That Higher Forecasts Are Not Enough?</a> · <a href="https://finnhub.io/api/news?id=e4f5829ada8c428435e172c0c2969e67f80f1463a33a34ba077bdb3d8bbc1f9a" target="_blank" rel="noopener noreferrer">AI Boom-Led Memory Chip Demand to Boost Micron&#x27;s DRAM Revenues in Q4</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">10</td>
-          <td class="ticker-cell">GLW</td>
-          <td class="name-cell" title="Corning Inc.">Corning Inc.</td>
-          <td class="num-cell" data-sort-value="149.2">$149.2B</td>
-          <td class="pct pos">+4.3%</td><td class="pct pos">+9.8%</td><td class="pct pos">+12.0%</td><td class="pct neg">-9.6%</td>
-          <td class="num-cell">85</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=134c442bb5eaac6cbd06ecc91947aa120ed561c777e6076b1aaa319ae591ab02" target="_blank" rel="noopener noreferrer">Corning Shares Slide Despite Second-Quarter Earnings Beat as Guidance Disappoints</a> · <a href="https://finnhub.io/api/news?id=4bedf884695789af3facd8e185baebfef3d05791186b4b77d3ef5045b3e76e33" target="_blank" rel="noopener noreferrer">Top Midday Stories: Corning Shares Fall on Tepid Q3 Sales Guidance; Coca-Cola Rases EPS, Revenue Outlook, Shares Rise</a> · <a href="https://finnhub.io/api/news?id=4c97bc2aab03cbd2523c02b6f652624884959d1de9290990325007ff921ad0a1" target="_blank" rel="noopener noreferrer">Corning (NYSE:GLW): High Growth Stock Slips on Revenue Guidance Miss</a></div></td>
+          <td class="ticker-cell">EIX</td>
+          <td class="name-cell" title="Edison International">Edison International</td>
+          <td class="num-cell" data-sort-value="20.7">$20.7B</td>
+          <td class="pct pos">+4.1%</td><td class="pct neg">-2.7%</td><td class="pct neg">-23.7%</td><td class="pct neg">-27.2%</td>
+          <td class="num-cell">383</td>
+          <td class="sector-cell">Utilities</td>
+          <td class="business-cell">유틸리티 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=30d38497a87f1247b0ce6efc1f3f404543143d02928239ecb9b11db58392e4b9" target="_blank" rel="noopener noreferrer">Jobs Blowout Revives Rate-Hike Bets, but Record Earnings Cushion the Blow: This Week on Wall Street</a> · <a href="https://finnhub.io/api/news?id=4768b91167007807036e4e78f679de32d0ba64b7763693d81087709064656f43" target="_blank" rel="noopener noreferrer">Your Safest Dividend Stocks Just Became the Most Dangerous, Cramer Warns</a> · <a href="https://finnhub.io/api/news?id=cae700293d49be5cbcf3be080cc0ac4bf6c0e1040ee9342c0ca647bbd10f70c3" target="_blank" rel="noopener noreferrer">Edison CEO Reportedly Warns Failed California Wildfire Bill Could Leave Customers Facing ‘Hundreds Of Millions’ In Added Costs</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">11</td>
-          <td class="ticker-cell">MU</td>
-          <td class="name-cell" title="Micron Technology">Micron Technology</td>
-          <td class="num-cell" data-sort-value="1142.7">$1.14T</td>
-          <td class="pct pos">+4.1%</td><td class="pct pos">+17.5%</td><td class="pct pos">+19.2%</td><td class="pct pos">+39.6%</td>
-          <td class="num-cell">10</td>
+          <td class="ticker-cell">ORCL</td>
+          <td class="name-cell" title="Oracle Corporation">Oracle Corporation</td>
+          <td class="num-cell" data-sort-value="416.2">$416.2B</td>
+          <td class="pct pos">+3.9%</td><td class="pct neg">-7.6%</td><td class="pct neg">-8.7%</td><td class="pct neg">-5.7%</td>
+          <td class="num-cell">24</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=1e50c6e6eb0ccc9e554104ef1a83c0cc7ef86ec9222d8ca6486b5fb8f0f8a5c2" target="_blank" rel="noopener noreferrer">Micron Technology&#x27;s Earnings Outlook Strengthens on Higher Memory Pricing, UBS Says</a> · <a href="https://finnhub.io/api/news?id=14470c7fe676a501eb55e25a464e454ea42ad2fcf7ed94d61e2717b1eb0b071b" target="_blank" rel="noopener noreferrer">AI Chips Update - AMD Advances AI Strategy With Taalas Acquisition</a> · <a href="https://finnhub.io/api/news?id=04d81504c5e1d81436eb81eec2eddd2be5bfddd2d36492d56987c35b9cfe4793" target="_blank" rel="noopener noreferrer">Q2 Earnings Scorecard: Record Margins, Strong Beats, and Upward Revisions</a></div></td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=f744294c656fc95645d2ce67f471277ae9f60fb9cb59a288aff4e8fc1302356d" target="_blank" rel="noopener noreferrer">Oracle&#x27;s AI Cloud Contracts Surge: Is Revenue Visibility Rising?</a> · <a href="https://finnhub.io/api/news?id=1b1448ca3410241200ceefa61072ae3b5e8e328809ec75e7f669320dce8371f2" target="_blank" rel="noopener noreferrer">Nvidia, Micron, Alphabet, Oracle and Adobe are part of Zacks Earnings Preview</a> · <a href="https://finnhub.io/api/news?id=77f54701023fe201eb195ced40fe08ecaca462848aa586f2ccb42c76d0e57157" target="_blank" rel="noopener noreferrer">Will Micron Earnings and Solidigm&#x27;s IPO Rescue DRAM ETF?</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">12</td>
-          <td class="ticker-cell">CIEN</td>
-          <td class="name-cell" title="Ciena">Ciena</td>
-          <td class="num-cell" data-sort-value="63">$63.0B</td>
-          <td class="pct pos">+3.8%</td><td class="pct pos">+14.8%</td><td class="pct pos">+18.9%</td><td class="pct neg">-19.7%</td>
-          <td class="num-cell">202</td>
+          <td class="ticker-cell">KLAC</td>
+          <td class="name-cell" title="KLA Corporation">KLA Corporation</td>
+          <td class="num-cell" data-sort-value="254.4">$254.4B</td>
+          <td class="pct pos">+3.9%</td><td class="pct pos">+4.4%</td><td class="pct pos">+12.0%</td><td class="pct neg">-34.8%</td>
+          <td class="num-cell">47</td>
           <td class="sector-cell">Information Technology</td>
           <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=eca922e0b7dbc9ebe2088158c4e38ea05a90cc369d3c282092c9a410ddbe9deb" target="_blank" rel="noopener noreferrer">NETGEAR Q2 Earnings Beat Estimates, Revenues Decline Y/Y</a> · <a href="https://finnhub.io/api/news?id=a157659317f4e9f1887fadcbbdb8ed3b7c279de5e6d69023c3bf7dc3707bbe19" target="_blank" rel="noopener noreferrer">Ciena (CIEN) Earnings Outlook Improves, Is It Still 28% Undervalued?</a> · <a href="https://finnhub.io/api/news?id=4b0a5ae972ae2995ce094c314ad331ef33fcb062dd105f42d64663bbb16a8cf8" target="_blank" rel="noopener noreferrer">Why Corning Stock Had Its Worst Day in Four Months After Earnings</a></div></td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=8d0cb8aae946432c362e205f32d7215e3e4ec0187996b01bcb18fce3b8150550" target="_blank" rel="noopener noreferrer">Semiconductor Equipment Stocks Face ASML and Applied Materials Earnings Test After High-Quality Pullback</a> · <a href="https://finnhub.io/api/news?id=a02b5181684b941f4b10fb982b1d6a1bf143a59c252ba8d582b1ab8dd878184d" target="_blank" rel="noopener noreferrer">Chip Earnings Wave to Test Whether Semiconductor Rally Broadens Beyond AI Leaders</a> · <a href="https://finnhub.io/api/news?id=1dbff8ff1f49c6f0b1d11db31ee010885a09b7250bab7dacfcff7dd0a191c94b" target="_blank" rel="noopener noreferrer">Applied Materials Just Dropped 14% in a Month. Sell Now, or Buy More?</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">13</td>
-          <td class="ticker-cell">DVN</td>
-          <td class="name-cell" title="Devon Energy">Devon Energy</td>
-          <td class="num-cell" data-sort-value="52.3">$52.3B</td>
-          <td class="pct pos">+3.8%</td><td class="pct pos">+4.9%</td><td class="pct pos">+8.5%</td><td class="pct neg">-3.2%</td>
-          <td class="num-cell">227</td>
-          <td class="sector-cell">Energy</td>
-          <td class="business-cell">에너지 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=a74d845df82b78fe9978d262d93a9eaeee3f93b423428d9bc68be2d7b83b2b0f" target="_blank" rel="noopener noreferrer">Sempra&#x27;s Q2 Earnings Outpace Estimates, Revenues Fall Y/Y</a> · <a href="https://finnhub.io/api/news?id=7d924cd881ac42bb13ff8e2803f1a6ba2d1e0f21418215aee4dbab66fe8440c0" target="_blank" rel="noopener noreferrer">Devon Posts $1.9 Billion Q2 Profit After Coterra Merger</a> · <a href="https://finnhub.io/api/news?id=8ec1276952432ad43894f08fbfd26e735b7e04f5ea0d5966557bc44bcba9b71d" target="_blank" rel="noopener noreferrer">Devon Energy (DVN) Q2 Earnings and Revenues Beat Estimates</a></div></td>
+          <td class="ticker-cell">COHR</td>
+          <td class="name-cell" title="Coherent Corp.">Coherent Corp.</td>
+          <td class="num-cell" data-sort-value="56.4">$56.4B</td>
+          <td class="pct pos">+3.5%</td><td class="pct neg">-5.9%</td><td class="pct pos">+4.7%</td><td class="pct neg">-25.9%</td>
+          <td class="num-cell">207</td>
+          <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=b886f43b329cd73dff7c5bb01c44c32a15c6608f55759401ecaaf7ad1f6b6c72" target="_blank" rel="noopener noreferrer">ADBE Q3 Earnings Beat Estimates, Revenues Rise on Subscription Growth</a> · <a href="https://finnhub.io/api/news?id=f4cd1e985d5f0d0dd650f0ec64360c43779f228908471c2596d762cf8077d0f1" target="_blank" rel="noopener noreferrer">GoPro Zooms 34% Higher on Starman Optical Merger and Markiplier Stake; Coherent Climbs 7%, Lumentum Gains 3%</a> · <a href="https://finnhub.io/api/news?id=631f7fade29f95dfc76ce44ccaa4c73ba9a11fd4b252188b6feaf111dbdb9cd7" target="_blank" rel="noopener noreferrer">CIEN Targets 30% Revenue Growth Through 2029 — Peers COHR, GLW And AAOI Rally After Guidance</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">14</td>
-          <td class="ticker-cell">LRCX</td>
-          <td class="name-cell" title="Lam Research">Lam Research</td>
-          <td class="num-cell" data-sort-value="430.3">$430.3B</td>
-          <td class="pct pos">+3.5%</td><td class="pct pos">+12.2%</td><td class="pct pos">+9.7%</td><td class="pct pos">+20.8%</td>
-          <td class="num-cell">24</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=ced5dc7ed48fac5e84748c24f8ed465c27425cf786498b9ff4632ab77e515612" target="_blank" rel="noopener noreferrer">Lam Research Corp (LRCX) (Q4 2026) Earnings Call Highlights: Record Revenue and EPS Fueled by ...</a> · <a href="https://finnhub.io/api/news?id=fa058ed4d390444bc33f93b179d91d49704ff2f294408a875d3c17d3b1927812" target="_blank" rel="noopener noreferrer">Lam Research (LRCX) Surpasses Q4 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=7661da6f77252b3912a82230ceaa3558d1ad64adff0fbb574d8c6760ab322913" target="_blank" rel="noopener noreferrer">Lam Research Soars After Earnings. Are they the Top Semiconductor Equipment Buy?</a></div></td>
+          <td class="ticker-cell">CBOE</td>
+          <td class="name-cell" title="Cboe Global Markets">Cboe Global Markets</td>
+          <td class="num-cell" data-sort-value="28.7">$28.7B</td>
+          <td class="pct pos">+3.4%</td><td class="pct neg">-1.9%</td><td class="pct neg">-15.5%</td><td class="pct pos">+8.2%</td>
+          <td class="num-cell">316</td>
+          <td class="sector-cell">Financials</td>
+          <td class="business-cell">금융 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=c96aa2134d6391e76c719e1e49213a1d7eff38627798f53a7e424d8f03afffbf" target="_blank" rel="noopener noreferrer">Can Cboe (CBOE) Upgrading Its 2026 Revenue Outlook Reframe The Exchange’s Long-Term Narrative?</a> · <a href="https://finnhub.io/api/news?id=ee33d0fa4da95b96622a33686bef057e266ce21491aa0ab35608ac801bd855e5" target="_blank" rel="noopener noreferrer">Cboe Shares Rise 5% After Extending S&amp;P 500 Licensing Agreement Through 2051</a> · <a href="https://finnhub.io/api/news?id=b781a70e3cc156c467af798270daddac518e1cbf1200e37b880b28de830a10b5" target="_blank" rel="noopener noreferrer">Cboe Provides Additional Details Relating to Anticipated Financial Impacts of S&amp;P DJI Licensing Agreement Extension</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">15</td>
-          <td class="ticker-cell">EME</td>
-          <td class="name-cell" title="Emcor">Emcor</td>
-          <td class="num-cell" data-sort-value="38">$38.0B</td>
-          <td class="pct pos">+3.1%</td><td class="pct pos">+6.6%</td><td class="pct pos">+15.9%</td><td class="pct neg">-5.5%</td>
-          <td class="num-cell">283</td>
-          <td class="sector-cell">Industrials</td>
-          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=4d5730c6505821b414c5b24cfd50617e0daae784eedae39a21da2df160fb7414" target="_blank" rel="noopener noreferrer">EMCOR Group (NYSE:EME) Surges 13% on Blowout Q2 Earnings Beat and Raised Guidance</a> · <a href="https://finnhub.io/api/news?id=d94ee7e7a426e9a55e4b96007677ff3fc8caf32fa9c3e7d1a3866404028b914b" target="_blank" rel="noopener noreferrer">Will Record Q2 Results And Higher 2026 Guidance Change EMCOR Group&#x27;s (EME) Narrative</a> · <a href="https://finnhub.io/api/news?id=1da00b0ab95ff52c4bc28f6e6a83d44a7cb3458e04d4971df785aaf0e11903ca" target="_blank" rel="noopener noreferrer">EMCOR Group Raises FY2026 Adj EPS Guidance from $28.25-$29.75 to $32.00-$33.25 vs $29.31 Est; Raises FY2026 Sales Guidance from $18.500B-$19.250B to $20.000B-$20.500B vs $18.997B Est</a></div></td>
+          <td class="ticker-cell">AIG</td>
+          <td class="name-cell" title="American International Group">American International Group</td>
+          <td class="num-cell" data-sort-value="38.9">$38.9B</td>
+          <td class="pct pos">+3.4%</td><td class="pct pos">+0.1%</td><td class="pct neg">-1.5%</td><td class="pct pos">+1.7%</td>
+          <td class="num-cell">270</td>
+          <td class="sector-cell">Financials</td>
+          <td class="business-cell">금융 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=e9bbe610db7c007c713e97e7efed71db268ecaaf23909d7a944c0d045ba2a86c" target="_blank" rel="noopener noreferrer">Why American International Group (AIG) is a Top Dividend Stock for Your Portfolio</a> · <a href="https://finnhub.io/api/news?id=3be08b24cc9f43f0775f94c6450bf74f6cee56e7f12ea2cc1476a7cd6533ef26" target="_blank" rel="noopener noreferrer">American International Group Inc&#x27;s Dividend Analysis</a> · <a href="https://finnhub.io/api/news?id=d87c106239a94d5f4ebbe57811125117042d1d17fdd8dd610ddc1cb9d0580c98" target="_blank" rel="noopener noreferrer">American International Group (AIG) is a Top Dividend Stock Right Now: Should You Buy?</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">16</td>
-          <td class="ticker-cell">FLEX</td>
-          <td class="name-cell" title="Flex Ltd.">Flex Ltd.</td>
-          <td class="num-cell" data-sort-value="48">$48.0B</td>
-          <td class="pct pos">+3.0%</td><td class="pct pos">+8.6%</td><td class="pct pos">+9.0%</td><td class="pct neg">-5.7%</td>
-          <td class="num-cell">246</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=3f3b61aa662907e2843bbcab4617edff7f8cdbff4de522fc9bb0c139effa47d3" target="_blank" rel="noopener noreferrer">Flex Fiscal Q1 Adjusted EPS, Net Sales Rise; Issues Q2 Guidance, Raises Fiscal 2027 Outlook</a> · <a href="https://finnhub.io/api/news?id=e220d868dc64ad84e0751875204f31a95e3b85cf4d34fed18ef310e05680f050" target="_blank" rel="noopener noreferrer">Flex Raises FY2027 Adj EPS Guidance from $4.21-$4.51 to $4.42-$4.74 vs $4.45 Est; Raises FY2027 Sales Guidance from $32.300B-$33.800B to $33.700B-$35.200B vs $33.370B Est</a> · <a href="https://finnhub.io/api/news?id=d32dbad69bd8474fc8b83eb8d6de8c7e63e98f383e8f8d5773f9b465a9851e32" target="_blank" rel="noopener noreferrer">Flex (FLEX) Surpasses Q1 Earnings and Revenue Estimates</a></div></td>
+          <td class="ticker-cell">NCLH</td>
+          <td class="name-cell" title="Norwegian Cruise Line Holdings">Norwegian Cruise Line Holdings</td>
+          <td class="num-cell" data-sort-value="6.7">$6.7B</td>
+          <td class="pct pos">+3.4%</td><td class="pct pos">+4.1%</td><td class="pct neg">-11.1%</td><td class="pct neg">-29.9%</td>
+          <td class="num-cell">503</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=ed16ed086c3ef21ce076f77e023a513638497de9ed094cf3e09ae57f091bd6d7" target="_blank" rel="noopener noreferrer">Carnival Stock Surges After Earnings Show Record Revenue</a> · <a href="https://finnhub.io/api/news?id=a9ab05aeab6889c5609136e8ee21bc7a02107b7ab3de168e176935e02326c184" target="_blank" rel="noopener noreferrer">Norwegian Cruise Line Holdings (NCLH) Stock Looks Cheap On Current Earnings</a> · <a href="https://finnhub.io/api/news?id=201e166243c14d9a38594eb40b80ba5f53d45d00e649c0894b4a83688659879a" target="_blank" rel="noopener noreferrer">Stock Market Today, Sept. 29: Carnival Surges 13% on Record Bookings, Raised Guidance</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">17</td>
-          <td class="ticker-cell">PSX</td>
-          <td class="name-cell" title="Phillips 66">Phillips 66</td>
-          <td class="num-cell" data-sort-value="96">$96.0B</td>
-          <td class="pct pos">+3.0%</td><td class="pct pos">+18.0%</td><td class="pct pos">+19.5%</td><td class="pct pos">+41.3%</td>
-          <td class="num-cell">129</td>
-          <td class="sector-cell">Energy</td>
-          <td class="business-cell">필립스 66은 미국, 영국, 독일 및 국제 시장에서 통합 다운스트림 에너지 사업을 영위합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=0ac3ca1d20cd47934ef23ec3b7c3ab6286c5e2ec9291a7aa4c0b636970689507" target="_blank" rel="noopener noreferrer">PSX Q2 Earnings &amp; Revenues Beat Estimates on Strong Refining Margins</a> · <a href="https://finnhub.io/api/news?id=dd66cbb89c914af4c57e9107520a1e34c0e1cc52cc1d2ec0836942e782ea4460" target="_blank" rel="noopener noreferrer">Phillips 66 (PSX) Beats Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=9dcd876a4108d0afc2c1a71f2ec34085a02166655ac37a99a40ed52819e2acfa" target="_blank" rel="noopener noreferrer">Par Petroleum (PARR) Beats Q2 Earnings and Revenue Estimates</a></div></td>
+          <td class="ticker-cell">GNRC</td>
+          <td class="name-cell" title="Generac">Generac</td>
+          <td class="num-cell" data-sort-value="12.2">$12.2B</td>
+          <td class="pct pos">+3.4%</td><td class="pct pos">+2.9%</td><td class="pct pos">+15.5%</td><td class="pct neg">-27.5%</td>
+          <td class="num-cell">468</td>
+          <td class="sector-cell">Industrials</td>
+          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=0b96601afe2c980a08c1bf3ad2d708cc7de9ddfe36a7a8863c5458824888f5ac" target="_blank" rel="noopener noreferrer">Generac Issues Amazon Warrant To Acquire Up To 1,693,745 Common Shares With Vesting Tied To $8B In Data Center Generator Orders</a> · <a href="https://finnhub.io/api/news?id=444f059302b2bffa75d084a9bf2504f9aef6ee1cf698c07eb79ef04703eeb775" target="_blank" rel="noopener noreferrer">Generac Up on Amazon Agreement; Coreweave Kicks Off Fundraising | Stock Movers</a> · <a href="https://finnhub.io/api/news?id=0fcc1ae87d91c1b57c94a221bb811577608eb1671c9ed9033eac19c52f7f0bbe" target="_blank" rel="noopener noreferrer">Why Does Generac Stock Cost More Than Its Faster-Growing Peers?</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">18</td>
-          <td class="ticker-cell">CAT</td>
-          <td class="name-cell" title="Caterpillar Inc.">Caterpillar Inc.</td>
-          <td class="num-cell" data-sort-value="405.3">$405.3B</td>
-          <td class="pct pos">+2.9%</td><td class="pct pos">+5.3%</td><td class="pct pos">+0.3%</td><td class="pct neg">-0.6%</td>
-          <td class="num-cell">29</td>
-          <td class="sector-cell">Industrials</td>
-          <td class="business-cell">캐터필러는 건설 및 광산 장비, 디젤 엔진 등을 제조하고 판매하는 글로벌 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=9a44580028f0c87eb36870cacb2318a65cc34d96d7827df86bf4db1d65b364fd" target="_blank" rel="noopener noreferrer">Wayfair Rises, Caterpillar Surges on Earnings | Stock Movers</a> · <a href="https://finnhub.io/api/news?id=9d9d565c94504459cade163a2b261f7fa43b6b9428f9921e45e4da0d3911a37c" target="_blank" rel="noopener noreferrer">Caterpillar (CAT) Q2 Earnings and Revenues Beat Estimates</a> · <a href="https://finnhub.io/api/news?id=dc5e31a26c33912c593642e4ffc9408a44a76ace68cb825b64507a14a2a8559f" target="_blank" rel="noopener noreferrer">ASTE Stock Down 10.4% in 1 Week as Near-Term Earnings Risks Build</a></div></td>
+          <td class="ticker-cell">DPZ</td>
+          <td class="name-cell" title="Domino&#x27;s">Domino&#x27;s</td>
+          <td class="num-cell" data-sort-value="9.9">$9.9B</td>
+          <td class="pct pos">+3.3%</td><td class="pct pos">+1.6%</td><td class="pct neg">-13.2%</td><td class="pct pos">+2.6%</td>
+          <td class="num-cell">489</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=8fe8cf78a489ee94d9272e6251146219c158d9fba8c5892aebfb00da486a575e" target="_blank" rel="noopener noreferrer">Top Wall Street Forecasters Revamp Domino&#x27;s Expectations Ahead Of Q3 Earnings</a> · <a href="https://finnhub.io/api/news?id=aed56baf9bbac7ce5a2d96c4059ff0abbe8378ef48db94ebbcfb76b8123ab0bc" target="_blank" rel="noopener noreferrer">Darden Restaurants (DRI) Misses Q1 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=9d26be94c58d89df3ed4a2c086d08f1525e1d1507fbcb3f8274e59d15572d251" target="_blank" rel="noopener noreferrer">Cracker Barrel Old Country Store (CBRL) Q4 Earnings and Revenues Surpass Estimates</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">19</td>
-          <td class="ticker-cell">INCY</td>
-          <td class="name-cell" title="Incyte">Incyte</td>
-          <td class="num-cell" data-sort-value="25">$25.0B</td>
-          <td class="pct pos">+2.8%</td><td class="pct pos">+1.6%</td><td class="pct pos">+5.3%</td><td class="pct pos">+29.6%</td>
-          <td class="num-cell">360</td>
-          <td class="sector-cell">Health Care</td>
-          <td class="business-cell">인사이트는 미국, 유럽, 캐나다, 일본에서 치료제의 발굴, 개발 및 상업화를 영위하는 바이오제약 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=5ba2cc11a9ecb49edc66612183fe45868379495b15bc40aff39523368206fff5" target="_blank" rel="noopener noreferrer">Mirum&#x27;s Q2 Earnings Lag Estimates, Revenues Beat, 2026 View Raised</a> · <a href="https://finnhub.io/api/news?id=9b51439141c29da15f6773f0c3e11b7989e81beaf05eadbc1aee88f09c1c18eb" target="_blank" rel="noopener noreferrer">INCY Q2 Earnings &amp; Revenues Beat on Higher Sales, &#x27;26 View Raised</a> · <a href="https://finnhub.io/api/news?id=fbd9cd328e5d6e2a42fcc9224756b806eabc2ce57cecc5da3f7d9c4db3a3e37e" target="_blank" rel="noopener noreferrer">Incyte Tops Second-Quarter Expectations but Shares Slip on Lower Revenue Outlook</a></div></td>
+          <td class="ticker-cell">META</td>
+          <td class="name-cell" title="Meta Platforms">Meta Platforms</td>
+          <td class="num-cell" data-sort-value="1847.4">$1.85T</td>
+          <td class="pct pos">+3.2%</td><td class="pct pos">+0.3%</td><td class="pct pos">+27.9%</td><td class="pct pos">+31.3%</td>
+          <td class="num-cell">7</td>
+          <td class="sector-cell">Communication Services</td>
+          <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=9eda3b34b1ca28546d0ec2f34665c395c67524a5e6838bd671837e213e1e275c" target="_blank" rel="noopener noreferrer">Meta’s Muse Earned a “20% Bump on the Multiple.” Now Earnings Have to Catch Up</a> · <a href="https://finnhub.io/api/news?id=4e49245d077f500c01ca0efa08c99bf58abfc4b34d6740bf85c101dcbecc95af" target="_blank" rel="noopener noreferrer">Full Transcript: Meta Platforms Q2 2026 Earnings Call</a> · <a href="https://finnhub.io/api/news?id=70f2a0c0d19406700ce69f506f7078536aeb736a677f3d6736126c0458b9e777" target="_blank" rel="noopener noreferrer">CoreWeave: Selling Compute Remains Highly Profitable Despite Heavy CapEx And Debt</a></div></td>
         </tr>
 
         <tr class="top-row">
           <td class="rank-cell">20</td>
-          <td class="ticker-cell">CASY</td>
-          <td class="name-cell" title="Casey&#x27;s">Casey&#x27;s</td>
-          <td class="num-cell" data-sort-value="32.2">$32.2B</td>
-          <td class="pct pos">+2.8%</td><td class="pct pos">+1.8%</td><td class="pct pos">+1.3%</td><td class="pct pos">+2.1%</td>
-          <td class="num-cell">304</td>
-          <td class="sector-cell">Consumer Staples</td>
-          <td class="business-cell">케이시스는 미국에서 케이시스 브랜드의 편의점을 운영하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=334881a3c769fa16d64e60bc0c521579faf295a0e4075acf8ac9eb015a85c14c" target="_blank" rel="noopener noreferrer">Casey&#x27;s General Stores Earnings Preview: What to Expect</a> · <a href="https://finnhub.io/api/news?id=d4ab778bc4641cec3892c5d8a0aee2f4923a1326b680f14443a512ef58a26b3d" target="_blank" rel="noopener noreferrer">Casey’s to acquire 24 stores from Texas chain</a> · <a href="https://finnhub.io/api/news?id=af72a397d825898b459a1a054ad11e152f22a3d67f610472c2aab599efe41d41" target="_blank" rel="noopener noreferrer">Dividend Champion, Contender, And Challenger Highlights: Week Of August 9</a></div></td>
+          <td class="ticker-cell">CIEN</td>
+          <td class="name-cell" title="Ciena">Ciena</td>
+          <td class="num-cell" data-sort-value="49.9">$49.9B</td>
+          <td class="pct pos">+3.1%</td><td class="pct neg">-3.7%</td><td class="pct neg">-6.2%</td><td class="pct neg">-27.7%</td>
+          <td class="num-cell">227</td>
+          <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=4a9b04076cb2d0dd71963f746f94e8bf717d22a381f83c9edf8c77b7028e42b9" target="_blank" rel="noopener noreferrer">NetApp Raised Guidance as Ciena’s Revenue Jumped 37%. Are AI Networks and Storage Finally Converting Into Earnings?</a> · <a href="https://finnhub.io/api/news?id=40a2370257a2d5f69e8ad1cf53909c4122d967e3939429787d13b88b4fcc433b" target="_blank" rel="noopener noreferrer">Ciena Earnings Beat, Revenue Edges By Views Amid AI Data Center Boom</a> · <a href="https://finnhub.io/api/news?id=9d339eebeef88f2eb442ebc0637a23a26b5ef75ee11ec30192ca8d8a559640f7" target="_blank" rel="noopener noreferrer">Ciena Tumbles 10% as In-Line Guidance Overshadows Earnings Beat, Arista Edges Higher</a></div></td>
         </tr>
           </tbody>
         </table>
@@ -647,243 +648,243 @@
           <tbody>
             
         <tr class="bot-row">
-          <td class="rank-cell">502</td>
-          <td class="ticker-cell">CVNA</td>
-          <td class="name-cell" title="Carvana">Carvana</td>
-          <td class="num-cell" data-sort-value="77.1">$77.1B</td>
-          <td class="pct neg">-7.3%</td><td class="pct neg">-5.5%</td><td class="pct pos">+4.1%</td><td class="pct pos">+4.3%</td>
-          <td class="num-cell">166</td>
-          <td class="sector-cell">Consumer Discretionary</td>
-          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=f9d53f2b338181982db3dd76c27f7217c500d3f6f671ed0d4354f61fe37a11de" target="_blank" rel="noopener noreferrer">Carvana Stock Falls 10% After Earnings as Guidance Leaves More Questions Than Answers</a> · <a href="https://finnhub.io/api/news?id=0bae2f75d657b40b1d04d15df8ce0a54198e19d8b46c4843eb343a086fd3643c" target="_blank" rel="noopener noreferrer">Carvana Stock Falls After Earnings as Guidance Leaves More Questions Than Answers</a> · <a href="https://finnhub.io/api/news?id=8807e621bc8c539869305b0943d39dc437b146c206be6f39a9c337c8404d5f6e" target="_blank" rel="noopener noreferrer">Carvana stock falls as auto retailer’s 2026 earnings guidance misses Wall Street’s expectations</a></div></td>
+          <td class="rank-cell">503</td>
+          <td class="ticker-cell">FICO</td>
+          <td class="name-cell" title="Fair Isaac">Fair Isaac</td>
+          <td class="num-cell" data-sort-value="12.8">$12.8B</td>
+          <td class="pct neg">-26.5%</td><td class="pct neg">-32.4%</td><td class="pct neg">-46.4%</td><td class="pct neg">-48.3%</td>
+          <td class="num-cell">459</td>
+          <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=30d38497a87f1247b0ce6efc1f3f404543143d02928239ecb9b11db58392e4b9" target="_blank" rel="noopener noreferrer">Jobs Blowout Revives Rate-Hike Bets, but Record Earnings Cushion the Blow: This Week on Wall Street</a> · <a href="https://finnhub.io/api/news?id=5f9a8b70a8cb4995fbc8ee557dd49a76d6933376cf166d5e74e34933b96ed574" target="_blank" rel="noopener noreferrer">Guidewire Software shares are trading higher after the company reported better-than-expected Q2 financial results, raised its FY26 sales guidance and issued Q3 sales guidance above estimates. Also, BTIG maintained its buy rating on the stock and raised its price target from $175 to $200.</a> · <a href="https://finnhub.io/api/news?id=41e39ce2214e0a716a9c4641e60b7ce33de23b023914bdfc6a9500d3ecb29d6b" target="_blank" rel="noopener noreferrer">2 Profitable Stocks with Exciting Potential and 1 That Underwhelm</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">501</td>
-          <td class="ticker-cell">CHTR</td>
-          <td class="name-cell" title="Charter Communications">Charter Communications</td>
-          <td class="num-cell" data-sort-value="17.2">$17.2B</td>
-          <td class="pct neg">-6.6%</td><td class="pct neg">-6.0%</td><td class="pct pos">+9.7%</td><td class="pct pos">+2.7%</td>
-          <td class="num-cell">427</td>
-          <td class="sector-cell">Communication Services</td>
-          <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=2c09871358ad1c9acefbfd72f6b3ef71d646118f4dc46acd6105e53de5c60d12" target="_blank" rel="noopener noreferrer">Verizon Lifts Earnings Outlook; Charter Communications Reports Broadband Customer Drop</a> · <a href="https://finnhub.io/api/news?id=594310af3a129bb6aa3b66a9dfb46eeb0a700e62908f8812e96107485886dab7" target="_blank" rel="noopener noreferrer">Charter Earnings Beat Estimates in Q2, Revenues Decline Y/Y</a> · <a href="https://finnhub.io/api/news?id=9d16ca2d9c4baa640dfaa2592d7a03a6716b4804c6234de4a963a46606fff0ad" target="_blank" rel="noopener noreferrer">Charter Communications (CHTR) Q2 Earnings and Revenues Surpass Estimates</a></div></td>
+          <td class="ticker-cell">STLD</td>
+          <td class="name-cell" title="Steel Dynamics">Steel Dynamics</td>
+          <td class="num-cell" data-sort-value="31.8">$31.8B</td>
+          <td class="pct neg">-3.7%</td><td class="pct neg">-5.2%</td><td class="pct neg">-5.4%</td><td class="pct neg">-3.3%</td>
+          <td class="num-cell">299</td>
+          <td class="sector-cell">Materials</td>
+          <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=c27420a797ff11c386117f17cf2c5a4d3fde7e24745f8cddc2575df4e1b07719" target="_blank" rel="noopener noreferrer">Is Steel Dynamics (STLD) A Bargain After Its New Q3 2026 Earnings Guidance?</a> · <a href="https://finnhub.io/api/news?id=74a292c3c2eb9047e45435764edf686516fffff3ce9e31b65b0ec3a711eb9df0" target="_blank" rel="noopener noreferrer">Steel Dynamics Provides Third Quarter 2026 Earnings Guidance</a> · <a href="https://finnhub.io/api/news?id=cae50c501c971efdbaee4b8d467edde7d7c5b5c2a7e96e8c2515a5c7bc07f41b" target="_blank" rel="noopener noreferrer">How Investors May Respond To Steel Dynamics (STLD) Upbeat Q3 EPS Guidance And Record Shipments</a></div></td>
         </tr>
 
         <tr class="bot-row">
-          <td class="rank-cell">500</td>
-          <td class="ticker-cell">STZ</td>
-          <td class="name-cell" title="Constellation Brands">Constellation Brands</td>
-          <td class="num-cell" data-sort-value="22.3">$22.3B</td>
-          <td class="pct neg">-6.2%</td><td class="pct neg">-2.1%</td><td class="pct neg">-1.0%</td><td class="pct neg">-7.6%</td>
-          <td class="num-cell">387</td>
-          <td class="sector-cell">Consumer Staples</td>
-          <td class="business-cell">필수소비재 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=6de169e631a962bd60437a5af1f95142d2075cf977689bbaa5f99c734d112d16" target="_blank" rel="noopener noreferrer">Sensata Technologies Q2 Earnings Call Highlights</a> · <a href="https://finnhub.io/api/news?id=dab9229b4aeaef925ca0d23df0fc77a11946a0e7985ff0dab422ec2c4ef8dae2" target="_blank" rel="noopener noreferrer">Constellation Brands (STZ) Down 3.8% Since Last Earnings Report: Can It Rebound?</a> · <a href="https://finnhub.io/api/news?id=e0d77a07f21ee374cb8a60001cc387aeeaa19c40d6b3128b4b14ae7e89c9aefc" target="_blank" rel="noopener noreferrer">Constellation Brands: The Earnings Floor Is Holding, But Beer Demand Is Not Yet Back</a></div></td>
+          <td class="rank-cell">502</td>
+          <td class="ticker-cell">LULU</td>
+          <td class="name-cell" title="Lululemon Athletica">Lululemon Athletica</td>
+          <td class="num-cell" data-sort-value="10.6">$10.6B</td>
+          <td class="pct neg">-3.7%</td><td class="pct neg">-6.6%</td><td class="pct neg">-19.8%</td><td class="pct neg">-15.2%</td>
+          <td class="num-cell">482</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=38bef8b668288f116fdd95fb2fe474b46bc9a2214cb8296f28db6967fb9e3646" target="_blank" rel="noopener noreferrer">Lululemon Shares Fall 17% After FY2026 Guidance Cut Despite Q2 Earnings Beat</a> · <a href="https://finnhub.io/api/news?id=98369d1e872893f0f0c9fb6b82a9446c666dd7d9a31a379150903a6c69b5830c" target="_blank" rel="noopener noreferrer">CTAS Q1 Earnings &amp; Revenues Beat Estimates on Margin Gains</a> · <a href="https://finnhub.io/api/news?id=34222b35ee9aff8455ebcaf8d8b96c9b97efacb7b500983d78a89cf145ed5ca8" target="_blank" rel="noopener noreferrer">Lululemon Athletica (LULU) Cut Full Year Guidance After Q2 Revenue Decline</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">499</td>
-          <td class="ticker-cell">ALGN</td>
-          <td class="name-cell" title="Align Technology">Align Technology</td>
-          <td class="num-cell" data-sort-value="12.2">$12.2B</td>
-          <td class="pct neg">-5.6%</td><td class="pct neg">-2.8%</td><td class="pct neg">-3.2%</td><td class="pct pos">+8.8%</td>
-          <td class="num-cell">474</td>
-          <td class="sector-cell">Health Care</td>
-          <td class="business-cell">헬스케어·바이오 분야를 영위하는 미국 상장 기업</td>
-          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=fdbe40fb2e0697a4ecf3c642c784f3529d4dbbfa3787e6670c31755698e83287" target="_blank" rel="noopener noreferrer">Align Technology (NASDAQ:ALGN) Reports Q2 CY2026 In Line With Expectations But Quarterly Revenue Guidance Slightly Misses Expectations</a> · <a href="https://finnhub.io/api/news?id=b68d03bb08ccbdee7efd930b46293002d97506ace367d5d42ee6743bc9de34de" target="_blank" rel="noopener noreferrer">ALGN Stock Up Post Q2 Earnings and Revenue Beat, Margins Rise</a> · <a href="https://finnhub.io/api/news?id=b145bdf9f5394b56227ec59e5e7b0f8bff3a4c840be8118d8207d93894c18a09" target="_blank" rel="noopener noreferrer">Align Technology (ALGN) Q2 Earnings and Revenues Top Estimates</a></div></td>
+          <td class="ticker-cell">NUE</td>
+          <td class="name-cell" title="Nucor">Nucor</td>
+          <td class="num-cell" data-sort-value="53">$53.0B</td>
+          <td class="pct neg">-3.4%</td><td class="pct neg">-3.8%</td><td class="pct neg">-5.7%</td><td class="pct pos">+6.1%</td>
+          <td class="num-cell">217</td>
+          <td class="sector-cell">Materials</td>
+          <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=e33c37cf7b03ad65743c47c5edc4d9e4d47f57cee42c73b1a4a306c514364c64" target="_blank" rel="noopener noreferrer">Nucor (NUE): Strong Shipments, but Q3 Guidance Raises Earnings Questions</a> · <a href="https://finnhub.io/api/news?id=6ada0a1370c8c8f70381599e87d1a0dee2210b315cf624910a1b8214d9d25d9e" target="_blank" rel="noopener noreferrer">Nucor Announces Guidance for the Third Quarter of 2026 Earnings</a> · <a href="https://finnhub.io/api/news?id=6db381779d013ef91ec567fdf551bf7c881bb5e73be3ff140ad8cffb917f145b" target="_blank" rel="noopener noreferrer">Will Softer Q3 Guidance and Steady Dividend Policy Change Nucor&#x27;s (NUE) Investment Narrative</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">500</td>
+          <td class="ticker-cell">EFX</td>
+          <td class="name-cell" title="Equifax">Equifax</td>
+          <td class="num-cell" data-sort-value="16.1">$16.1B</td>
+          <td class="pct neg">-3.4%</td><td class="pct neg">-11.9%</td><td class="pct neg">-27.3%</td><td class="pct neg">-11.0%</td>
+          <td class="num-cell">427</td>
+          <td class="sector-cell">Industrials</td>
+          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=38803184543571123cf8cbcfcbccf5ed3f7250dcf6ccca134d337a837d88609d" target="_blank" rel="noopener noreferrer">Why Is Gartner (IT) Up 0.2% Since Last Earnings Report?</a> · <a href="https://finnhub.io/api/news?id=91b76e9e3e4249be5f85d8386e668d605b83194762c8906986479a53fb530722" target="_blank" rel="noopener noreferrer">TransUnion (TRU): Buy, Sell, or Hold Post Q2 Earnings?</a> · <a href="https://finnhub.io/api/news?id=5d939e1228796bbb2db04fae9ea201aa7b20759288bd355b1994175e53aefadc" target="_blank" rel="noopener noreferrer">Equifax Inc&#x27;s Dividend Analysis</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">498</td>
-          <td class="ticker-cell">TTD</td>
-          <td class="name-cell" title="Trade Desk (The)">Trade Desk (The)</td>
-          <td class="num-cell" data-sort-value="6.3">$6.3B</td>
-          <td class="pct neg">-5.2%</td><td class="pct pos">+0.1%</td><td class="pct neg">-27.9%</td><td class="pct neg">-36.6%</td>
-          <td class="num-cell">502</td>
-          <td class="sector-cell">Communication Services</td>
-          <td class="business-cell">더 트레이드 데스크는 디지털 광고 구매 플랫폼을 제공하는 테크 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=aee8c96eca93a88b025f5b397169304c3c4c68bf3977666655d8991d3676bd76" target="_blank" rel="noopener noreferrer">TTD Stock Sinks Over 26% On Earnings Miss, Weak Outlook — Retail Says Trade Desk’s Guidance Is The Real Problem</a> · <a href="https://finnhub.io/api/news?id=53a4175e41e61305e8bc615836cd1ceff95fbbd8dc3ed9368dd4fd8481323fa1" target="_blank" rel="noopener noreferrer">The Bull Case For Trade Desk (TTD) Could Change Following Q3 Guidance Cut And Execution Missteps – Learn Why</a> · <a href="https://finnhub.io/api/news?id=ddbb61e2d50f1dd80e574e5579f57fa1923dae6465f789949105c7cee87bd766" target="_blank" rel="noopener noreferrer">Trade Desk shares plunge on weak revenue, guidance miss</a></div></td>
+          <td class="ticker-cell">SLB</td>
+          <td class="name-cell" title="Schlumberger">Schlumberger</td>
+          <td class="num-cell" data-sort-value="72.3">$72.3B</td>
+          <td class="pct neg">-3.1%</td><td class="pct neg">-4.3%</td><td class="pct neg">-12.6%</td><td class="pct pos">+7.8%</td>
+          <td class="num-cell">167</td>
+          <td class="sector-cell">Energy</td>
+          <td class="business-cell">에너지 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=177a3427d6b88cf7334a26bf192fb183d9e8b0fba32d1915e71ea5a6ad740bdf" target="_blank" rel="noopener noreferrer">SLB Awarded Contract By OQ Exploration &amp; Production To Deliver Bisat-B Expansion Production Facility In Oman</a> · <a href="https://finnhub.io/api/news?id=710caca6b568356a4b58704fca783178cb4a3969fd0bff6474cd9700f0e97a39" target="_blank" rel="noopener noreferrer">SLB OneSubsea Awarded Major Subsea Systems Contract for Rovuma Basin Development</a> · <a href="https://finnhub.io/api/news?id=6ee13e094b7ae7254e1ff098b1f0f4c6f35f88034896b74f4795902009d86cd7" target="_blank" rel="noopener noreferrer">SLB Awarded Four Multi-Year Integrated Well Construction Contracts by Aramco</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">497</td>
-          <td class="ticker-cell">NOW</td>
-          <td class="name-cell" title="ServiceNow">ServiceNow</td>
-          <td class="num-cell" data-sort-value="121.7">$121.7B</td>
-          <td class="pct neg">-5.1%</td><td class="pct neg">-7.6%</td><td class="pct pos">+14.0%</td><td class="pct pos">+23.8%</td>
-          <td class="num-cell">98</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">서비스나우는 기업용 클라우드 디지털 워크플로우 솔루션을 제공하는 회사입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=4ff1a3cde356d91b611e016f9feace42045fb2224792dafb2b3be6a5ea61c57f" target="_blank" rel="noopener noreferrer">ServiceNow Earnings Top Views, Revenue Outlook Light. But Software Stock Climbs.</a> · <a href="https://finnhub.io/api/news?id=92aa1e9b50615c047ace379556d472df222de7f69b55d605cffd318bd95fad97" target="_blank" rel="noopener noreferrer">ServiceNow (NYSE:NOW) Rallies After Q2 Earnings Beat and Raised Guidance, Reinforcing Its Position as a High-Growth AI Stock</a> · <a href="https://finnhub.io/api/news?id=9d9b489bc4917b6b2358c5fdb5884951d3e5a46aaaad916115ae99898c3847e1" target="_blank" rel="noopener noreferrer">NOW Q2 Earnings Beat Estimates, Revenues Rise on Subscription Growth</a></div></td>
+          <td class="ticker-cell">FDS</td>
+          <td class="name-cell" title="FactSet">FactSet</td>
+          <td class="num-cell" data-sort-value="9.6">$9.6B</td>
+          <td class="pct neg">-2.9%</td><td class="pct neg">-6.0%</td><td class="pct neg">-15.5%</td><td class="pct pos">+13.4%</td>
+          <td class="num-cell">492</td>
+          <td class="sector-cell">Financials</td>
+          <td class="business-cell">금융 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=bc8f5f9178724a41b0eaec48e3ea770eff52ecc71bda7e73158cdd5840b90f0c" target="_blank" rel="noopener noreferrer">Macy&#x27;s Fiscal Q2 Adjusted Earnings, Revenue Rise; Raises Fiscal 2026 Guidance</a> · <a href="https://finnhub.io/api/news?id=978db6b33ffdce732238843848d602f69382136d42746e42d01a8f678b07fa38" target="_blank" rel="noopener noreferrer">Cooper Companies Fiscal Q3 Adjusted Earnings, Revenue Rise; Q4 Guidance Set</a> · <a href="https://finnhub.io/api/news?id=7bfc1a7ea31aae75500e295aeb1f0bf27d7243b8e7aeae022fefaa1862413846" target="_blank" rel="noopener noreferrer">AeroVironment Quarterly Earnings, Revenue Unexpectedly Increase; Maintains Full-Year Outlook</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">496</td>
-          <td class="ticker-cell">TAP</td>
-          <td class="name-cell" title="Molson Coors Beverage Company">Molson Coors Beverage Company</td>
-          <td class="num-cell" data-sort-value="7.6">$7.6B</td>
-          <td class="pct neg">-4.7%</td><td class="pct neg">-4.2%</td><td class="pct neg">-0.5%</td><td class="pct pos">+0.9%</td>
-          <td class="num-cell">499</td>
-          <td class="sector-cell">Consumer Staples</td>
-          <td class="business-cell">몰슨 쿠어스 베버리지는 맥주 및 몰트 음료를 제조, 마케팅, 판매하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=a6eaeb9901ce518ff7207ff5040648a20e05e39f090d22f3522a9b84497749c4" target="_blank" rel="noopener noreferrer">Molson Coors Beverage Affirms FY2026 Adj EPS Guidance of $4.61-$4.82 vs $4.73 Est; Affirms FY2026 Sales Guidance of $11.029B-$11.252B vs $11.107B Est</a> · <a href="https://finnhub.io/api/news?id=ac27b77d86e879788e53e186c0c8a43e43e98da2c3926475e32856516eef2b1d" target="_blank" rel="noopener noreferrer">Molson Coors Brewing (TAP) Surpasses Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=5c4491d6a4877fe8ead67f735c853ad75f2c310d2b7ba30d57f24f94649a97e9" target="_blank" rel="noopener noreferrer">Boston Beer (SAM) Q2 Earnings and Revenues Miss Estimates</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">495</td>
-          <td class="ticker-cell">LHX</td>
-          <td class="name-cell" title="L3Harris">L3Harris</td>
-          <td class="num-cell" data-sort-value="51.8">$51.8B</td>
-          <td class="pct neg">-4.6%</td><td class="pct neg">-3.9%</td><td class="pct neg">-1.3%</td><td class="pct neg">-7.9%</td>
-          <td class="num-cell">230</td>
+          <td class="ticker-cell">URI</td>
+          <td class="name-cell" title="United Rentals">United Rentals</td>
+          <td class="num-cell" data-sort-value="62.3">$62.3B</td>
+          <td class="pct neg">-2.8%</td><td class="pct neg">-2.7%</td><td class="pct neg">-1.5%</td><td class="pct neg">-10.3%</td>
+          <td class="num-cell">190</td>
           <td class="sector-cell">Industrials</td>
-          <td class="business-cell">L3해리스 테크놀로지는 방산 및 항공우주 솔루션을 제공하는 기술 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=0bf36c34d6d5ebb7e8986725363f81d7d5a5a681e16fbbfa62bce382ad27dc8a" target="_blank" rel="noopener noreferrer">L3Harris Q2 Earnings and Revenues Beat Estimates, 2026 Outlook Raised</a> · <a href="https://finnhub.io/api/news?id=4fe2835842505a7acb4c26ba1bbeddd512c8a8a1c302d016deeed3345fcc7ab4" target="_blank" rel="noopener noreferrer">L3Harris Technologies Inc (LHX) (Q2 2026) Earnings Call Highlights: Record Orders and Revenue ...</a> · <a href="https://finnhub.io/api/news?id=4ec76990ee286e7a65cb354449ba723ac0d666dcac9284a4b69dba91674f3a40" target="_blank" rel="noopener noreferrer">L3Harris Technologies Raises FY2026 Adj EPS Guidance from $11.40-$11.60 to $11.80-$12.00 vs $11.61 Est; Raises FY2026 Sales Guidance from $23.000B-$23.500B to $23.200B-$23.700B vs $23.579B Est</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">494</td>
-          <td class="ticker-cell">CNC</td>
-          <td class="name-cell" title="Centene Corporation">Centene Corporation</td>
-          <td class="num-cell" data-sort-value="31.8">$31.8B</td>
-          <td class="pct neg">-4.5%</td><td class="pct neg">-3.2%</td><td class="pct neg">-3.1%</td><td class="pct pos">+10.5%</td>
-          <td class="num-cell">307</td>
-          <td class="sector-cell">Health Care</td>
-          <td class="business-cell">미국에서 미보험 가구 및 상업 기관에 관리 의료 프로그램과 서비스를 제공합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=00bc5d83bea2c03cd8271f74ebbe09a7de13041114571593cfc4add094879b6d" target="_blank" rel="noopener noreferrer">Centene (CNC) Posts Strong Q2 Earnings Beat, Raises Guidance</a> · <a href="https://finnhub.io/api/news?id=11d848c9d9bfd9426dc3fbeb88818d7e1e7d0e4e5b76d295dd87c60c7d182a82" target="_blank" rel="noopener noreferrer">Centene (CNC) Could Be 3% Undervalued After Strong Q2 Earnings And Higher Outlook</a> · <a href="https://finnhub.io/api/news?id=200fc2e05635b2f7e35023fe0e70fb4e6739db6f97b9a877a1477c09929e7d1b" target="_blank" rel="noopener noreferrer">Centene Raises Full-Year Outlook After Strong Second-Quarter Earnings Beat</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">493</td>
-          <td class="ticker-cell">KKR</td>
-          <td class="name-cell" title="KKR &amp; Co.">KKR &amp; Co.</td>
-          <td class="num-cell" data-sort-value="97.7">$97.7B</td>
-          <td class="pct neg">-4.5%</td><td class="pct pos">+4.8%</td><td class="pct pos">+8.0%</td><td class="pct pos">+12.4%</td>
-          <td class="num-cell">126</td>
-          <td class="sector-cell">Financials</td>
-          <td class="business-cell">글로벌 투자 및 자산 운용 서비스를 제공하는 금융 회사입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=3987746d3cc8f5eb63032f6779dd6b715f3ce30dff00f0d483a6a2104adc18ed" target="_blank" rel="noopener noreferrer">HASI Gains as Q2 Earnings Beat on Y/Y Revenue Growth, Raises Outlook</a> · <a href="https://finnhub.io/api/news?id=30169fbf06b1842ea486dc4287ae72b15c9fc0e0dede16b11b4f1bab3346bf5d" target="_blank" rel="noopener noreferrer">KKR (NYSE:KKR) Beats Earnings but Misses Revenue in Q2 2026</a> · <a href="https://finnhub.io/api/news?id=f45ae9f0e8afb89d538d62f6028c804ad1e3be7512bfb81c585745c0b1290454" target="_blank" rel="noopener noreferrer">KKR &amp; Co. Inc. (KKR) Q2 Earnings and Revenues Top Estimates</a></div></td>
+          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=5158fead4cc0f04a73ab13b282faad26d54806b62677fd460514342c6be4fe64" target="_blank" rel="noopener noreferrer">Can KBR&#x27;s $1.1B Weather Contract Strengthen Its Federal Footprint?</a> · <a href="https://finnhub.io/api/news?id=32a6c1a411a56ed04abf784fe0b60d005648b0469330c536bb966c8476781d87" target="_blank" rel="noopener noreferrer">United Rentals (URI) Lifted Guidance On Stronger Demand, Is It Still Below Fair Value?</a> · <a href="https://finnhub.io/api/news?id=ea400ae231724a7919d63f057e5b2e11eef4243e552dcb5b73307bd1b5f3f410" target="_blank" rel="noopener noreferrer">Unpacking Q2 Earnings: United Rentals (NYSE:URI) In The Context Of Other Specialty Equipment Distributors Stocks</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">492</td>
-          <td class="ticker-cell">APO</td>
-          <td class="name-cell" title="Apollo Global Management">Apollo Global Management</td>
-          <td class="num-cell" data-sort-value="79.5">$79.5B</td>
-          <td class="pct neg">-4.4%</td><td class="pct pos">+1.9%</td><td class="pct pos">+11.7%</td><td class="pct neg">-0.2%</td>
-          <td class="num-cell">160</td>
+          <td class="ticker-cell">PSKY</td>
+          <td class="name-cell" title="Paramount Skydance Corporation">Paramount Skydance Corporation</td>
+          <td class="num-cell" data-sort-value="11.6">$11.6B</td>
+          <td class="pct neg">-2.8%</td><td class="pct neg">-1.2%</td><td class="pct neg">-7.8%</td><td class="pct pos">+1.8%</td>
+          <td class="num-cell">472</td>
+          <td class="sector-cell">Communication Services</td>
+          <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=9099df51d78ec3836617a44878c2b785cecb868b52bcd00640e92a4b82d0d586" target="_blank" rel="noopener noreferrer">States settle lawsuit over Paramount-Warner merger, clearing key hurdle for $81 billion deal</a> · <a href="https://finnhub.io/api/news?id=39124709af7435561a005c93f6c9691a8d959d3a059a189c9a545b18fb18d8bc" target="_blank" rel="noopener noreferrer">Paramount settles antitrust lawsuit with state AGs, clearing path for WBD merger</a> · <a href="https://finnhub.io/api/news?id=e14d568b77c7f06988461d5b9f30339845daaa13ab4bc911486bfc69e9a1469a" target="_blank" rel="noopener noreferrer">Paramount&#x27;s $110B Warner Bros. Discovery Merger Clears Legal Hurdle; Elizabeth Warren Says Letting Trump-Aligned Entity &#x27;Dominate&#x27; News Is &#x27;Disastrous&#x27;</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">493</td>
+          <td class="ticker-cell">FIS</td>
+          <td class="name-cell" title="Fidelity National Information Se">Fidelity National Information Se</td>
+          <td class="num-cell" data-sort-value="17">$17.0B</td>
+          <td class="pct neg">-2.8%</td><td class="pct neg">-4.6%</td><td class="pct neg">-18.6%</td><td class="pct neg">-13.2%</td>
+          <td class="num-cell">418</td>
           <td class="sector-cell">Financials</td>
-          <td class="business-cell">글로벌 대체 자산 운용 및 투자 관리 서비스를 제공하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=414f818f3a4e8ad4fcd813adeb0c51d84d9daceae2edb5c4d5323fa3991a7645" target="_blank" rel="noopener noreferrer">Apollo Global Management Shares Rise as Revenue Surges Despite Earnings Miss</a> · <a href="https://finnhub.io/api/news?id=23cdf6f602d8d9905ef9406c4ed92c6edb7e69f9faf1ec2b79cc411625ec6b48" target="_blank" rel="noopener noreferrer">Patria Investments (PAX) Tops Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=d5f4c8a26f40bd2459bf13886f3c531a43655b2521f903598065c1dfb76d3181" target="_blank" rel="noopener noreferrer">Affiliated Managers Group (AMG) Tops Q2 Earnings and Revenue Estimates</a></div></td>
+          <td class="business-cell">금융 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=1d623a489e62a03134444bb9e10ac38051d8cb5f7feb2bf0238eda8858b83d44" target="_blank" rel="noopener noreferrer">Why Is Fidelity National (FIS) Down 2.3% Since Last Earnings Report?</a> · <a href="https://finnhub.io/api/news?id=58e7d093867c7e9fa1d0887a4940b6dfd2e585256cd9bee600c915c97ff4d5ed" target="_blank" rel="noopener noreferrer">How Has Visa&#x27;s Growth Story Changed?</a> · <a href="https://finnhub.io/api/news?id=89ea77c7a5b9bca727f97b7d7f49b997f80931be53016acb15be58661d37165d" target="_blank" rel="noopener noreferrer">How Can FIS&#x27; Wallet Partnership With Ericsson Drive Long-Term Growth?</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">494</td>
+          <td class="ticker-cell">WYNN</td>
+          <td class="name-cell" title="Wynn Resorts">Wynn Resorts</td>
+          <td class="num-cell" data-sort-value="8.2">$8.2B</td>
+          <td class="pct neg">-2.8%</td><td class="pct neg">-5.2%</td><td class="pct neg">-17.9%</td><td class="pct neg">-19.2%</td>
+          <td class="num-cell">498</td>
+          <td class="sector-cell">Consumer Discretionary</td>
+          <td class="business-cell">소비재·자동차·레저 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=689b40e1ded70df7243b0e07e3d3492aad9cf53b2e53074f73928a4fc53b3f3a" target="_blank" rel="noopener noreferrer">Caesars stockholders approve $6 billion merger with Fertitta</a> · <a href="https://finnhub.io/api/news?id=6edd54ec161159ef1f2ed59721ccb93e74ad55c4babdd9960353772821d2573a" target="_blank" rel="noopener noreferrer">Why Is Wynn (WYNN) Down 9.5% Since Last Earnings Report?</a> · <a href="https://finnhub.io/api/news?id=4cb4911509d65e1da1543d91402652f8a10e065c5aece9deccf36772d221333d" target="_blank" rel="noopener noreferrer">Consumer Discretionary - Casino Operator Q2 Earnings: Wynn Resorts (NASDAQ:WYNN) is the Best in the Biz</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">495</td>
+          <td class="ticker-cell">TPL</td>
+          <td class="name-cell" title="Texas Pacific Land Corporation">Texas Pacific Land Corporation</td>
+          <td class="num-cell" data-sort-value="22.5">$22.5B</td>
+          <td class="pct neg">-2.8%</td><td class="pct neg">-7.5%</td><td class="pct neg">-9.6%</td><td class="pct neg">-24.8%</td>
+          <td class="num-cell">370</td>
+          <td class="sector-cell">Energy</td>
+          <td class="business-cell">에너지 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=bd9559852dc2e86e932f56ffe6df4289ea93be3dd15903166f76b75ce70f6473" target="_blank" rel="noopener noreferrer">Q2 Earnings Highs And Lows: Texas Pacific Land (NYSE:TPL) Vs The Rest Of The U.S. Shale E&amp;P Stocks</a> · <a href="https://finnhub.io/api/news?id=741d6ea90e0aa04dbe0d39d21eb4f839bf1c5579d7b3969b84086379cdb5c707" target="_blank" rel="noopener noreferrer">3 Profitable Stocks to Keep an Eye On</a> · <a href="https://finnhub.io/api/news?id=529d0b69b56ebb4c0abe21e055d716a3bd31410cd56b66354704cf8f3bf424bf" target="_blank" rel="noopener noreferrer">Texas Pacific Land (TPL) Stock May Look Rich After Cramer Backing</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">491</td>
-          <td class="ticker-cell">NCLH</td>
-          <td class="name-cell" title="Norwegian Cruise Line Holdings">Norwegian Cruise Line Holdings</td>
-          <td class="num-cell" data-sort-value="8.3">$8.3B</td>
-          <td class="pct neg">-4.4%</td><td class="pct neg">-2.0%</td><td class="pct neg">-6.6%</td><td class="pct pos">+17.1%</td>
-          <td class="num-cell">496</td>
-          <td class="sector-cell">Consumer Discretionary</td>
-          <td class="business-cell">북미, 유럽, 아시아 태평양 및 전 세계에서 크루즈 기업을 운영합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=9d2f4e69a381ac2b7e7a82ae2fc590be7b8abd60784812c08e2752942a74112b" target="_blank" rel="noopener noreferrer">Why Norwegian Cruise Line (NCLH) Is Up 7.3% After Strong Q2 Earnings But Lowered Full-Year Outlook</a> · <a href="https://finnhub.io/api/news?id=82a6ba2845a66b4a887bbe5ec6a82d221aca8267621968e2c33880d9e603211f" target="_blank" rel="noopener noreferrer">Norwegian Cruise Line falls on weak guidance despite Q2 earnings beat</a> · <a href="https://finnhub.io/api/news?id=ff5ad29ce9b5c5563e489315d82791320f39f53d4e9a20c573d796bf2ab97b37" target="_blank" rel="noopener noreferrer">Norwegian Cruise Line Shares Drop as Weaker Full-Year Outlook Overshadows Earnings Beat</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">490</td>
-          <td class="ticker-cell">FDXF</td>
-          <td class="name-cell" title="FedEx Freight">FedEx Freight</td>
-          <td class="num-cell" data-sort-value="21.5">$21.5B</td>
-          <td class="pct neg">-4.3%</td><td class="pct pos">+1.7%</td><td class="pct neg">-5.5%</td><td class="pct flat">—%</td>
-          <td class="num-cell">390</td>
-          <td class="sector-cell">Industrials</td>
-          <td class="business-cell">페덱스 프레이트는 화물 운송 및 물류 서비스를 제공하는 지주회사입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=8f8a4c45ab487fa69e16cb0127871ab9a2a944bbb228fb1bb783df1e53597edb" target="_blank" rel="noopener noreferrer">FedEx (FDX) Could Be 10% Undervalued On Fresh Financing And Strong Q4 Results</a> · <a href="https://finnhub.io/api/news?id=104aa85789c7bfa1b2242b9d8ee45a587642af04e9aab9667bcf96be5df8ad1d" target="_blank" rel="noopener noreferrer">FedEx Freight Stock Outlook After the Spin-Off and S&amp;P 500 Debut</a> · <a href="https://finnhub.io/api/news?id=444f7257eed2048bf9a8fd67663d6b44bb2584361e6115479b15d013506bdddb" target="_blank" rel="noopener noreferrer">FedEx Freight Targets Margin Growth as LTL Demand and Pricing Shift</a></div></td>
+          <td class="ticker-cell">HAL</td>
+          <td class="name-cell" title="Halliburton">Halliburton</td>
+          <td class="num-cell" data-sort-value="26.5">$26.5B</td>
+          <td class="pct neg">-2.7%</td><td class="pct neg">-4.0%</td><td class="pct neg">-12.4%</td><td class="pct neg">-6.7%</td>
+          <td class="num-cell">328</td>
+          <td class="sector-cell">Energy</td>
+          <td class="business-cell">에너지 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=b8c998cff797c58f960289b66946e8d18ecaee08d05367a9e2ba75c83f7f8de7" target="_blank" rel="noopener noreferrer">Halliburton Awarded Bundled Deepwater Well Construction and Completions Contract</a> · <a href="https://finnhub.io/api/news?id=8049af0afb19be5c31ad856ac6948ea096c44b58d4753e0f1acd6db9b7acf3e9" target="_blank" rel="noopener noreferrer">Halliburton Awarded Bundled Well Construction And Completions Contract From Eni For Cronos Ultra-Deepwater Development In Block 6 Of Cyprus EEZ</a> · <a href="https://finnhub.io/api/news?id=26fe3953c4d17bd355a1eca4cf0135dfface0bdefed2ddf014e38ec3dbb5e436" target="_blank" rel="noopener noreferrer">Halliburton (HAL) Stock May Be Undervalued On A New Deepwater Contract</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">489</td>
-          <td class="ticker-cell">EXPE</td>
-          <td class="name-cell" title="Expedia Group">Expedia Group</td>
-          <td class="num-cell" data-sort-value="38.2">$38.2B</td>
-          <td class="pct neg">-4.3%</td><td class="pct pos">+1.4%</td><td class="pct pos">+18.5%</td><td class="pct pos">+46.6%</td>
-          <td class="num-cell">282</td>
-          <td class="sector-cell">Consumer Discretionary</td>
-          <td class="business-cell">익스피디아 그룹은 온라인 여행 플랫폼 및 관련 서비스를 제공하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=bda8061b75470014ccce233550835567abb7385d51e8d88b5091927344e64da8" target="_blank" rel="noopener noreferrer">Expedia Group (NASDAQ:EXPE) Beats Q2 Profit Forecast, Raises Full-Year Revenue Guidance</a> · <a href="https://finnhub.io/api/news?id=b14db3dc678b644b4ac33fa691613090489f7834f3906efd7cbe8d77cbdc8744" target="_blank" rel="noopener noreferrer">Expedia Group (EXPE) Q2 Beat And Higher Guidance Leave Valuation In Focus</a> · <a href="https://finnhub.io/api/news?id=31b461393c8d235e05aeb409a7d9546e72d9818c7984936f6c5d0b55e5faa858" target="_blank" rel="noopener noreferrer">Expedia (NASDAQ:EXPE) Beats Expectations in Strong Q2 CY2026, Quarterly Revenue Guidance Slightly Exceeds Expectations</a></div></td>
+          <td class="ticker-cell">AAPL</td>
+          <td class="name-cell" title="Apple Inc.">Apple Inc.</td>
+          <td class="num-cell" data-sort-value="4860.2">$4.86T</td>
+          <td class="pct neg">-2.7%</td><td class="pct neg">-3.0%</td><td class="pct pos">+3.0%</td><td class="pct pos">+13.9%</td>
+          <td class="num-cell">2</td>
+          <td class="sector-cell">Information Technology</td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=11e1f7ba8080a7948619b3f506bb9ac7af120dbc6ad68c262bf345388c53584e" target="_blank" rel="noopener noreferrer">Sandisk: $94B In Contracts Reinforces Outlook</a> · <a href="https://finnhub.io/api/news?id=8d0bc68a3c70edaa79b66578ac99abee01fe0069f6214bff7bf0e4419f413bc9" target="_blank" rel="noopener noreferrer">Klarna Falls 3% as Selling Persists Weeks After Its Guidance Cut; Affirm Advances 2%</a> · <a href="https://finnhub.io/api/news?id=2bcd3b8223c0bd29eaa411eefb419930289a32aa8b06c279625275f5cfd54557" target="_blank" rel="noopener noreferrer">A US Jury Orders Apple (AAPL) to Pay a Record $5.7 Billion in a Patent Case</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">490</td>
+          <td class="ticker-cell">MDT</td>
+          <td class="name-cell" title="Medtronic">Medtronic</td>
+          <td class="num-cell" data-sort-value="110.4">$110.4B</td>
+          <td class="pct neg">-2.7%</td><td class="pct neg">-3.3%</td><td class="pct neg">-3.8%</td><td class="pct pos">+12.2%</td>
+          <td class="num-cell">104</td>
+          <td class="sector-cell">Health Care</td>
+          <td class="business-cell">헬스케어·바이오 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=7a90a05273cd28dc7fffb36cb5649e06786b1f206272fea5f91e02b7ab561cc7" target="_blank" rel="noopener noreferrer">Medtronic shares rise 5% after earnings beat and guidance increase</a> · <a href="https://finnhub.io/api/news?id=eba43d418f8e67df631c0d1b606761485b25fa6b671f486ffab96faa1e0faf60" target="_blank" rel="noopener noreferrer">Medtronic Q1 Earnings &amp; Revenues Top Estimates, Stock Up in Pre-Market</a> · <a href="https://finnhub.io/api/news?id=88cb324ec79385df2c89af54702a27992677154d6cf22c72ff6b3ce4be21e378" target="_blank" rel="noopener noreferrer">Medtronic (MDT) Raises its Outlook Again as Heart Device Demand Keeps Climbing</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">488</td>
-          <td class="ticker-cell">ROST</td>
-          <td class="name-cell" title="Ross Stores">Ross Stores</td>
-          <td class="num-cell" data-sort-value="75.5">$75.5B</td>
-          <td class="pct neg">-4.1%</td><td class="pct neg">-7.7%</td><td class="pct pos">+0.8%</td><td class="pct pos">+10.8%</td>
-          <td class="num-cell">173</td>
-          <td class="sector-cell">Consumer Discretionary</td>
-          <td class="business-cell">로스 스토어스는 오프프라이스 의류 및 홈 패션 소매점을 운영하는 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=5f530d5184151246146c1eec082575ec248746c858e6a223606c91d865e00621" target="_blank" rel="noopener noreferrer">Is Ross Stores (ROST) Fully Valued After Its Earnings Beat And Raised Guidance?</a> · <a href="https://finnhub.io/api/news?id=492deb9ef4a0bba2fd42992e0a06021788d8e6a64dc21cf6f0f4215da8a88bbc" target="_blank" rel="noopener noreferrer">Bargain Hunters, AI Bets, And CEO Confidence: Navigating The Final Wave Of Q2 Earnings</a> · <a href="https://finnhub.io/api/news?id=1750acde286032ed0eed0d4889a2f4a1aa7b71ccfa5586de976b1a4086d9c60c" target="_blank" rel="noopener noreferrer">Here&#x27;s How Ross Stores Stock is Poised Ahead of Q2 Earnings</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">487</td>
-          <td class="ticker-cell">FIS</td>
-          <td class="name-cell" title="Fidelity National Information Se">Fidelity National Information Se</td>
-          <td class="num-cell" data-sort-value="21.2">$21.2B</td>
-          <td class="pct neg">-4.1%</td><td class="pct neg">-3.2%</td><td class="pct neg">-1.8%</td><td class="pct neg">-0.4%</td>
-          <td class="num-cell">392</td>
-          <td class="sector-cell">Financials</td>
-          <td class="business-cell">피델리티 내셔널 인포메이션 서비스는 금융 및 결제 기술 솔루션을 제공합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=91dabb48f06d4be7ef4de404b43c32918a587b964201f6f6a3adf778744b73eb" target="_blank" rel="noopener noreferrer">FIS Beats Q2 Earnings on Banking Solutions Strength, Cuts 2026 Outlook</a> · <a href="https://finnhub.io/api/news?id=987f0e93428885f15e25d9112f609519beb9ef9793cd39e9a4880fabbb4e52b7" target="_blank" rel="noopener noreferrer">Fidelity National Information Services (FIS) After Earnings Beat Is The Undervalued Story Still Intact</a> · <a href="https://finnhub.io/api/news?id=61f279889b718897738d568909cd448df7324a86e7dbe43bd556b5ce1b0db401" target="_blank" rel="noopener noreferrer">Fidelity National Info Lowers FY2026 Adj EPS Guidance from $6.22-$6.32 to $6.15-$6.24 vs $6.28 Est; Lowers FY2026 Sales Guidance from $13.770B-$13.850B to $13.630B-$13.695B vs $13.784B Est</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">486</td>
-          <td class="ticker-cell">NKE</td>
-          <td class="name-cell" title="Nike, Inc.">Nike, Inc.</td>
-          <td class="num-cell" data-sort-value="58">$58.0B</td>
-          <td class="pct neg">-4.0%</td><td class="pct neg">-7.2%</td><td class="pct neg">-10.7%</td><td class="pct neg">-5.8%</td>
-          <td class="num-cell">219</td>
-          <td class="sector-cell">Consumer Discretionary</td>
-          <td class="business-cell">나이키는 스포츠 신발, 의류, 장비, 액세서리 및 서비스를 설계, 개발, 마케팅, 판매합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=b56af23808ad38582688b692b3101c1d358375f729e587a36cbfe36bb715a551" target="_blank" rel="noopener noreferrer">Is DECK Stock Attractive After Its Strong Fiscal 2027 Earnings Update?</a> · <a href="https://finnhub.io/api/news?id=ff7fb8a1ce28575e914eccea402c326212a84d38a2897ba4d92d2c003e54b36b" target="_blank" rel="noopener noreferrer">Deckers&#x27; Q1 Earnings Preview: Is DECK Ready to Surprise Wall Street?</a> · <a href="https://finnhub.io/api/news?id=4ce8610f6db8cf8807bb495bf1cddb5775af420f1df71cc9df672bc4210ff899" target="_blank" rel="noopener noreferrer">ONON Q1 Results Raise Outlook With Margin Gains And Growth Potential</a></div></td>
+          <td class="ticker-cell">ITW</td>
+          <td class="name-cell" title="Illinois Tool Works">Illinois Tool Works</td>
+          <td class="num-cell" data-sort-value="73.3">$73.3B</td>
+          <td class="pct neg">-2.5%</td><td class="pct neg">-1.3%</td><td class="pct neg">-4.7%</td><td class="pct neg">-1.3%</td>
+          <td class="num-cell">166</td>
+          <td class="sector-cell">Industrials</td>
+          <td class="business-cell">산업재·운송·방산 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=ba359d7458c2e3f9c2a67200eb1da7612fd244d291ce5e06a8602f23b8585530" target="_blank" rel="noopener noreferrer">Unpacking Q2 Earnings: Illinois Tool Works (NYSE:ITW) In The Context Of Other General Industrial Machinery Stocks</a> · <a href="https://finnhub.io/api/news?id=36d2ba419a5309fbf0e2d2ff0c998b7d43243dd6c43297873476bd0f12b7c7b8" target="_blank" rel="noopener noreferrer">Illinois Tool Works (NYSE:ITW): Dividend Quality That Income Investors Can Rely On</a> · <a href="https://finnhub.io/api/news?id=65f28497a06b2f66d040d918faf2ccb75d6e9d2a45e1bc7f1ecf7bf187f4b828" target="_blank" rel="noopener noreferrer">Is The Buyback The Reason To Own Lincoln Electric Stock?</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">485</td>
-          <td class="ticker-cell">ADSK</td>
-          <td class="name-cell" title="Autodesk">Autodesk</td>
-          <td class="num-cell" data-sort-value="51">$51.0B</td>
-          <td class="pct neg">-4.0%</td><td class="pct neg">-5.6%</td><td class="pct pos">+10.7%</td><td class="pct pos">+2.1%</td>
-          <td class="num-cell">234</td>
+          <td class="ticker-cell">MLM</td>
+          <td class="name-cell" title="Martin Marietta Materials">Martin Marietta Materials</td>
+          <td class="num-cell" data-sort-value="34.1">$34.1B</td>
+          <td class="pct neg">-2.4%</td><td class="pct neg">-4.1%</td><td class="pct neg">-9.6%</td><td class="pct neg">-16.8%</td>
+          <td class="num-cell">286</td>
+          <td class="sector-cell">Materials</td>
+          <td class="business-cell">소재 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=119094de17346b77383108c9d2d405b8b82b86edd52678c4ff23cef049d8abd2" target="_blank" rel="noopener noreferrer">Is Martin Marietta Materials (MLM) Undervalued Following Record Guidance And A 20% Slide?</a> · <a href="https://finnhub.io/api/news?id=00b80bb994f28bb715c53d10e61484b3f4c0fe889d36c8b121a00ad05bb5e1b0" target="_blank" rel="noopener noreferrer">A Look Back at Building Materials Stocks’ Q2 Earnings: Martin Marietta Materials (NYSE:MLM) Vs The Rest Of The Pack</a> · <a href="https://finnhub.io/api/news?id=efee6b9119e0dfc7094c274f7adc98c54bc842a259cd3fbe40fc4423775ff06b" target="_blank" rel="noopener noreferrer">From Fashion to Concrete: J.P. Morgan Says Buy These 2 Stocks</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">486</td>
+          <td class="ticker-cell">DGX</td>
+          <td class="name-cell" title="Quest Diagnostics">Quest Diagnostics</td>
+          <td class="num-cell" data-sort-value="25.7">$25.7B</td>
+          <td class="pct neg">-2.4%</td><td class="pct neg">-1.2%</td><td class="pct neg">-4.4%</td><td class="pct pos">+9.9%</td>
+          <td class="num-cell">338</td>
+          <td class="sector-cell">Health Care</td>
+          <td class="business-cell">헬스케어·바이오 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=9e36425fe178bc4709a47624582e481fa85510e74d1222fa56d6866a9e993d90" target="_blank" rel="noopener noreferrer">Quest Diagnostics Incorporated: Testing Growth Keeps Me Bullish Despite Medicare Headwinds</a> · <a href="https://finnhub.io/api/news?id=595b73bf89e80d13752af49c883469a8239d7018da51accdfc2ed2fe3801f203" target="_blank" rel="noopener noreferrer">Why Is DaVita HealthCare (DVA) Down 4.9% Since Last Earnings Report?</a> · <a href="https://finnhub.io/api/news?id=d1b6e8b524d0647dcaeec0b1a5b6abcaaf33defc75d8f66fc0c8d15a8e837148" target="_blank" rel="noopener noreferrer">NICU Genetic Testing Market Size, Share &amp; Trends Analysis - Global Opportunity Analysis and Industry Forecast (2026-2036)</a></div></td>
+        </tr>
+
+        <tr class="bot-row">
+          <td class="rank-cell">487</td>
+          <td class="ticker-cell">TYL</td>
+          <td class="name-cell" title="Tyler Technologies">Tyler Technologies</td>
+          <td class="num-cell" data-sort-value="13">$13.0B</td>
+          <td class="pct neg">-2.4%</td><td class="pct neg">-4.5%</td><td class="pct neg">-16.3%</td><td class="pct pos">+8.1%</td>
+          <td class="num-cell">455</td>
           <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">오토데스크(Autodesk, Inc.)입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=c9e87d66287af0e62291ce58fbe47818a32c6e3aad6c1b92ce90939b3a40a072" target="_blank" rel="noopener noreferrer">PubMatic, Inc. (PUBM) Q2 Earnings and Revenues Top Estimates</a> · <a href="https://finnhub.io/api/news?id=3f7a1c4ec989056972194e696b82ad067dd9da32948508611da929c8e6ce54c7" target="_blank" rel="noopener noreferrer">Autodesk (NASDAQ:ADSK): An Affordable Growth Stock with Strong Earnings and Reasonable Valuation</a> · <a href="https://finnhub.io/api/news?id=49d2b399250bdf57c472f762a166f3093d72c8f58775f8ee134df6d661bfc429" target="_blank" rel="noopener noreferrer">Meta Platforms (META) Lags Q2 Earnings Estimates</a></div></td>
+          <td class="business-cell">정보기술 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=4b94e4028c7aead526760622a057df82f736d3258a25488e63fdf75796decbc1" target="_blank" rel="noopener noreferrer">State of South Carolina and Tyler Technologies Expand Partnership for Digital Government and Payment Services</a> · <a href="https://finnhub.io/api/news?id=5f9a8b70a8cb4995fbc8ee557dd49a76d6933376cf166d5e74e34933b96ed574" target="_blank" rel="noopener noreferrer">Guidewire Software shares are trading higher after the company reported better-than-expected Q2 financial results, raised its FY26 sales guidance and issued Q3 sales guidance above estimates. Also, BTIG maintained its buy rating on the stock and raised its price target from $175 to $200.</a> · <a href="https://finnhub.io/api/news?id=04ee1b138db4647df40e8582bba97d974b366b2a4c30e168a856fd6fe195d582" target="_blank" rel="noopener noreferrer">South Carolina Department Of Motor Vehicles To Adopt Electronic Titling Services Under Digital Government Services Contract With Tyler</a></div></td>
         </tr>
 
         <tr class="bot-row">
           <td class="rank-cell">484</td>
-          <td class="ticker-cell">VRSN</td>
-          <td class="name-cell" title="Verisign">Verisign</td>
-          <td class="num-cell" data-sort-value="24.7">$24.7B</td>
-          <td class="pct neg">-4.0%</td><td class="pct neg">-7.0%</td><td class="pct neg">-1.8%</td><td class="pct neg">-8.1%</td>
-          <td class="num-cell">365</td>
-          <td class="sector-cell">Information Technology</td>
-          <td class="business-cell">베리사인은 인터넷 인프라 및 도메인 네임 레지스트리 서비스를 제공합니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=a3e6ae97a2b630147cb203a29cd1ec7f761e234537b256de3c4bca18d992113e" target="_blank" rel="noopener noreferrer">VeriSign (VRSN) Beats Q2 Earnings and Revenue Estimates</a> · <a href="https://finnhub.io/api/news?id=c6a68b7848803c2d994a3bdfe9c372272d72cbdbeaa510ef0ef38a5bca245f7a" target="_blank" rel="noopener noreferrer">Verisign (NASDAQ:VRSN) Reports In-Line Q2 Results as Raised 2026 Guidance Supports the Quality Stock Thesis</a> · <a href="https://finnhub.io/api/news?id=a47ad7f0bc8a271af3493561d9e532c43ff1705e233807236e6b2cf91a6dc883" target="_blank" rel="noopener noreferrer">Earnings Scheduled For July 23, 2026</a></div></td>
-        </tr>
-
-        <tr class="bot-row">
-          <td class="rank-cell">483</td>
-          <td class="ticker-cell">FISV</td>
-          <td class="name-cell" title="Fiserv">Fiserv</td>
-          <td class="num-cell" data-sort-value="27.8">$27.8B</td>
-          <td class="pct neg">-4.0%</td><td class="pct flat">-0.0%</td><td class="pct pos">+3.1%</td><td class="pct neg">-5.6%</td>
-          <td class="num-cell">331</td>
-          <td class="sector-cell">Financials</td>
-          <td class="business-cell">거래 및 결제 처리 서비스 분야의 미국 상장 기업입니다.</td>
-          <td class="reason-cell">관련 기사는 확인했지만 해당 거래일 등락의 직접 촉매는 검증되지 않았습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=97be565955e439616ef783f58e0f6eb81074770ace94780e8db34ff602303c2f" target="_blank" rel="noopener noreferrer">Fiserv cuts 2026 outlook as Q2 earnings, revenue miss estimates</a> · <a href="https://finnhub.io/api/news?id=6d8bba9851a3248c85625940941a66883e93198422f5946793f5def709d62655" target="_blank" rel="noopener noreferrer">Fiserv (FISV) Could Be 55% Below Fair Value After Earnings Miss And Guidance Cut</a> · <a href="https://finnhub.io/api/news?id=47afe32156f9367ed564e74151247f9694747a064c2f2afb2f54f263b859c781" target="_blank" rel="noopener noreferrer">FISV Q2 Earnings Miss Estimates on Margin Pressure, Revenues Decline</a></div></td>
+          <td class="ticker-cell">NWS</td>
+          <td class="name-cell" title="News Corp (Class B)">News Corp (Class B)</td>
+          <td class="num-cell" data-sort-value="17.1">$17.1B</td>
+          <td class="pct neg">-2.3%</td><td class="pct neg">-2.7%</td><td class="pct neg">-9.3%</td><td class="pct pos">+12.6%</td>
+          <td class="num-cell">415</td>
+          <td class="sector-cell">Communication Services</td>
+          <td class="business-cell">통신·미디어·인터넷 서비스 분야를 영위하는 미국 상장 기업</td>
+          <td class="reason-cell">관련 기사 판정 생성에 실패해 해당 거래일의 직접 촉매를 확인하지 못했습니다.<div class="stock-source-links">관련 기사: <a href="https://finnhub.io/api/news?id=3aec8897a63c0639fdf2b0b104ab0ed5d01ae60e46054bed41d4c89f1e56bcbd" target="_blank" rel="noopener noreferrer">How News Corp’s Digital-driven Earnings Beat Could Reshape the Investment Thesis for News (NWSA) Investors</a> · <a href="https://finnhub.io/api/news?id=caa6c20df2201a52efc3fb3ebf7e4c88b4d9035413cf64056bae51c888471135" target="_blank" rel="noopener noreferrer">Is News (NWSA) A Bargain On Its Q2 Earnings Beat And Digital Ad Growth?</a> · <a href="https://finnhub.io/api/news?id=717ae5e123cad4722dc5d89de049f452a4d58ede7c68f57e615f44e3d508cac9" target="_blank" rel="noopener noreferrer">News (NWSA) Stock Looks Above Fair Value As Earnings Beat Lifts Shares</a></div></td>
         </tr>
           </tbody>
         </table>
@@ -895,29 +896,30 @@
   
   <section class="market-summary-card">
     <div class="market-summary-label">MARKET TAKEAWAY</div>
-    <h2>📈 하락 종목이 시장 전반으로 확산된 강한 위험회피 흐름</h2>
-    <p><strong>관측</strong>2026년 8월 17일 미국 증시는 상승 126개, 하락 363개(상승 비율 26%)로 하락 종목이 시장 전반으로 확산되었습니다. 섹터별로는 에너지(+0.9%)와 정보기술(-0.1%)이 상대적 강세를 보인 반면, 필수소비재(-1.4%)와 통신서비스(-1.1%)는 약세를 보였습니다. 개별 종목 중에서는 SNDK(+8.9%)가 가장 강했고, CVNA(-7.3%)가 가장 약했습니다.</p>
-    <p><strong>직접 해석</strong>시장 폭이 약해 단기적으로 방어적 포지셔닝과 변동성 확대 가능성이 유의되는 가운데, 외환·채권 시장에서는 연준의 금리 인하 기대 속에 달러가 하락하고 금리가 변동하는 흐름이 나타났습니다. 연준 굴스비 총재의 인플레이션 지표 개선 발언과 더불어 주택 시장 및 소비 지출, 도매 물가 지표에 시장의 관심이 집중되고 있습니다.</p>
-    <p><strong>최근 맥락</strong>최근 2~45일 동안의 거시 및 섹터 배경을 보면, 빅테크 실적 발표와 연준 통화정책 회의, 인플레이션 지표가 주된 관전 포인트였습니다. 미국 고용 지표 완화로 연준의 금리 인상 기대가 줄어들며 글로벌 증시가 강세를 보이기도 했으나, 이란 및 호르무즈 해협 이슈에 따른 유가 상승과 인플레이션 우려가 시장에 지속적인 부담으로 작용했습니다.</p>
+    <h2>📈 하락 종목이 다소 우세한 약한 위험회피 흐름</h2>
+    <br>
+    <p><strong>관측</strong><br>상승 188개·하락 286개로 상승 비율은 40%였습니다. 강세 섹터는 Utilities +1.2%, Industrials +0.2%, 약세 섹터는 Energy -0.9%, Consumer Staples -0.7%였습니다. 개별 종목 중 CCL(+13.4%)가 가장 강했고, FICO(-26.5%)가 가장 약했습니다.</p>
+    <p><strong>직접 해석</strong><br>해당 거래일 장 마감 전 직접 시황 근거 3건 이상을 코드 기준으로 확인하지 못했습니다. 아래 해석은 가격·시장 폭·섹터 수익률에 한정됩니다.</p>
+    <p><strong>최근 맥락</strong><br>최근 거시·섹터 맥락을 뒷받침할 시점 적격 기사 근거가 충분하지 않습니다.</p>
     
     <div class="korea-market-scenario">
-      <h3>🇰🇷 한국 증시 확인 조건과 시나리오 · 2026-08-18</h3>
-      <p><strong>기본 시나리오</strong>미국 증시에서 나타난 위험회피 심리와 연준의 금리 인하 기대 및 물가 지표 관망세가 한국 증시로 복합적으로 전달될 수 있습니다.</p>
+      <h3>🇰🇷 한국 증시 확인 조건과 시나리오 · 2026-10-02</h3>
+      <p><strong>기본 시나리오</strong><br>미국장 직접 근거가 부족해 한국 증시 조건부 시나리오를 생성하지 못했습니다.</p>
       <div class="scenario-grid">
-        <div><strong>긍정 확인 조건</strong><ul><li>연준 위원의 인플레이션 지표 개선 발언에 따른 금리 인하 기대 유지</li><li>미국 에너지 섹터 강세에 따른 관련 산업 투자심리 방어</li></ul></div>
-        <div><strong>위험 확인 조건</strong><ul><li>미국 증시 내 광범위한 하락 종목 확산으로 인한 위험자산 선호 약화</li><li>주요 물가 및 소비 지표 발표를 앞둔 관망세 지속</li></ul></div>
-        <div><strong>관전 변수·업종</strong><ul><li>미국 국채 금리</li><li>달러화 환율</li><li>유가 변동성</li><li>정보기술 및 에너지 업종 동향</li></ul></div>
+        <div><strong>긍정 확인 조건</strong><ul></ul></div>
+        <div><strong>위험 확인 조건</strong><ul></ul></div>
+        <div><strong>관전 변수·업종</strong><ul></ul></div>
       </div>
     </div>
-    <p class="market-summary-sources"><strong>직접 근거</strong><a href="https://www.cnbc.com/2026/08/13/treasury-yields-wall-street-inflation-data.html" target="_blank" rel="noopener noreferrer">Treasury yields dip as Wall Street awaits wholesale inflation data</a> (2026-08-13) · <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxQMHQ3RV9DUU5mVVpveUtFNmJfelJtYnluMGVCQ2FPRzEzSG1nUUZidUsxSURTQ3Rwa1htSm5EMXpZVHNpN1Y3aDMzd1pwV2gydjE5RkZWOFdQWFE2WGVZMU1GX1h4dnh0OFlwWnJKOHZrVndsaFA2cm45SDNjdmJXd3k0YklSVkxsaWphX1paQkNpUE1xWFlJ?oc=5" target="_blank" rel="noopener noreferrer">Fed&#x27;s Goolsbee says latest inflation data is better - Reuters</a> (2026-08-13) · <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxNNl9yb3JkT21xaHcxVWgydjJJc1lLNU5LNDBicTBWTm1YekxBb0VJRUI5MWo2Qm9Ic0NfY3p4LU9BcXVQeUpZVkZ4Uk50dERwb01aOW0tM1ZVaHlDa2VIaEVOSmlGWG9PYWxNNDdRbDJtQzVrQ29RZVV5a3dBb1l0NGozaw?oc=5" target="_blank" rel="noopener noreferrer">Stocks mixed, dollar falls on Fed rate bets, yields rise - Reuters</a> (2026-08-16) · <a href="https://www.cnbc.com/2026/08/16/here-are-the-2-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html" target="_blank" rel="noopener noreferrer">Here are the 2 big things we&#x27;re watching in the stock market in the week ahead</a> (2026-08-16)</p>
-    <p class="market-summary-sources"><strong>맥락 근거</strong><a href="https://www.cnbc.com/2026/07/26/here-are-the-3-big-things-were-watching-in-the-stock-market-in-the-week-ahead.html" target="_blank" rel="noopener noreferrer">Here are the 3 big things we&#x27;re watching in the stock market in the week ahead</a> (2026-07-26) · <a href="https://www.bloomberg.com/news/articles/2026-08-09/stock-market-today-dow-s-p-live-updates" target="_blank" rel="noopener noreferrer">Global stock rally extends, oil advances on Iran: Markets Wrap</a> (2026-08-10) · <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0JfVHdob1VJM3o3c2RjRHBySGdOb0h0OFVfVTNUdGo5ems0NjhoaGhMaVhpWG9iR3J4dlJkZVBlYVgwS0w2SUd6ZGZiLUtMUndydTZycjNJQ1l0MENqTmdpOTFycEZBRkJ3ZUEyWlM3RERCOGhoYk5ISEdLZnNIUm9HYw?oc=5" target="_blank" rel="noopener noreferrer">Oil prices jump, Wall Street under pressure with Hormuz, inflation in focus - Reuters</a> (2026-08-09)</p>
-    <p class="market-summary-rag">RAG rag_success · Gemini + Finnhub RAG</p>
-    <p class="market-summary-note">Gemini + Finnhub RAG가 코드가 선정한 직접 근거 4건과 최근 맥락 3건을 바탕으로 작성한 자동 요약이며 투자 조언이 아닙니다.</p>
+    
+    
+    <p class="market-summary-rag">RAG generation_failure · 규칙 기반 제한 문구</p>
+    <p class="market-summary-note">뉴스 근거 확인이 제한된 자동 요약이며 투자 조언이 아닙니다.</p>
   </section>
 
   <footer>
     데이터 출처: Yahoo Finance (yfinance) &nbsp;|&nbsp;
-    자동 생성: 2026-08-17 22:29 UTC &nbsp;|&nbsp;
+    자동 생성: 2026-10-01 07:13 UTC &nbsp;|&nbsp;
     <a href="https://github.com" style="color:var(--muted);">GitHub Actions</a>
   </footer>
 
@@ -927,7 +929,7 @@
   // ── Breadth bar animation ──
   window.addEventListener('load', () => {
     const fill = document.getElementById('breadthFill');
-    const pct = 25.8;
+    const pct = 39.7;
     setTimeout(() => { fill.style.width = pct + '%'; }, 200);
   });
 
