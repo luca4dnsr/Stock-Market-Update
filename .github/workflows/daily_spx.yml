@@ -17,7 +17,7 @@ on:
         type: choice
         options: ['false', 'true']
       nim_probe:
-        description: 'NVIDIA NIM GPT-OSS 최소 응답 진단 (파일 생성·이메일 발송 없음)'
+        description: 'NVIDIA NIM Kimi K3 최소 응답 진단 (파일 생성·이메일 발송 없음)'
         required: false
         default: 'false'
         type: choice
@@ -224,7 +224,7 @@ jobs:
           path: ${{ env.MARKET_RAG_DB_PATH }}
           key: market-rag-schema-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}-ingest
 
-      # ── 4. NVIDIA NIM 최소 응답 진단 (수동 실행 전용) ─────
+      # ── 4. NVIDIA NIM Kimi K3 최소 응답 진단 (수동 실행 전용) ─
       - name: Probe NVIDIA NIM
         if: github.event.inputs.nim_probe == 'true'
         env:
@@ -242,7 +242,7 @@ jobs:
               raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
 
           endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
-          models = [("GPT-OSS 120B", "openai/gpt-oss-120b")]
+          models = [("Kimi K3", "moonshotai/kimi-k3")]
           failures = 0
           for label, model in models:
               started = time.monotonic()
@@ -280,7 +280,6 @@ jobs:
         if: github.event.inputs.nim_probe != 'true'
         timeout-minutes: 45
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           REPORT_DATE: ${{ github.event.inputs.report_date }}

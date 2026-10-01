@@ -43,11 +43,7 @@ BUSINESS_PROFILE_CACHE_FILE = CACHE_DIR / "business_profiles.json"
 BUSINESS_PROFILE_CACHE_DAYS = 30
 PROFILE_FETCH_WORKERS       = 6
 
-# ── AI 인사이트 공급자 우선순위 ───────────────────────────
-# 1) Gemini (Finnhub 기사 해석)  2) NVIDIA NIM GPT-OSS  3) 규칙 기반 제한 문구
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-GEMINI_MODEL = "gemini-3.6-flash"
-
+# ── AI 인사이트 공급자 ───────────────────────────────────
 # Yahoo Finance는 주가·기업 기본정보를 유지하고, 뉴스 근거는 Finnhub에서만 받는다.
 FINNHUB_API_BASE_URL = "https://finnhub.io/api/v1"
 FINNHUB_REQUEST_TIMEOUT_SEC = 25
@@ -67,14 +63,12 @@ MARKET_RAG_CONTEXT_MAX_SOURCES = 3
 MARKET_RAG_CONTEXT_MAX_AGE_DAYS = 45
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-NIM_GPT_OSS_MODEL = "openai/gpt-oss-120b"
+KIMI_MODEL = "moonshotai/kimi-k3"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v15-partial-fallback-korea-scenario"
-# 구조화 시황과 4종목 응답이 내부 추론 토큰 때문에 잘리지 않도록 여유를 둔다.
-GEMINI_INSIGHTS_MAX_TOKENS = 5000
-GEMINI_INSIGHTS_BATCH_SIZE = 4
-GEMINI_INSIGHTS_TIMEOUT_SEC = 120
+AI_INSIGHTS_CACHE_VERSION = "v16-kimi-k3-single-provider"
+KIMI_INSIGHTS_BATCH_SIZE = 4
+KIMI_INSIGHTS_MAX_TOKENS = 5000
 # 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.
 WORKFLOW_NEWS_CUTOFF_HOUR_KST = 7
 WORKFLOW_NEWS_CUTOFF_MINUTE_KST = 0
@@ -84,9 +78,7 @@ NEWS_WINDOW_DAYS_AFTER = 0
 MARKET_MIN_NEWS_SOURCES = 3
 MARKET_MAX_NEWS_SOURCES = 5
 # 사업 설명·뉴스 해석을 함께 생성할 수 있도록 여유를 둔다.
-NIM_INSIGHTS_MAX_TOKENS = 1200
 NIM_CONNECT_TIMEOUT_SEC = 10
-# GPT-OSS 120B는 혼잡 시 60초를 넘길 수 있어, 전체 워크플로 한도 내에서 120초를 허용한다.
 NIM_READ_TIMEOUT_SEC = 120
 
 # ── 캐시 설정 ──────────────────────────────────────────
