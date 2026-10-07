@@ -25,8 +25,10 @@ from config import (
     FINNHUB_NEWS_REQUEST_DELAY_SEC,
     FINNHUB_REQUEST_TIMEOUT_SEC,
     GLM_INSIGHTS_BATCH_SIZE,
-    GLM_INSIGHTS_MAX_TOKENS,
+    GLM_MARKET_MAX_TOKENS,
     GLM_MODEL,
+    GLM_STOCK_ARTICLE_SUMMARY_CHARS,
+    GLM_STOCK_MAX_TOKENS,
     MARKET_MAX_NEWS_SOURCES,
     MARKET_MIN_NEWS_SOURCES,
     MARKET_RAG_DB_FILE,
@@ -735,7 +737,7 @@ def _select_market_articles(
     return selected
 
 
-def _request_glm_json_once(prompt: str) -> dict:
+def _request_glm_json_once(prompt: str, max_tokens: int) -> dict:
     """NVIDIA NIM의 GLM 5.3 모델을 호출해 JSON 응답을 반환한다."""
     api_key = os.getenv("NVIDIA_API_KEY")
     if not api_key:
@@ -754,7 +756,7 @@ def _request_glm_json_once(prompt: str) -> dict:
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0,
-            "max_tokens": GLM_INSIGHTS_MAX_TOKENS,
+            "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
             "stream": False,
         },
@@ -783,18 +785,18 @@ def _request_glm_json_once(prompt: str) -> dict:
     return generated
 
 
-def _request_glm_json(prompt: str) -> dict:
-    """GLM 5.3 응답 형식 오류와 일시적 네트워크 오류를 한 번 재시도한다."""
+def _request_glm_json(prompt: str, max_tokens: int = GLM_STOCK_MAX_TOKENS) -> dict:
+    """GLM 5.3 JSON 형식 오류만 한 번 재시도하고 네트워크 timeout은 즉시 반환한다."""
     retry_prompt = (
         "\n\n이전 응답이 비어 있거나 JSON 형식이 아니었습니다. "
         "설명, Markdown, 코드 펜스 없이 유효한 JSON 객체만 다시 출력하십시오. "
         "요청한 모든 필수 필드를 빠짐없이 포함하십시오."
     )
     try:
-        return _request_glm_json_once(prompt)
-    except (requests.RequestException, ValueError) as exc:
+        return _request_glm_json_once(prompt, max_tokens)
+    except ValueError as exc:
         logger.info("GLM 5.3 응답 복구 재시도: 원인=%s", type(exc).__name__)
-        return _request_glm_json_once(prompt + retry_prompt)
+        return _request_glm_json_once(prompt + retry_prompt, max_tokens)
 
 
 def _business_fallback(record: dict) -> str:
@@ -817,11 +819,43 @@ def _business_fallback(record: dict) -> str:
 
 def _stock_prompt(items: list[dict], data_date: str, start: date, end: date) -> str:
     expected_tickers = [str(item["ticker"]) for item in items]
+    compact_items = []
+    for item in items:
+        compact = {
+            key: item.get(key)
+            for key in (
+                "ticker",
+                "name",
+                "sector",
+                "return_1d",
+                "business_source_en",
+            )
+        }
+        compact["selected_finnhub_articles"] = [
+            {
+                key: article.get(key)
+                for key in (
+                    "article_id",
+                    "headline",
+                    "summary",
+                    "source",
+                    "published_date",
+                    "session_phase",
+                )
+            }
+            for article in item.get("selected_finnhub_articles", [])
+            if isinstance(article, dict)
+        ]
+        for article in compact["selected_finnhub_articles"]:
+            article["summary"] = str(article.get("summary") or "")[
+                :GLM_STOCK_ARTICLE_SUMMARY_CHARS
+            ]
+        compact_items.append(compact)
     payload = {
         "data_date": data_date,
         "expected_count": len(expected_tickers),
         "expected_tickers": expected_tickers,
-        "stocks": items,
+        "stocks": compact_items,
     }
     return f"""미국 거래일은 {data_date}입니다.
 아래 Yahoo Finance 기업 정보와 Finnhub 기사만 사용하십시오. 웹 검색은 하지 마십시오.
@@ -1709,6 +1743,7 @@ def _research_market_summary(
     try:
         generated = _request_glm_json(
             _market_prompt(base_market_summary, retrieval, data_date),
+            max_tokens=GLM_MARKET_MAX_TOKENS,
         )
         provider_name = "GLM 5.3 + Finnhub"
         return _build_market_summary(generated, retrieval, provider_name)

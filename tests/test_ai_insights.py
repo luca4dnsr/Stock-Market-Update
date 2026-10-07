@@ -98,7 +98,21 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(payload["model"], "z-ai/glm-5.3")
         self.assertEqual(payload["response_format"], {"type": "json_object"})
         self.assertEqual(payload["temperature"], 0)
+        self.assertEqual(payload["max_tokens"], 1800)
         self.assertEqual(generated, {"items": []})
+
+    def test_glm_timeout_is_not_retried(self):
+        with (
+            patch(
+                "ai_insights.requests.post",
+                side_effect=requests.ReadTimeout("slow response"),
+            ) as mock_post,
+            patch.dict(os.environ, {"NVIDIA_API_KEY": "test-key"}),
+            self.assertRaises(requests.ReadTimeout),
+        ):
+            _request_glm_json("prompt")
+
+        self.assertEqual(mock_post.call_count, 1)
 
     def test_glm_request_retries_empty_response_with_repair_prompt(self):
         empty_response = Mock(ok=True)
@@ -244,6 +258,17 @@ class AiInsightsTest(unittest.TestCase):
         self.assertIn('"expected_tickers": ["AAA", "BBB"]', prompt)
         self.assertIn("post_close", prompt)
         self.assertIn("정규장 등락의 원인으로 표현하지", prompt)
+
+    def test_stock_prompt_compacts_article_summaries(self):
+        article = _article("1", "AAA raises guidance", "Reuters", "2026-07-24")
+        article["summary"] = "x" * 900
+        prompt = _stock_prompt(
+            [_stock_input("AAA", [article])],
+            "2026-07-24",
+            date(2026, 6, 24),
+            date(2026, 7, 24),
+        )
+        self.assertNotIn("x" * 401, prompt)
 
     def test_market_prompt_contains_korea_scenario_and_evidence_rules(self):
         prompt = _market_prompt(
