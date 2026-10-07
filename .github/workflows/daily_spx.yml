@@ -242,7 +242,7 @@ jobs:
               raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
 
           endpoint = "https://integrate.api.nvidia.com/v1/chat/completions"
-          models = [("GLM 5.3", "z-ai/glm-5-3")]
+          models = [("GLM 5.3", "z-ai/glm-5.3")]
           failures = 0
           for label, model in models:
               started = time.monotonic()

@@ -67,10 +67,10 @@ MARKET_RAG_CONTEXT_MAX_SOURCES = 3
 MARKET_RAG_CONTEXT_MAX_AGE_DAYS = 45
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-GLM_MODEL = "z-ai/glm-5-3"
+GLM_MODEL = "z-ai/glm-5.3"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v18-glm-5-3-single-provider"
+AI_INSIGHTS_CACHE_VERSION = "v19-glm-5.3-single-provider"
 GLM_INSIGHTS_BATCH_SIZE = 2
 GLM_INSIGHTS_MAX_TOKENS = 5000
 # 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.

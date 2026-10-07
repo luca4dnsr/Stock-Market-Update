@@ -95,7 +95,7 @@ class AiInsightsTest(unittest.TestCase):
             mock_post.call_args.args[0],
             "https://integrate.api.nvidia.com/v1/chat/completions",
         )
-        self.assertEqual(payload["model"], "z-ai/glm-5-3")
+        self.assertEqual(payload["model"], "z-ai/glm-5.3")
         self.assertEqual(payload["response_format"], {"type": "json_object"})
         self.assertEqual(payload["temperature"], 0)
         self.assertEqual(generated, {"items": []})
@@ -293,7 +293,7 @@ class AiInsightsTest(unittest.TestCase):
         self.assertEqual(summary["direct_evidence_ids"], ["D1", "D2", "D3"])
 
     def test_cache_version_is_glm_specific(self):
-        self.assertIn("glm-5-3", AI_INSIGHTS_CACHE_VERSION)
+        self.assertIn("glm-5.3", AI_INSIGHTS_CACHE_VERSION)
 
 
 if __name__ == "__main__":

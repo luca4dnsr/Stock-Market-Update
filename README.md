@@ -70,7 +70,7 @@ git push -u origin main
 GitHub Actions 실행 시에는 `Settings → Secrets and variables → Actions`에서 아래 Repository Secret을 등록합니다.
 
 - `FINNHUB_API_KEY` — Finnhub의 종목별·시장 전체 뉴스에 사용
-- `NVIDIA_API_KEY` — NVIDIA NIM의 `z-ai/glm-5-3`에 사용
+- `NVIDIA_API_KEY` — NVIDIA NIM의 `z-ai/glm-5.3`에 사용
 
 주가·시가총액·섹터·기업 기본 설명과 상승·하락 Top 20 선정은 **Yahoo Finance**를 유지합니다. 뉴스는 **Finnhub**만 사용합니다. 상승 20개·하락 20개 종목마다 거래일 30일 전부터 해당 거래일 다음날 KST 07:00 워크플로 뉴스 기준 시각까지의 `company-news`를 받습니다. 장 마감 후 기사는 `post_close`로 구분해 후속 촉매로만 설명하며, 그날 정규장 등락의 원인으로 사용하지 않습니다. 시장 전체 `general news`는 보고서 실행과 분리해 SQLite FTS5 코퍼스에 수집하며 90일간 보존합니다. NVIDIA NIM GLM 5.3은 웹 검색 없이 코드가 날짜·URL·관련 티커·미국 증시 관련성 기준으로 먼저 확정한 기사 제목·요약·발행 시각·URL만 한국어로 해석합니다. 모델은 기사 ID를 고르지 않으며, 근거 기사는 코드가 최종 선택합니다. 근거가 부족하면 `최근 한 달 내 종목 직접 관련 뉴스·공시 근거를 충분히 확인하지 못했습니다.`라고 표시합니다.
 
