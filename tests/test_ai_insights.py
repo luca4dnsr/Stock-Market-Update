@@ -13,7 +13,7 @@ from ai_insights import (
     _normalise_company_articles,
     _normalise_stock_batch,
     _parse_json,
-    _request_kimi_json,
+    _request_glm_json,
     _select_market_articles,
     _stock_evidence_outcome,
     _stock_prompt,
@@ -78,7 +78,7 @@ def _market_retrieval() -> dict:
 
 
 class AiInsightsTest(unittest.TestCase):
-    def test_kimi_request_uses_nvidia_nim_json_contract(self):
+    def test_glm_request_uses_nvidia_nim_json_contract(self):
         response = Mock(ok=True)
         response.json.return_value = {
             "choices": [{"message": {"content": '{"items": []}'}}]
@@ -88,15 +88,19 @@ class AiInsightsTest(unittest.TestCase):
             patch("ai_insights.requests.post", return_value=response) as mock_post,
             patch.dict(os.environ, {"NVIDIA_API_KEY": "test-key"}),
         ):
-            generated = _request_kimi_json("prompt")
+            generated = _request_glm_json("prompt")
 
         payload = mock_post.call_args.kwargs["json"]
-        self.assertEqual(payload["model"], "moonshotai/kimi-k3")
+        self.assertEqual(
+            mock_post.call_args.args[0],
+            "https://integrate.api.nvidia.com/v1/chat/completions",
+        )
+        self.assertEqual(payload["model"], "z-ai/glm-5-3")
         self.assertEqual(payload["response_format"], {"type": "json_object"})
         self.assertEqual(payload["temperature"], 0)
         self.assertEqual(generated, {"items": []})
 
-    def test_kimi_request_retries_empty_response_with_repair_prompt(self):
+    def test_glm_request_retries_empty_response_with_repair_prompt(self):
         empty_response = Mock(ok=True)
         empty_response.json.return_value = {
             "choices": [{"message": {"content": ""}}],
@@ -113,22 +117,22 @@ class AiInsightsTest(unittest.TestCase):
             ) as mock_post,
             patch.dict(os.environ, {"NVIDIA_API_KEY": "test-key"}),
         ):
-            generated = _request_kimi_json("prompt")
+            generated = _request_glm_json("prompt")
 
         self.assertEqual(generated, {"items": []})
         self.assertEqual(mock_post.call_count, 2)
         retry_prompt = mock_post.call_args_list[1].kwargs["json"]["messages"][-1]["content"]
         self.assertIn("JSON 객체만", retry_prompt)
 
-    def test_kimi_request_redacts_no_secret_in_errors(self):
+    def test_glm_request_redacts_no_secret_in_errors(self):
         response = Mock(ok=False, status_code=401, text="token=test-key")
         with (
             patch("ai_insights.requests.post", return_value=response),
             patch.dict(os.environ, {"NVIDIA_API_KEY": "test-key"}),
             self.assertRaises(RuntimeError) as captured,
         ):
-            _request_kimi_json("prompt")
-        self.assertIn("Kimi K3 HTTP 401", str(captured.exception))
+            _request_glm_json("prompt")
+        self.assertIn("GLM 5.3 HTTP 401", str(captured.exception))
 
     @patch("ai_insights.requests.get")
     def test_finnhub_request_error_does_not_expose_api_key(self, mock_get):
@@ -194,9 +198,9 @@ class AiInsightsTest(unittest.TestCase):
                 "evidence_status": "verified",
             }]
         }
-        result = _normalise_stock_batch(generated, [item], "Kimi K3 + Finnhub")
+        result = _normalise_stock_batch(generated, [item], "GLM 5.3 + Finnhub")
         self.assertEqual(result["AAA"]["model_verdict"], "verified")
-        self.assertEqual(result["AAA"]["provider"], "Kimi K3 + Finnhub")
+        self.assertEqual(result["AAA"]["provider"], "GLM 5.3 + Finnhub")
 
     def test_stock_evidence_outcomes_distinguish_display_states(self):
         base = {
@@ -282,14 +286,14 @@ class AiInsightsTest(unittest.TestCase):
         summary = _build_market_summary(
             generated,
             _market_retrieval(),
-            "Kimi K3 + Finnhub",
+            "GLM 5.3 + Finnhub",
         )
-        self.assertEqual(summary["provider"], "Kimi K3 + Finnhub")
+        self.assertEqual(summary["provider"], "GLM 5.3 + Finnhub")
         self.assertEqual(summary["fallback_stage"], "none")
         self.assertEqual(summary["direct_evidence_ids"], ["D1", "D2", "D3"])
 
-    def test_cache_version_is_kimi_specific(self):
-        self.assertIn("kimi-k3", AI_INSIGHTS_CACHE_VERSION)
+    def test_cache_version_is_glm_specific(self):
+        self.assertIn("glm-5-3", AI_INSIGHTS_CACHE_VERSION)
 
 
 if __name__ == "__main__":

@@ -4,10 +4,14 @@ config.py — 전역 설정 및 디렉토리 초기화
 
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).parent
 CACHE_DIR = BASE_DIR / "cache"
 OUTPUT_DIR = BASE_DIR / "output"
 LOGS_DIR = BASE_DIR / "logs"
+
+load_dotenv(BASE_DIR / ".env")
 
 # 디렉토리 자동 생성
 for _d in [CACHE_DIR, OUTPUT_DIR, LOGS_DIR]:
@@ -63,12 +67,12 @@ MARKET_RAG_CONTEXT_MAX_SOURCES = 3
 MARKET_RAG_CONTEXT_MAX_AGE_DAYS = 45
 
 NIM_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-KIMI_MODEL = "moonshotai/kimi-k3"
+GLM_MODEL = "z-ai/glm-5-3"
 
 AI_INSIGHTS_CACHE_FILE = CACHE_DIR / "ai_daily_insights.json"
-AI_INSIGHTS_CACHE_VERSION = "v16-kimi-k3-single-provider"
-KIMI_INSIGHTS_BATCH_SIZE = 2
-KIMI_INSIGHTS_MAX_TOKENS = 5000
+AI_INSIGHTS_CACHE_VERSION = "v18-glm-5-3-single-provider"
+GLM_INSIGHTS_BATCH_SIZE = 2
+GLM_INSIGHTS_MAX_TOKENS = 5000
 # 정규 워크플로 cron(UTC 22:00 = KST 07:00)과 함께 변경해야 한다.
 WORKFLOW_NEWS_CUTOFF_HOUR_KST = 7
 WORKFLOW_NEWS_CUTOFF_MINUTE_KST = 0

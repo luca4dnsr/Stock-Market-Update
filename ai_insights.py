@@ -24,9 +24,9 @@ from config import (
     FINNHUB_NEWS_MAX_PER_TICKER,
     FINNHUB_NEWS_REQUEST_DELAY_SEC,
     FINNHUB_REQUEST_TIMEOUT_SEC,
-    KIMI_INSIGHTS_BATCH_SIZE,
-    KIMI_INSIGHTS_MAX_TOKENS,
-    KIMI_MODEL,
+    GLM_INSIGHTS_BATCH_SIZE,
+    GLM_INSIGHTS_MAX_TOKENS,
+    GLM_MODEL,
     MARKET_MAX_NEWS_SOURCES,
     MARKET_MIN_NEWS_SOURCES,
     MARKET_RAG_DB_FILE,
@@ -735,8 +735,8 @@ def _select_market_articles(
     return selected
 
 
-def _request_kimi_json_once(prompt: str) -> dict:
-    """NVIDIA NIM의 Kimi K3를 호출해 JSON 응답을 반환한다."""
+def _request_glm_json_once(prompt: str) -> dict:
+    """NVIDIA NIM의 GLM 5.3 모델을 호출해 JSON 응답을 반환한다."""
     api_key = os.getenv("NVIDIA_API_KEY")
     if not api_key:
         raise RuntimeError("NVIDIA_API_KEY가 설정되지 않았습니다.")
@@ -748,53 +748,53 @@ def _request_kimi_json_once(prompt: str) -> dict:
             "Content-Type": "application/json",
         },
         json={
-            "model": KIMI_MODEL,
+            "model": GLM_MODEL,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0,
-            "max_tokens": KIMI_INSIGHTS_MAX_TOKENS,
+            "max_tokens": GLM_INSIGHTS_MAX_TOKENS,
             "response_format": {"type": "json_object"},
             "stream": False,
         },
         timeout=(NIM_CONNECT_TIMEOUT_SEC, NIM_READ_TIMEOUT_SEC),
     )
     if not response.ok:
-        raise RuntimeError(f"Kimi K3 HTTP {response.status_code}: {response.text[:500]}")
+        raise RuntimeError(f"GLM 5.3 HTTP {response.status_code}: {response.text[:500]}")
     content = ""
     try:
         choice = response.json()["choices"][0]
         content = str(choice["message"].get("content") or "")
         if choice.get("finish_reason") == "length":
-            raise ValueError("Kimi K3 응답이 토큰 제한으로 잘렸습니다.")
+            raise ValueError("GLM 5.3 응답이 토큰 제한으로 잘렸습니다.")
         generated = _parse_json(content)
         if not isinstance(generated, dict):
-            raise ValueError("Kimi K3 JSON 최상위 값이 객체가 아닙니다.")
+            raise ValueError("GLM 5.3 JSON 최상위 값이 객체가 아닙니다.")
     except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
         logger.warning(
-            "Kimi K3 JSON 파싱 실패 | content_chars=%d | "
+            "GLM 5.3 JSON 파싱 실패 | content_chars=%d | "
             "unclosed_string=%s | output_ends_with_object=%s",
             len(content),
             _json_has_unclosed_string(content),
             content.rstrip().endswith("}"),
         )
-        raise ValueError(f"Kimi K3 JSON 파싱 실패: {exc}") from exc
+        raise ValueError(f"GLM 5.3 JSON 파싱 실패: {exc}") from exc
     return generated
 
 
-def _request_kimi_json(prompt: str) -> dict:
-    """Kimi K3 응답 형식 오류와 일시적 네트워크 오류를 한 번 재시도한다."""
+def _request_glm_json(prompt: str) -> dict:
+    """GLM 5.3 응답 형식 오류와 일시적 네트워크 오류를 한 번 재시도한다."""
     retry_prompt = (
         "\n\n이전 응답이 비어 있거나 JSON 형식이 아니었습니다. "
         "설명, Markdown, 코드 펜스 없이 유효한 JSON 객체만 다시 출력하십시오. "
         "요청한 모든 필수 필드를 빠짐없이 포함하십시오."
     )
     try:
-        return _request_kimi_json_once(prompt)
+        return _request_glm_json_once(prompt)
     except (requests.RequestException, ValueError) as exc:
-        logger.info("Kimi K3 응답 복구 재시도: 원인=%s", type(exc).__name__)
-        return _request_kimi_json_once(prompt + retry_prompt)
+        logger.info("GLM 5.3 응답 복구 재시도: 원인=%s", type(exc).__name__)
+        return _request_glm_json_once(prompt + retry_prompt)
 
 
 def _business_fallback(record: dict) -> str:
@@ -1100,7 +1100,7 @@ def _valid_stock_response_items(
         generated,
         expected_items,
         attempt,
-        "Kimi K3",
+        "GLM 5.3",
     )[0]
 
 
@@ -1172,7 +1172,7 @@ def _log_stock_diagnostic(
     evidence_outcome = diagnostic.get("evidence_outcome", "unknown")
     logger.info(
         "종목 뉴스 진단 | ticker=%s | cache=%s | Finnhub 수집=%s | 필터통과=%s | "
-        "LLM전달=%s | 장마감후=%s | Finnhub=%s | Kimi K3=%s | "
+        "LLM전달=%s | 장마감후=%s | Finnhub=%s | GLM 5.3=%s | "
         "결과=%s",
         ticker,
         "hit" if cache_hit else "miss",
@@ -1707,13 +1707,13 @@ def _research_market_summary(
             rag_status=_limited_retrieval_status(retrieval),
         )
     try:
-        generated = _request_kimi_json(
+        generated = _request_glm_json(
             _market_prompt(base_market_summary, retrieval, data_date),
         )
-        provider_name = "Kimi K3 + Finnhub"
+        provider_name = "GLM 5.3 + Finnhub"
         return _build_market_summary(generated, retrieval, provider_name)
     except Exception as exc:
-        logger.warning("Kimi K3 + Finnhub 시황 조사 실패, 제한 문구를 사용합니다: %s", exc)
+        logger.warning("GLM 5.3 + Finnhub 시황 조사 실패, 제한 문구를 사용합니다: %s", exc)
         return _limited_market_summary(
             base_market_summary,
             retrieval,
@@ -1786,20 +1786,20 @@ def enrich_with_ai(
             for ticker in missing
         ]
         for batch_index, batch in enumerate(
-            _chunked(items, KIMI_INSIGHTS_BATCH_SIZE), start=1
+            _chunked(items, GLM_INSIGHTS_BATCH_SIZE), start=1
         ):
             kimi_entries: dict[str, dict] = {}
             kimi_issues: dict[str, list[str]] = {}
             kimi_error: Exception | None = None
             try:
-                generated = _request_kimi_json(
+                generated = _request_glm_json(
                     _stock_prompt(batch, data_date, start, end),
                 )
                 valid_raw, kimi_issues = _inspect_stock_response_items(
                     generated,
                     batch,
                     attempt=1,
-                    provider_name="Kimi K3",
+                    provider_name="GLM 5.3",
                 )
                 valid_source_items = [
                     item
@@ -1815,12 +1815,12 @@ def enrich_with_ai(
                             ]
                         },
                         valid_source_items,
-                        "Kimi K3 + Finnhub",
+                        "GLM 5.3 + Finnhub",
                     )
             except Exception as exc:
                 kimi_error = exc
                 logger.warning(
-                    "Kimi K3 종목 해석 실패 (묶음 %d), 제한 문구를 사용합니다: %s",
+                    "GLM 5.3 종목 해석 실패 (묶음 %d), 제한 문구를 사용합니다: %s",
                     batch_index,
                     exc,
                 )
